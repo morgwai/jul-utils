@@ -78,28 +78,23 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 
-	private void addBucketWithMessages(int messageCount) {
-		int bucket = buffer.addBucket();
-		if (bucket % 20 == 0) {
-			// make some threads a bit slower to start
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {}
-		}
-		for (int i = 0; i < messageCount; i++) {
-			append(bucket);
-		}
-		buffer.closeBucket(bucket);
+
+	@Test
+	public void test1000Threds10kPerThread() throws InterruptedException {
+		test1000Threds(10_000);
 	}
 
+	@Test
+	public void test1000Threds1PerThread() throws InterruptedException {
+		test1000Threds(1, 1, 1, 1, 0);
+	}
 
-
-	private void test1000Threds(int messagesPerThread) throws InterruptedException {
+	private void test1000Threds(int... messagesPerThread) throws InterruptedException {
 		int bucketCount = 1000;
 		sequences = new int[bucketCount];
 		Thread[] threads = new Thread[bucketCount];
 		for (int i = 0; i < threads.length; i++) {
-			threads[i] = new Thread(() -> addBucketWithMessages(messagesPerThread));
+			threads[i] = newBucketThread(messagesPerThread[i % messagesPerThread.length]);
 		}
 		for (int i = 0; i < threads.length; i++) threads[i].start();
 		for (int i = 0; i < threads.length; i++) threads[i].join();
@@ -110,15 +105,22 @@ public class OrderedConcurrentOutputBufferTest {
 				Comparators.isInStrictOrder(outputData, new MessageComparator()));
 	}
 
-	@Test
-	public void test1000Threds10kPerThread() throws InterruptedException {
-		test1000Threds(10_000);
+	private Thread newBucketThread(int messageCount) {
+		return new Thread(() -> {
+			int bucket = buffer.addBucket();
+			if (bucket % 17 == 0) {
+				// make some threads a bit slower to start
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {}
+			}
+			for (int i = 0; i < messageCount; i++) {
+				append(bucket);
+			}
+			buffer.closeBucket(bucket);
+		});
 	}
 
-	@Test
-	public void test1000Threds1PerThread() throws InterruptedException {
-		test1000Threds(1);
-	}
 
 
 	@Test
