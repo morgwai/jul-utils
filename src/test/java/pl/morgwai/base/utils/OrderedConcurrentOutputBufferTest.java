@@ -4,7 +4,6 @@
 package pl.morgwai.base.utils;
 
 import java.util.Comparator;
-import java.util.ConcurrentModificationException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -79,7 +78,7 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 
-	private void addBucketWith5to10kMessages() {
+	private void addBucketWithMessages(int messageCount) {
 		int bucket = buffer.addBucket();
 		if (bucket % 20 == 0) {
 			// make some threads a bit slower to start
@@ -87,7 +86,6 @@ public class OrderedConcurrentOutputBufferTest {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {}
 		}
-		int messageCount = 5000 + (1000 * (bucket % 6));
 		for (int i = 0; i < messageCount; i++) {
 			append(bucket);
 		}
@@ -96,13 +94,12 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 
-	@Test
-	public void test1000Threds5to10kMessagesEach() throws InterruptedException {
+	private void test1000Threds(int messagesPerThread) throws InterruptedException {
 		int bucketCount = 1000;
 		sequences = new int[bucketCount];
 		Thread[] threads = new Thread[bucketCount];
 		for (int i = 0; i < threads.length; i++) {
-			threads[i] = new Thread(() -> addBucketWith5to10kMessages());
+			threads[i] = new Thread(() -> addBucketWithMessages(messagesPerThread));
 		}
 		for (int i = 0; i < threads.length; i++) threads[i].start();
 		for (int i = 0; i < threads.length; i++) threads[i].join();
@@ -113,6 +110,15 @@ public class OrderedConcurrentOutputBufferTest {
 				Comparators.isInStrictOrder(outputData, new MessageComparator()));
 	}
 
+	@Test
+	public void test1000Threds10kPerThread() throws InterruptedException {
+		test1000Threds(10_000);
+	}
+
+	@Test
+	public void test1000Threds1PerThread() throws InterruptedException {
+		test1000Threds(1);
+	}
 
 
 	@Test
@@ -148,31 +154,6 @@ public class OrderedConcurrentOutputBufferTest {
 			buffer.addBucket();
 			fail("IllegalStateException should be thrown");
 		} catch (IllegalStateException e) {}
-	}
-
-
-
-	@Test(timeout = 1000l)
-	public void testConcurrentModificationOfBucket() throws InterruptedException {
-		final boolean[] thrown = { false };
-		// nondeterministic (ConcurrentModificationException is not guaranteed to be thrown),
-		// so retry in a loop until desired result or timeout (succeeds 99% of tries)
-		while ( ! thrown[0]) {
-			setup();
-			int bucket = buffer.addBucket();
-			Thread[] threads = new Thread[100];
-			for (int i = 0; i < threads.length; i++) {
-				threads[i] = new Thread(() -> {
-					try {
-						buffer.append(new Message(0, 0), bucket);
-					} catch (ConcurrentModificationException e) {
-						thrown[0] = true;
-					}
-				});
-			}
-			for (int i = 0; i < threads.length; i++) threads[i].start();
-			for (int i = 0; i < threads.length; i++) threads[i].join();
-		}
 	}
 
 

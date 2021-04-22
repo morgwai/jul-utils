@@ -3,11 +3,8 @@
  */
 package pl.morgwai.base.utils;
 
-import java.util.ConcurrentModificationException;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -18,11 +15,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * so that they all can be written in the correct order.
  * Useful for processing input streams in several concurrent threads when order of response messages
  * should reflect the order of request messages.<br/>
- * A buffer consists of ordered buckets. Each bucket gets flushed automatically when all previous
- * buckets were flushed. A user can {@link #addBucket() add a new bucket at the end of the buffer}
+ * A buffer consists of ordered buckets. Each bucket gets flushed automatically after all previous
+ * buckets are flushed. A user can {@link #addBucket() add a new bucket at the end of the buffer}
  * and {@link #append(MessageT, int) append messages to it}. Within each bucket, messages are
  * written to the output in the order they were appended.<br/>
- * All methods are thread-safe <b>except {@link #append(MessageT, int)}</b>.
+ * All methods are thread-safe, but it is an error to append to a closed bucket, and
+ * {@link #closeBucket(int)} is <b>not</b> idempotent, so if several threads append to the same
+ * bucket, only 1 of them can close it and they must all synchronize before it.<br/>
+ * Although bucket numbers can be easily predicted, it is an error to append to a bucket or close it
+ * before {@link #addBucket()} returns.
  */
 public class OrderedConcurrentOutputBuffer<MessageT> {
 
@@ -35,13 +36,12 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	OutputStream<MessageT> stream;
 
 	AtomicInteger bucketCount;
-	volatile int currentBucket;  // the first bucket that has not yet been flushed
+	volatile int currentBucket;  // the first bucket that has not yet been flushed/closed
 
 	ConcurrentHashMap<Integer, List<MessageT>> bucketBuffers;
-	ConcurrentHashMap<Integer, Object> bucketGuards;  // non-null => being processed
-	Set<Integer> closedBuckets;
+	ConcurrentHashMap<Integer, Object> closedBuckets;  // contains(bucket) <=> isClosed(bucket)
 
-	volatile boolean lastBucketSignaled;
+	volatile boolean lastBucketSignaled;  // volatile only for sanity check in addBucket() below
 
 
 
@@ -53,45 +53,38 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		if (lastBucketSignaled) {
 			throw new IllegalStateException("last bucket has been already signaled");
 		}
-		return bucketCount.incrementAndGet();
+		int bucketNumber = bucketCount.incrementAndGet();
+		bucketBuffers.put(bucketNumber, new LinkedList<>());
+		return bucketNumber;
 	}
 
 
 
 	/**
 	 * Appends <code>message</code> to the end of the bucket specified by <code>bucketNumber</code>.
-	 * A single bucket is thread-compatible, but <b>not thread-safe</b>: if multiple threads append
-	 * to a single bucket concurrently, they must be properly synchronized. Violation may result in
-	 * <code>ConcurrentModificationException</code>, but it is not guaranteed.
 	 */
 	public void append(MessageT message, int bucketNumber) {
-		guardBucket(bucketNumber);
-		try {
-			// it doesn't matter if currentBucket is increased by the thread handling the previous
-			// bucket right after the below check: a thread handling this bucket will flush the
-			// buffer upon next call to addMessage(...) or closeBucket(...)
-			if (currentBucket == bucketNumber) {
-				// if the previous bucket was just closed, then flush our buffer first
-				var bufferedMessages = bucketBuffers.remove(currentBucket);
-				if (bufferedMessages != null) {
-					for (MessageT bufferedMessage: bufferedMessages) {
-						stream.write(bufferedMessage);
-					}
+		checkValid(bucketNumber);
+		if (closedBuckets.containsKey(bucketNumber)) throwAlreadyClosedException(bucketNumber);
+		var bucketBuffer = bucketBuffers.get(bucketNumber);
+		synchronized (bucketBuffer) {
+			// SAFE RACE:
+			// if currentBucket is increased by the thread that closed the previous bucket right
+			// after the below check, it will synchronize on this bucketBuffer also and either will
+			// flush it right after this thread appends a message to it, or another thread that
+			// appends to this bucket will acquire bufferBucket's monitor first and flush it since
+			// volatile currentBucket was already increased.
+			if (bucketNumber != currentBucket) {
+				bucketBuffer.add(message);
+			} else {
+				// if the previous bucket was just closed, then need to flush our buffer first
+				for (MessageT bufferedMessage: bucketBuffer) {
+					stream.write(bufferedMessage);
 				}
+				bucketBuffer.clear();
 
 				stream.write(message);
-				return;
 			}
-
-			// only 1 concurrent thread can add to a bucket: no need to use putIfAbsent(...) here
-			var bucketBuffer = bucketBuffers.get(bucketNumber);
-			if (bucketBuffer == null) {
-				bucketBuffer = new LinkedList<>();
-				bucketBuffers.put(bucketNumber, bucketBuffer);
-			}
-			bucketBuffer.add(message);
-		} finally {
-			bucketGuards.remove(bucketNumber);
 		}
 	}
 
@@ -104,61 +97,61 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * closed.
 	 */
 	public synchronized void closeBucket(int bucketNumber) {
-		guardBucket(bucketNumber);
-		// do not release guard at the end: no more messages can be added
-
-		closedBuckets.add(bucketNumber);
+		checkValid(bucketNumber);
+		if (closedBuckets.putIfAbsent(bucketNumber, new Object()) != null) {
+			throwAlreadyClosedException(bucketNumber);
+		}
 		if (bucketNumber > currentBucket) return;
 
 		// flush completed buckets from the beginning of the buffer (including this one: if it was
 		// closed immediately after the previous, without any messages added, it is not flushed yet)
-		while (closedBuckets.contains(currentBucket)) {
-			var bufferedMessages = bucketBuffers.remove(currentBucket);
-			if (bufferedMessages != null) {
-				for (MessageT bufferedMessage: bufferedMessages) {
-					stream.write(bufferedMessage);
-				}
+		while (closedBuckets.containsKey(currentBucket)) {
+			for (MessageT bufferedMessage: bucketBuffers.remove(currentBucket)) {
+				stream.write(bufferedMessage);
 			}
 			currentBucket++;
 		}
-		// beginning of the new currentBucket cannot be flushed here as this would introduce a
-		// race between thread handling bucketNumber and the one handling the new currentBucket.
-		// This unnecessarily buffers messages previously appended to the new currentBucket until a
-		// next message is appended or the bucket is closed, but otherwise append(...) would require
-		// synchronization with the whole buffer.
 
-		if (lastBucketSignaled && currentBucket > bucketCount.get()) {
+		if (currentBucket <= bucketCount.get()) {
+			// flush the beginning of the new current bucket
+			var bucketBuffer = bucketBuffers.get(currentBucket);
+			if (bucketBuffer == null) {
+				// SAFE RACE:
+				// currentBucket was just added and buffer not created yet in addBucket(), so
+				// nothing to flush anyway.
+				// As currentBucket is volatile, the next append will write directly to the stream.
+				return;
+			}
+			synchronized (bucketBuffer) {
+				for (MessageT bufferedMessage: bucketBuffer) {
+					stream.write(bufferedMessage);
+				}
+				bucketBuffer.clear();
+			}
+		} else if (lastBucketSignaled) {
+			// all buckets flushed, if no more coming then close the output stream
 			stream.close();
 		}
 	}
 
 
 
-	/**
-	 * Attempts to prevent concurrent appends and checks some basic preconditions.
-	 */
-	private void guardBucket(int bucketNumber) {
+	private void checkValid(int bucketNumber) {
 		if (bucketNumber > bucketCount.get() || bucketNumber < 1) {
 			throw new IllegalArgumentException("invalid bucket " + bucketNumber);
 		}
-		Object guard = new Object();
-		bucketGuards.putIfAbsent(bucketNumber, guard);
-		if (guard != bucketGuards.get(bucketNumber)) {
-			if (closedBuckets.contains(bucketNumber)) {
-				throw new IllegalStateException(
-						"bucket " + bucketNumber + " has been already closed");
-			} else {
-				throw new ConcurrentModificationException(
-						"more than 1 thread operate on bucket " + bucketNumber);
-			}
-		}
+	}
+
+	private void throwAlreadyClosedException(int bucketNumber) {
+		throw new IllegalStateException(
+				"bucket " + bucketNumber + " has been already closed");
 	}
 
 
 
 	/**
 	 * Indicates that no more new buckets will be added. If all buckets are already flushed, then
-	 * the underlying stream will closed.
+	 * the underlying stream will be closed.
 	 */
 	public synchronized void signalLastBucket() {
 		lastBucketSignaled = true;
@@ -176,8 +169,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		currentBucket = 1;
 
 		bucketBuffers = new ConcurrentHashMap<>();
-		bucketGuards = new ConcurrentHashMap<>();
-		closedBuckets = new HashSet<>();
+		closedBuckets = new ConcurrentHashMap<>();
 
 		lastBucketSignaled = false;
 	}
