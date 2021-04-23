@@ -13,6 +13,7 @@ import org.junit.Test;
 import com.google.common.collect.Comparators;
 
 import pl.morgwai.base.utils.OrderedConcurrentOutputBuffer.OutputStream;
+import pl.morgwai.base.utils.OrderedConcurrentOutputBuffer.Bucket;
 
 import static org.junit.Assert.*;
 
@@ -24,7 +25,7 @@ public class OrderedConcurrentOutputBufferTest {
 
 	OrderedConcurrentOutputBuffer<Message> buffer;
 
-	OutputStream<Message> stream;
+	OutputStream<Message> outputStream;
 	List<Message> outputData;
 	boolean closed;
 
@@ -32,8 +33,10 @@ public class OrderedConcurrentOutputBufferTest {
 
 	int[] sequences;
 
-	void append(int bucketNumber) {
-		buffer.append(new Message(bucketNumber, ++sequences[bucketNumber-1]), bucketNumber);
+	void append(OutputStream<Message> bucket) {
+		@SuppressWarnings("rawtypes")
+		int bucketNumber = ((Bucket) bucket).bucketNumber;
+		bucket.write(new Message(bucketNumber, ++sequences[bucketNumber-1]));
 	}
 
 
@@ -41,35 +44,35 @@ public class OrderedConcurrentOutputBufferTest {
 	@Test
 	public void testSingleThread() {
 		sequences = new int[5];
-		int bucket1 = buffer.addBucket();
-		int bucket2 = buffer.addBucket();
+		OutputStream<Message> bucket1 = buffer.addBucket();
+		OutputStream<Message> bucket2 = buffer.addBucket();
 		append(bucket2);
 		append(bucket2);
 		append(bucket1);
 		append(bucket2);
 		append(bucket1);
 		append(bucket2);
-		int bucket3 = buffer.addBucket();
-		append(bucket2);
-		append(bucket3);
-		append(bucket1);
-		append(bucket3);
+		OutputStream<Message> bucket3 = buffer.addBucket();
 		append(bucket2);
 		append(bucket3);
-		buffer.closeBucket(bucket2);
+		append(bucket1);
+		append(bucket3);
+		append(bucket2);
+		append(bucket3);
+		bucket2.close();
 		append(bucket1);
 		append(bucket1);
 		append(bucket3);
 		append(bucket1);
-		int bucket4 = buffer.addBucket();
-		buffer.closeBucket(bucket1);
-		buffer.closeBucket(bucket3);
-		int bucket5 = buffer.addBucket();
+		OutputStream<Message> bucket4 = buffer.addBucket();
+		bucket1.close();
+		bucket3.close();
+		OutputStream<Message> bucket5 = buffer.addBucket();
 		buffer.signalLastBucket();
 		append(bucket5);
-		buffer.closeBucket(bucket4);
+		bucket4.close();
 		append(bucket5);
-		buffer.closeBucket(bucket5);
+		bucket5.close();
 
 		assertTrue("stream should be closed", closed);
 		assertTrue("messages should be written in order",
@@ -107,8 +110,10 @@ public class OrderedConcurrentOutputBufferTest {
 
 	private Thread newBucketThread(int messageCount) {
 		return new Thread(() -> {
-			int bucket = buffer.addBucket();
-			if (bucket % 17 == 0) {
+			OutputStream<Message> bucket = buffer.addBucket();
+			@SuppressWarnings("rawtypes")
+			int bucketNumber = ((Bucket) bucket).bucketNumber;
+			if (bucketNumber % 17 == 0) {
 				// make some threads a bit slower to start
 				try {
 					Thread.sleep(100);
@@ -117,29 +122,17 @@ public class OrderedConcurrentOutputBufferTest {
 			for (int i = 0; i < messageCount; i++) {
 				append(bucket);
 			}
-			buffer.closeBucket(bucket);
+			bucket.close();
 		});
 	}
 
 
 
 	@Test
-	public void testInvalidBucketNumber() {
-		buffer.addBucket();
-		int bucket = buffer.addBucket();
-		try {
-			buffer.append(new Message(1, 1), bucket + 10);
-			fail("IllegalArgumentException should be thrown");
-		} catch (IllegalArgumentException e) {}
-	}
-
-
-
-	@Test
-	public void testAddMessageToClosedBucket() {
+	public void testWriteMessageToClosedBucket() {
 		sequences = new int[1];
-		int bucket = buffer.addBucket();
-		buffer.closeBucket(bucket);
+		OutputStream<Message> bucket = buffer.addBucket();
+		bucket.close();
 		try {
 			append(bucket);
 			fail("IllegalStateException should be thrown");
@@ -194,7 +187,7 @@ public class OrderedConcurrentOutputBufferTest {
 	public void setup() {
 		outputData = new LinkedList<>();
 		closed = false;
-		stream = new OutputStream<>() {
+		outputStream = new OutputStream<>() {
 
 			@Override
 			public void write(Message value) {
@@ -206,6 +199,6 @@ public class OrderedConcurrentOutputBufferTest {
 				closed = true;
 			}
 		};
-		buffer = new OrderedConcurrentOutputBuffer<>(stream);
+		buffer = new OrderedConcurrentOutputBuffer<>(outputStream);
 	}
 }
