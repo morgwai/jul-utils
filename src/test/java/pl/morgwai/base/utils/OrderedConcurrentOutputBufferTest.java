@@ -6,14 +6,12 @@ package pl.morgwai.base.utils;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.Comparators;
 
 import pl.morgwai.base.utils.OrderedConcurrentOutputBuffer.OutputStream;
-import pl.morgwai.base.utils.OrderedConcurrentOutputBuffer.Bucket;
 
 import static org.junit.Assert.*;
 
@@ -31,47 +29,45 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 
-	int[] sequences;
+	int[] bucketMessageNumbers;
 
-	void append(OutputStream<Message> bucket) {
-		@SuppressWarnings("rawtypes")
-		int bucketNumber = ((Bucket) bucket).bucketNumber;
-		bucket.write(new Message(bucketNumber, ++sequences[bucketNumber-1]));
+	Message nextMessage(int bucketNumber) {
+		return new Message(bucketNumber, ++bucketMessageNumbers[bucketNumber - 1]);
 	}
 
 
 
 	@Test
 	public void testSingleThread() {
-		sequences = new int[5];
+		bucketMessageNumbers = new int[5];
 		OutputStream<Message> bucket1 = buffer.addBucket();
 		OutputStream<Message> bucket2 = buffer.addBucket();
-		append(bucket2);
-		append(bucket2);
-		append(bucket1);
-		append(bucket2);
-		append(bucket1);
-		append(bucket2);
+		bucket2.write(nextMessage(2));
+		bucket2.write(nextMessage(2));
+		bucket1.write(nextMessage(1));
+		bucket2.write(nextMessage(2));
+		bucket1.write(nextMessage(1));
+		bucket2.write(nextMessage(2));
 		OutputStream<Message> bucket3 = buffer.addBucket();
-		append(bucket2);
-		append(bucket3);
-		append(bucket1);
-		append(bucket3);
-		append(bucket2);
-		append(bucket3);
+		bucket2.write(nextMessage(2));
+		bucket3.write(nextMessage(3));
+		bucket1.write(nextMessage(1));
+		bucket3.write(nextMessage(3));
+		bucket2.write(nextMessage(2));
+		bucket3.write(nextMessage(3));
 		bucket2.close();
-		append(bucket1);
-		append(bucket1);
-		append(bucket3);
-		append(bucket1);
+		bucket1.write(nextMessage(1));
+		bucket1.write(nextMessage(1));
+		bucket3.write(nextMessage(3));
+		bucket1.write(nextMessage(1));
 		OutputStream<Message> bucket4 = buffer.addBucket();
 		bucket1.close();
 		bucket3.close();
 		OutputStream<Message> bucket5 = buffer.addBucket();
 		buffer.signalLastBucket();
-		append(bucket5);
+		bucket5.write(nextMessage(5));
 		bucket4.close();
-		append(bucket5);
+		bucket5.write(nextMessage(5));
 		bucket5.close();
 
 		assertTrue("stream should be closed", closed);
@@ -93,9 +89,10 @@ public class OrderedConcurrentOutputBufferTest {
 	}
 
 	private void test1000Threds(int... messagesPerThread) throws InterruptedException {
-		int bucketCount = 1000;
-		sequences = new int[bucketCount];
-		Thread[] threads = new Thread[bucketCount];
+		bucketCount = 0;
+		int targetBucketNumber = 1000;
+		bucketMessageNumbers = new int[targetBucketNumber];
+		Thread[] threads = new Thread[targetBucketNumber];
 		for (int i = 0; i < threads.length; i++) {
 			threads[i] = newBucketThread(messagesPerThread[i % messagesPerThread.length]);
 		}
@@ -108,11 +105,16 @@ public class OrderedConcurrentOutputBufferTest {
 				Comparators.isInStrictOrder(outputData, new MessageComparator()));
 	}
 
+	int bucketCount;
+
 	private Thread newBucketThread(int messageCount) {
 		return new Thread(() -> {
-			OutputStream<Message> bucket = buffer.addBucket();
-			@SuppressWarnings("rawtypes")
-			int bucketNumber = ((Bucket) bucket).bucketNumber;
+			int bucketNumber;
+			OutputStream<Message> bucket;
+			synchronized (OrderedConcurrentOutputBufferTest.this) {
+				bucketNumber = ++bucketCount;
+				bucket = buffer.addBucket();
+			}
 			if (bucketNumber % 17 == 0) {
 				// make some threads a bit slower to start
 				try {
@@ -120,7 +122,7 @@ public class OrderedConcurrentOutputBufferTest {
 				} catch (InterruptedException e) {}
 			}
 			for (int i = 0; i < messageCount; i++) {
-				append(bucket);
+				bucket.write(nextMessage(bucketNumber));
 			}
 			bucket.close();
 		});
@@ -130,11 +132,10 @@ public class OrderedConcurrentOutputBufferTest {
 
 	@Test
 	public void testWriteMessageToClosedBucket() {
-		sequences = new int[1];
 		OutputStream<Message> bucket = buffer.addBucket();
 		bucket.close();
 		try {
-			append(bucket);
+			bucket.write(new Message(666, 666));;
 			fail("IllegalStateException should be thrown");
 		} catch (IllegalStateException e) {}
 	}
