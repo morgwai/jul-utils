@@ -129,6 +129,26 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 	@Test
+	public void testSignalConcurrentlyWithFlushingLastBucket() throws InterruptedException {
+		// tries to trigger a rare race condition that was causing output to be closed 2 times
+		// before AtomicBoolean outputClosed was added:
+		// signalLastBucket() must be called when close() has already flushed the last bucket
+		// (so that headBucket is null), but before lastBucketSignaled is examined.
+		var bucket = buffer.addBucket();
+		var t1 = new Thread(() -> bucket.close());
+		var t2 = new Thread(() -> buffer.signalLastBucket());
+		t1.start();
+		t2.start();
+		t1.join();
+		t2.join();
+
+		assertEquals("stream should be closed 1 time", 1, closeCount);
+		assertTrue("atomic flag should be switched", buffer.outputClosed.get());
+	}
+
+
+
+	@Test
 	public void testWriteMessageToClosedBucket() {
 		OutputStream<Message> bucket = buffer.addBucket();
 		bucket.close();

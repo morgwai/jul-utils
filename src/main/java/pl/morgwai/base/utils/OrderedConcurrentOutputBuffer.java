@@ -5,6 +5,7 @@ package pl.morgwai.base.utils;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 
@@ -34,6 +35,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 	OutputStream<MessageT> output;
+	AtomicBoolean outputClosed;
 
 	Bucket last;
 
@@ -135,7 +137,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 				// flush the new head bucket. it is still unclosed and its subsequent messages will
 				// be written directly to the output now (safe race with addBucket(), see above)
 				headBucket.flush();
-			} else if (lastBucketSignaled) {
+			} else if (lastBucketSignaled && outputClosed.compareAndSet(false, true)) {
 				// all buckets flushed (queue empty) and no more coming
 				output.close();
 			}
@@ -163,7 +165,9 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	public void signalLastBucket() {
 		synchronized (last) {
 			lastBucketSignaled = true;
-			if (last.closed && last.buffer == null) output.close();
+			if (last.closed && last.buffer == null && outputClosed.compareAndSet(false, true)) {
+				output.close();
+			}
 		}
 	}
 
@@ -171,6 +175,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 	public OrderedConcurrentOutputBuffer(OutputStream<MessageT> outputStream) {
 		this.output = outputStream;
+		outputClosed = new AtomicBoolean(false);
 		last = new Bucket();
 		last.buffer = null;
 		last.closed = true;
