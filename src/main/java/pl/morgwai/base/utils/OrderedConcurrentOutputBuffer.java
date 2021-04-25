@@ -163,7 +163,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	public void signalLastBucket() {
 		synchronized (last) {
 			lastBucketSignaled = true;
-			if (last.closed) output.close();
+			if (last.closed && last.buffer == null) output.close();
 		}
 	}
 

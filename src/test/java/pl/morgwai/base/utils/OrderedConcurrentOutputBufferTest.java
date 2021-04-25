@@ -25,7 +25,7 @@ public class OrderedConcurrentOutputBufferTest {
 
 	OutputStream<Message> outputStream;
 	List<Message> outputData;
-	boolean closed;
+	volatile int closeCount;
 
 
 
@@ -64,17 +64,15 @@ public class OrderedConcurrentOutputBufferTest {
 		bucket1.close();
 		bucket3.close();
 		OutputStream<Message> bucket5 = buffer.addBucket();
-		buffer.signalLastBucket();
-		bucket5.write(nextMessage(5));
-		bucket4.close();
 		bucket5.write(nextMessage(5));
 		bucket5.close();
+		buffer.signalLastBucket();
+		bucket4.close();
 
-		assertTrue("stream should be closed", closed);
+		assertEquals("stream should be closed 1 time", 1, closeCount);
 		assertTrue("messages should be written in order",
 				Comparators.isInStrictOrder(outputData, new MessageComparator()));
 	}
-
 
 
 
@@ -100,7 +98,7 @@ public class OrderedConcurrentOutputBufferTest {
 		for (int i = 0; i < threads.length; i++) threads[i].join();
 		buffer.signalLastBucket();
 
-		assertTrue("stream should be closed", closed);
+		assertEquals("stream should be closed 1 time", 1, closeCount);
 		assertTrue("messages should be written in order",
 				Comparators.isInStrictOrder(outputData, new MessageComparator()));
 	}
@@ -187,17 +185,18 @@ public class OrderedConcurrentOutputBufferTest {
 	@Before
 	public void setup() {
 		outputData = new LinkedList<>();
-		closed = false;
+		closeCount = 0;
 		outputStream = new OutputStream<>() {
 
 			@Override
 			public void write(Message value) {
+				if (closeCount > 0) throw new IllegalStateException("output already closed");
 				outputData.add(value);
 			}
 
 			@Override
 			public void close() {
-				closed = true;
+				closeCount++;
 			}
 		};
 		buffer = new OrderedConcurrentOutputBuffer<>(outputStream);
