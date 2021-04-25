@@ -5,7 +5,6 @@ package pl.morgwai.base.utils;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 
@@ -18,8 +17,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * previous buckets are flushed. A user can {@link #addBucket() add a new bucket at the end of a
  * buffer} and {@link Bucket#write(Object) write messages to it}. Within each bucket, messages are
  * written to the output in the order they were buffered.<br/>
- * All methods are thread-safe, except that {@link #addBucket()} and {@link #signalLastBucket()}
- * must not be called concurrently with each other: see their respective documentations.
+ * Bucket methods and {@link #signalLastBucket()} are all thread-safe. {@link #addBucket()} is
+ * <b>not</b> thread-safe and concurrent invocations must be synchronized by the user (in case of
+ * websocket and gRPC, it is usually not a problem as endpoints and request observers are guaranteed
+ * to be called by only 1 thread at a time).
  */
 public class OrderedConcurrentOutputBuffer<MessageT> {
 
@@ -34,22 +35,14 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 	OutputStream<MessageT> output;
 
-	ConcurrentLinkedQueue<Bucket> buckets;
+	Bucket last;
 
-	volatile boolean lastBucketSignaled;  // volatile only for sanity check in addBucket() below
+	volatile boolean lastBucketSignaled;
 
 
 
 	/**
-	 * Adds a new empty bucket at the end of this buffer. Although not synchronized, this method is
-	 * thread safe: it is safe to call this method from multiple concurrent threads, but the order
-	 * of added buckets will be undefined in such case.<br/>
-	 * This method <b>must not</b> be called concurrently with {@link #signalLastBucket()}
-	 * (websocket endpoints and gRPC request observers are guaranteed to be called by only 1
-	 * concurrent thread, so it's always safe if {@link #addBucket()} is called in
-	 * <code>onNext(...) / onMessage(...)</code>, while {@link #signalLastBucket()} in
-	 * <code>onCompleted() / onClose(...)</code> by the thread that originally invoked these
-	 * methods).
+	 * Adds a new empty bucket at the end of this buffer. <b>Not</b> thread-safe.
 	 * @return newly added bucket
 	 * @throws IllegalStateException if last bucket has been already signaled by a call to
 	 *     {@link #signalLastBucket()}
@@ -59,7 +52,14 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 			throw new IllegalStateException("last bucket has been already signaled");
 		}
 		var bucket = new Bucket();
-		buckets.add(bucket);
+		last.next = bucket;
+		// SAFE RACE:
+		// a thread that has flushed last right before the below check, will try to flush this new
+		// bucket also, but flush() is idempotent
+		if (last.closed && last.buffer == null) {
+			bucket.flush();
+		}
+		last = bucket;
 		return bucket;
 	}
 
@@ -67,12 +67,14 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 	/**
 	 * A list of messages that will have a well defined position relatively to other buckets within
-	 * the {@link OrderedConcurrentOutputBuffer#output output stream}.
+	 * the {@link OrderedConcurrentOutputBuffer#output output stream}. All methods are thread-safe.
 	 */
 	public class Bucket implements OutputStream<MessageT> {
 
-		List<MessageT> buffer;
-		boolean closed;
+		// the below 3 are volatile for addBucket()
+		volatile List<MessageT> buffer;  // (buffer == null && ! closed) <=> this is the head bucket
+		volatile boolean closed;
+		volatile Bucket next;
 
 
 
@@ -92,36 +94,26 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		@Override
 		public synchronized void write(MessageT message) {
 			if (closed) throw new IllegalStateException(ALREADY_CLOSED_MESSAGE);
-
-			// SAFE RACE:
-			// if the head of buckets queue is advanced right after the below check by the thread,
-			// that flushed the previous bucket, it will also synchronize on this bucket and will
-			// flush it right after this thread appends the message to it.
-			// (in case other threads also write to this bucket, one of them may also acquire its
-			// monitor first and will flush it as queue's head was already advanced: see the else
-			// branch below).
-			if (this != buckets.peek()) {
-				buffer.add(message);
-			} else {
-				// SAFE RACE:
-				// the thread, that flushed the previous bucket and advanced the head, will try to
-				// flush this bucket also, but flush is idempotent.
-				// flush must be called here, as write(...) can be called after the other thread
-				// advanced the head, but before acquired this bucket's monitor.
-				flush();
+			if (buffer == null) {
 				output.write(message);
+			} else {
+				buffer.add(message);
 			}
 		}
 
 
 
 		/**
-		 * Closes this bucket. If all the previous buckets are already flushed, then this bucket
-		 * will also be automatically flushed together with all subsequent closed buckets. Such
-		 * sequence of flushing is synchronized on the whole buffer. If all buckets until the last
-		 * one (indicated by {@link #signalLastBucket()} are flushed, then the underlying output
-		 * stream will be closed.<br/>
-		 * This method is <b>not</b> idempotent.
+		 * Marks this bucket as closed. The marking is synchronized on this bucket.<br/>
+		 * If this was the head bucket (the first unclosed one), then flushes all buffered messages
+		 * from subsequent buckets that can be sent now. Specifically, a continuous chain of
+		 * subsequent closed buckets and the first unclosed one will be flushed. Each flushing is
+		 * synchronized on the given bucket.<br/>
+		 * The first unclosed bucket becomes the new head: its messages will be written directly to
+		 * the underlying output stream.<br/>
+		 * If all buckets until the last one (indicated by {@link #signalLastBucket()}) are flushed,
+		 * then the underlying output stream will be closed.<br/>
+		 * This method is not idempotent.
 		 * @throws IllegalStateException if the bucket is already closed
 		 */
 		@Override
@@ -129,27 +121,23 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 			synchronized (this) {
 				if (closed) throw new IllegalStateException(ALREADY_CLOSED_MESSAGE);
 				closed = true;
+				if (buffer != null) return;
 			}
 
-			synchronized (OrderedConcurrentOutputBuffer.this) {
-				if (this != buckets.peek()) return;
+			// flush all closed buckets from the beginning of the queue
+			Bucket headBucket = next;
+			while (headBucket != null && headBucket.closed) {
+				headBucket.flush();
+				headBucket = headBucket.next;
+			}
 
-				// flush all closed buckets from the beginning of the queue
-				var headBucket = buckets.peek();
-				while (headBucket != null && headBucket.closed) {
-					headBucket.flush();
-					buckets.remove();  // safe race with write(), see above
-					headBucket = buckets.peek();
-				}
-
-				if (headBucket != null) {
-					// flush the new head bucket, so its buffered messages are not retained until
-					// the next write or close (safe race with write(), see above)
-					headBucket.flush();
-				} else if (lastBucketSignaled) {
-					// all buckets flushed (queue empty) and no more coming
-					output.close();
-				}
+			if (headBucket != null) {
+				// flush the new head bucket. it is still unclosed and its subsequent messages will
+				// be written directly to the output now (safe race with addBucket(), see above)
+				headBucket.flush();
+			} else if (lastBucketSignaled) {
+				// all buckets flushed (queue empty) and no more coming
+				output.close();
 			}
 		}
 
@@ -158,6 +146,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		public Bucket() {
 			buffer = new LinkedList<>();
 			closed = false;
+			next = null;
 		}
 
 
@@ -169,24 +158,22 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 	/**
 	 * Indicates that no more new buckets will be added. If all buckets are already flushed, then
-	 * the underlying stream will be closed.<br/>
-	 * This method <b>must not</b> be called concurrently with {@link #addBucket()}
-	 * (websocket endpoints and gRPC request observers are guaranteed to be called by only 1
-	 * concurrent thread, so it's always safe if {@link #addBucket()} is called in
-	 * <code>onNext(...) / onMessage(...)</code>, while {@link #signalLastBucket()} in
-	 * <code>onCompleted() / onClose(...)</code> by the thread that originally invoked these
-	 * methods).
+	 * the underlying stream will be closed.
 	 */
-	public synchronized void signalLastBucket() {
-		lastBucketSignaled = true;
-		if (buckets.isEmpty()) output.close();
+	public void signalLastBucket() {
+		synchronized (last) {
+			lastBucketSignaled = true;
+			if (last.closed) output.close();
+		}
 	}
 
 
 
 	public OrderedConcurrentOutputBuffer(OutputStream<MessageT> outputStream) {
 		this.output = outputStream;
-		buckets = new ConcurrentLinkedQueue<>();
+		last = new Bucket();
+		last.buffer = null;
+		last.closed = true;
 		lastBucketSignaled = false;
 	}
 }
