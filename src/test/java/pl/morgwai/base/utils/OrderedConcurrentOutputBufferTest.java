@@ -66,7 +66,7 @@ public class OrderedConcurrentOutputBufferTest {
 		OutputStream<Message> bucket5 = buffer.addBucket();
 		bucket5.write(nextMessage(5));
 		bucket5.close();
-		buffer.signalLastBucket();
+		buffer.signalNoMoreBuckets();
 		bucket4.close();
 
 		assertEquals("stream should be closed 1 time", 1, closeCount);
@@ -96,7 +96,7 @@ public class OrderedConcurrentOutputBufferTest {
 		}
 		for (int i = 0; i < threads.length; i++) threads[i].start();
 		for (int i = 0; i < threads.length; i++) threads[i].join();
-		buffer.signalLastBucket();
+		buffer.signalNoMoreBuckets();
 
 		assertEquals("stream should be closed 1 time", 1, closeCount);
 		assertTrue("messages should be written in order",
@@ -132,11 +132,11 @@ public class OrderedConcurrentOutputBufferTest {
 	public void testSignalConcurrentlyWithFlushingLastBucket() throws InterruptedException {
 		// tries to trigger a rare race condition that was causing output to be closed 2 times
 		// before AtomicBoolean outputClosed was added:
-		// signalLastBucket() must be called when close() has already flushed the last bucket
-		// (so that headBucket is null), but before lastBucketSignaled is examined.
+		// signalNoMoreBuckets() must be called when close() has already flushed the last bucket
+		// (so that headBucket is null), but before noMoreBuckets is examined.
 		var bucket = buffer.addBucket();
 		var t1 = new Thread(() -> bucket.close());
-		var t2 = new Thread(() -> buffer.signalLastBucket());
+		var t2 = new Thread(() -> buffer.signalNoMoreBuckets());
 		t1.start();
 		t2.start();
 		t1.join();
@@ -163,7 +163,7 @@ public class OrderedConcurrentOutputBufferTest {
 	@Test
 	public void testAddBucketAfterLastBucketSignaled() {
 		buffer.addBucket();
-		buffer.signalLastBucket();
+		buffer.signalNoMoreBuckets();
 		try {
 			buffer.addBucket();
 			fail("IllegalStateException should be thrown");

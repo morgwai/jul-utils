@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * previous buckets are flushed. A user can {@link #addBucket() add a new bucket at the end of a
  * buffer} and {@link Bucket#write(Object) write messages to it}. Within each bucket, messages are
  * written to the output in the order they were buffered.<br/>
- * Bucket methods and {@link #signalLastBucket()} are all thread-safe. {@link #addBucket()} is
+ * Bucket methods and {@link #signalNoMoreBuckets()} are all thread-safe. {@link #addBucket()} is
  * <b>not</b> thread-safe and concurrent invocations must be synchronized by the user (in case of
  * websocket and gRPC, it is usually not a problem as endpoints and request observers are guaranteed
  * to be called by only 1 thread at a time).
@@ -39,7 +39,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 	Bucket last;
 
-	volatile boolean lastBucketSignaled;
+	volatile boolean noMoreBuckets;
 
 
 
@@ -47,11 +47,11 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * Adds a new empty bucket at the end of this buffer. <b>Not</b> thread-safe.
 	 * @return newly added bucket
 	 * @throws IllegalStateException if last bucket has been already signaled by a call to
-	 *     {@link #signalLastBucket()}
+	 *     {@link #signalNoMoreBuckets()}
 	 */
 	public Bucket addBucket() {
-		if (lastBucketSignaled) {
-			throw new IllegalStateException("last bucket has been already signaled");
+		if (noMoreBuckets) {
+			throw new IllegalStateException("noMoreBuckets has been already signaled");
 		}
 		var bucket = new Bucket();
 		last.next = bucket;
@@ -113,8 +113,8 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		 * synchronized on the given bucket.<br/>
 		 * The first unclosed bucket becomes the new head: its messages will be written directly to
 		 * the underlying output stream.<br/>
-		 * If all buckets until the last one (indicated by {@link #signalLastBucket()}) are flushed,
-		 * then the underlying output stream will be closed.<br/>
+		 * If all buckets until the last one (indicated by {@link #signalNoMoreBuckets()}) are
+		 * flushed, then the underlying output stream will be closed.<br/>
 		 * This method is not idempotent.
 		 * @throws IllegalStateException if the bucket is already closed
 		 */
@@ -137,7 +137,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 				// flush the new head bucket. it is still unclosed and its subsequent messages will
 				// be written directly to the output now (safe race with addBucket(), see above)
 				headBucket.flush();
-			} else if (lastBucketSignaled && outputClosed.compareAndSet(false, true)) {
+			} else if (noMoreBuckets && outputClosed.compareAndSet(false, true)) {
 				// all buckets flushed (queue empty) and no more coming
 				output.close();
 			}
@@ -162,9 +162,9 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * Indicates that no more new buckets will be added. If all buckets are already flushed, then
 	 * the underlying stream will be closed.
 	 */
-	public void signalLastBucket() {
+	public void signalNoMoreBuckets() {
 		synchronized (last) {
-			lastBucketSignaled = true;
+			noMoreBuckets = true;
 			if (last.closed && last.buffer == null && outputClosed.compareAndSet(false, true)) {
 				output.close();
 			}
@@ -179,6 +179,6 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		last = new Bucket();
 		last.buffer = null;
 		last.closed = true;
-		lastBucketSignaled = false;
+		noMoreBuckets = false;
 	}
 }
