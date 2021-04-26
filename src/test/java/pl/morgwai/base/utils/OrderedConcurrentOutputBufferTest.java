@@ -6,7 +6,12 @@ package pl.morgwai.base.utils;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.Comparators;
@@ -69,9 +74,10 @@ public class OrderedConcurrentOutputBufferTest {
 		buffer.signalNoMoreBuckets();
 		bucket4.close();
 
-		assertEquals("stream should be closed 1 time", 1, closeCount);
+		assertEquals("17 messages should be written", 17, outputData.size());
 		assertTrue("messages should be written in order",
 				Comparators.isInStrictOrder(outputData, new MessageComparator()));
+		assertEquals("stream should be closed 1 time", 1, closeCount);
 	}
 
 
@@ -89,18 +95,22 @@ public class OrderedConcurrentOutputBufferTest {
 	private void test1000Threds(int... messagesPerThread) throws InterruptedException {
 		bucketCount = 0;
 		int targetBucketNumber = 1000;
+		int expectedMessageCount = 0;
 		bucketMessageNumbers = new int[targetBucketNumber];
 		Thread[] threads = new Thread[targetBucketNumber];
 		for (int i = 0; i < threads.length; i++) {
-			threads[i] = newBucketThread(messagesPerThread[i % messagesPerThread.length]);
+			int threadMessageCount = messagesPerThread[i % messagesPerThread.length];
+			threads[i] = newBucketThread(threadMessageCount);
+			expectedMessageCount += threadMessageCount;
 		}
 		for (int i = 0; i < threads.length; i++) threads[i].start();
 		for (int i = 0; i < threads.length; i++) threads[i].join();
 		buffer.signalNoMoreBuckets();
 
-		assertEquals("stream should be closed 1 time", 1, closeCount);
+		assertEquals("all messages should be written", expectedMessageCount, outputData.size());
 		assertTrue("messages should be written in order",
 				Comparators.isInStrictOrder(outputData, new MessageComparator()));
+		assertEquals("stream should be closed 1 time", 1, closeCount);
 	}
 
 	int bucketCount;
@@ -111,6 +121,7 @@ public class OrderedConcurrentOutputBufferTest {
 			OutputStream<Message> bucket;
 			synchronized (OrderedConcurrentOutputBufferTest.this) {
 				bucketNumber = ++bucketCount;
+				if (log.isLoggable(Level.FINER)) log.finer("adding bucket " + bucketNumber);
 				bucket = buffer.addBucket();
 			}
 			if (bucketNumber % 17 == 0) {
@@ -122,6 +133,7 @@ public class OrderedConcurrentOutputBufferTest {
 			for (int i = 0; i < messageCount; i++) {
 				bucket.write(nextMessage(bucketNumber));
 			}
+			if (log.isLoggable(Level.FINER)) log.finer("closing bucket " + bucketNumber);
 			bucket.close();
 		});
 	}
@@ -212,6 +224,7 @@ public class OrderedConcurrentOutputBufferTest {
 			public void write(Message value) {
 				if (closeCount > 0) throw new IllegalStateException("output already closed");
 				outputData.add(value);
+				if (log.isLoggable(Level.FINEST)) log.finest(value.toString());
 			}
 
 			@Override
@@ -221,4 +234,18 @@ public class OrderedConcurrentOutputBufferTest {
 		};
 		buffer = new OrderedConcurrentOutputBuffer<>(outputStream);
 	}
+
+
+
+	@BeforeClass
+	public static void setupLogging() {
+		var handler = new ConsoleHandler();
+		handler.setLevel(Level.FINEST);
+		log.addHandler(handler);
+		log.setLevel(Level.OFF);
+	}
+
+
+
+	static final Logger log = Logger.getLogger(OrderedConcurrentOutputBufferTest.class.getName());
 }
