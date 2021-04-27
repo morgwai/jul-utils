@@ -161,6 +161,40 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 	@Test
+	public void testConcurrentCloseOfSubequentBucketsFollowedByClosedBuckets()
+			throws InterruptedException {
+		// tries to trigger a rare race condition that was suppressing flushing sequence before the
+		// outer do-while loop was introduced in close():
+		// bucket2 must be closed after bucket1's finishes flushing loop in close() (so that bucket2
+		// doesn't get flushed there) and before it is flushed as the new unclosed headBucket.
+		for (int i = 0; i < 5000; i++) {
+			setup();
+			var bucket1 = buffer.addBucket();
+			var bucket2 = buffer.addBucket();
+			var bucket3 = buffer.addBucket();
+			bucket3.write(new Message(3, 1));
+			bucket3.close();
+			var bucket4 = buffer.addBucket();
+			bucket4.write(new Message(4, 1));
+			bucket4.close();
+			buffer.signalNoMoreBuckets();
+			var t1 = new Thread(() -> bucket1.close());
+			var t2 = new Thread(() -> bucket2.close());
+			t1.start();
+			t2.start();
+			t1.join();
+			t2.join();
+
+			assertEquals("all messages should be written", 2, outputData.size());
+			assertTrue("messages should be written in order",
+					Comparators.isInStrictOrder(outputData, new MessageComparator()));
+			assertEquals("stream should be closed 1 time", 1, closeCount);
+		}
+	}
+
+
+
+	@Test
 	public void testWriteMessageToClosedBucket() {
 		OutputStream<Message> bucket = buffer.addBucket();
 		bucket.close();

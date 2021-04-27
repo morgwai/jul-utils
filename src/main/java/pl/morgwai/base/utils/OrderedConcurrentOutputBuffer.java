@@ -126,18 +126,37 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 				if (buffer != null) return;
 			}
 
-			// flush all closed buckets from the beginning of the queue
 			Bucket headBucket = next;
-			while (headBucket != null && headBucket.closed) {
-				headBucket.flush();
-				headBucket = headBucket.next;
-			}
+			do {
+				// flush all closed buckets from the beginning of the queue
+				while (headBucket != null && headBucket.closed) {
+					headBucket.flush();
+					headBucket = headBucket.next;
+				}
 
-			if (headBucket != null) {
-				// flush the new head bucket. it is still unclosed and its subsequent messages will
-				// be written directly to the output now (safe race with addBucket(), see above)
-				headBucket.flush();
-			} else if (noMoreBuckets && outputClosed.compareAndSet(false, true)) {
+				// flush the buffered beginning of the new unclosed headBucket (if any)
+				if (headBucket != null) {
+
+					// if another thread closes headBucket at this moment, it will not flush
+					// subsequent closed buckets, hence the outer do-while loop
+
+					synchronized (headBucket) {
+						headBucket.flush();  // safe race with addBucket(), see above
+						if ( ! headBucket.closed) {
+							// if another thread closes headBucket right after this synchronized
+							// block, it will start flushing subsequent closed buckets, while this
+							// thread would do another turn of the outer do-while loop, also trying
+							// to flush the same buckets. Hence break to prevent this race.
+							break;
+						}
+					}
+
+					// headBucket is closed & flushed, but subsequent buckets are not flushed, so
+					// 1 more turn of the outer do-while loop will be performed
+				}
+			} while (headBucket != null && headBucket.closed);
+
+			if (headBucket == null && noMoreBuckets && outputClosed.compareAndSet(false, true)) {
 				// all buckets flushed (queue empty) and no more coming
 				output.close();
 			}
