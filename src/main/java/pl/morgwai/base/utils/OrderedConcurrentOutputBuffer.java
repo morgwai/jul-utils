@@ -37,7 +37,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	OutputStream<MessageT> output;
 	AtomicBoolean outputClosed;
 
-	Bucket last;
+	Bucket tailBucket;
 
 	volatile boolean noMoreBuckets;
 
@@ -46,22 +46,21 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	/**
 	 * Adds a new empty bucket at the end of this buffer. <b>Not</b> thread-safe.
 	 * @return newly added bucket
-	 * @throws IllegalStateException if last bucket has been already signaled by a call to
-	 *     {@link #signalNoMoreBuckets()}
+	 * @throws IllegalStateException if {@link #signalNoMoreBuckets()} have been already called
 	 */
 	public Bucket addBucket() {
 		if (noMoreBuckets) {
 			throw new IllegalStateException("noMoreBuckets has been already signaled");
 		}
 		var bucket = new Bucket();
-		last.next = bucket;
+		tailBucket.next = bucket;
 		// SAFE RACE:
-		// a thread that has flushed last right before the below check, will try to flush this new
-		// bucket also, but flush() is idempotent
-		if (last.closed && last.buffer == null) {
+		// a thread that has flushed tailBucket right before the below check, will try to flush
+		// this new bucket also, but flush() is idempotent
+		if (tailBucket.closed && tailBucket.buffer == null) {
 			bucket.flush();
 		}
-		last = bucket;
+		tailBucket = bucket;
 		return bucket;
 	}
 
@@ -182,9 +181,10 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * the underlying stream will be closed.
 	 */
 	public void signalNoMoreBuckets() {
-		synchronized (last) {
+		synchronized (tailBucket) {
 			noMoreBuckets = true;
-			if (last.closed && last.buffer == null && outputClosed.compareAndSet(false, true)) {
+			if (tailBucket.closed && tailBucket.buffer == null
+					&& outputClosed.compareAndSet(false, true)) {
 				output.close();
 			}
 		}
@@ -195,9 +195,9 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	public OrderedConcurrentOutputBuffer(OutputStream<MessageT> outputStream) {
 		this.output = outputStream;
 		outputClosed = new AtomicBoolean(false);
-		last = new Bucket();
-		last.buffer = null;
-		last.closed = true;
+		tailBucket = new Bucket();
+		tailBucket.buffer = null;
+		tailBucket.closed = true;
 		noMoreBuckets = false;
 	}
 }
