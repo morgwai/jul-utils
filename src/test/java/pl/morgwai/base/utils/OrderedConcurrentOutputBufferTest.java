@@ -83,8 +83,8 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 	@Test
-	public void test1000Threds10kPerThread() throws InterruptedException {
-		test1000Threds(10_000);
+	public void test1000Threds1000PerThread() throws InterruptedException {
+		test1000Threds(1000);
 	}
 
 	@Test
@@ -142,20 +142,19 @@ public class OrderedConcurrentOutputBufferTest {
 
 	@Test
 	public void testSignalConcurrentlyWithFlushingLastBucket() throws InterruptedException {
-		// tries to trigger a rare race condition that was causing output to be closed 2 times
-		// before AtomicBoolean outputClosed was added:
-		// signalNoMoreBuckets() must be called when close() has already flushed the last bucket
-		// (so that headBucket is null), but before noMoreBuckets is examined.
-		var bucket = buffer.addBucket();
-		var t1 = new Thread(() -> bucket.close());
-		var t2 = new Thread(() -> buffer.signalNoMoreBuckets());
-		t1.start();
-		t2.start();
-		t1.join();
-		t2.join();
+		// tries to trigger a race condition that was causing output to be closed 2 times
+		for (int i = 0; i < 5000; i++) {
+			setup();
+			var bucket = buffer.addBucket();
+			var t1 = new Thread(() -> bucket.close());
+			var t2 = new Thread(() -> buffer.signalNoMoreBuckets());
+			t1.start();
+			t2.start();
+			t1.join();
+			t2.join();
 
-		assertEquals("stream should be closed 1 time", 1, closeCount);
-		assertTrue("atomic flag should be switched", buffer.outputClosed.get());
+			assertEquals("stream should be closed 1 time", 1, closeCount);
+		}
 	}
 
 
@@ -163,10 +162,7 @@ public class OrderedConcurrentOutputBufferTest {
 	@Test
 	public void testConcurrentCloseOfSubequentBucketsFollowedByClosedBuckets()
 			throws InterruptedException {
-		// tries to trigger a rare race condition that was suppressing flushing sequence before the
-		// outer do-while loop was introduced in close():
-		// bucket2 must be closed after bucket1's finishes flushing loop in close() (so that bucket2
-		// doesn't get flushed there) and before it is flushed as the new unclosed headBucket.
+		// tries to trigger a race condition that was suppressing flushing sequence
 		for (int i = 0; i < 5000; i++) {
 			setup();
 			var bucket1 = buffer.addBucket();
@@ -197,12 +193,8 @@ public class OrderedConcurrentOutputBufferTest {
 	@Test
 	public void testAddBucketAndSignalWhileClosingTail()
 			throws InterruptedException {
-		// tries to trigger a rare race condition that was causing output to be closed too early:
-		// bucket2 must be added and noMoreBuckets signaled after bucket1 finishes flushing, but
-		// before it checks if noMoreBuckets was signaled.
-		// Note: without Thread.sleep(0, 1) in line 157 to force VM to switch threads (and removing
-		// line 162), this almost never happens.
-		for (int i = 0; i < 10; i++) {
+		// tries to trigger a race condition that was causing output to be closed too early
+		for (int i = 0; i < 100; i++) {
 			setup();
 			var bucket1 = buffer.addBucket();
 			bucket1.write(new Message(1, 1));
