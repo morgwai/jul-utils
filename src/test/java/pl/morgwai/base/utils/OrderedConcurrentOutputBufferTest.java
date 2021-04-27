@@ -195,6 +195,46 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 	@Test
+	public void testAddBucketAndSignalWhileClosingTail()
+			throws InterruptedException {
+		// tries to trigger a rare race condition that was causing output to be closed too early:
+		// bucket2 must be added and noMoreBuckets signaled after bucket1 finishes flushing, but
+		// before it checks if noMoreBuckets was signaled.
+		// Note: without Thread.sleep(0, 1) in line 157 to force VM to switch threads (and removing
+		// line 162), this almost never happens.
+		for (int i = 0; i < 10; i++) {
+			setup();
+			var bucket1 = buffer.addBucket();
+			bucket1.write(new Message(1, 1));
+			Exception[] t2exceptionHolder = {null};
+			var t1 = new Thread(() -> bucket1.close());
+			var t2 = new Thread(() -> {
+				try {
+					var bucket2 = buffer.addBucket();
+					buffer.signalNoMoreBuckets();
+					Thread.sleep(3);
+					bucket2.write(new Message(2, 1));
+					bucket2.close();
+				} catch (Exception e) {
+					t2exceptionHolder[0] = e;
+				}
+			});
+			t1.start();
+			t2.start();
+			t1.join();
+			t2.join();
+
+			if (t2exceptionHolder[0] != null) fail(t2exceptionHolder[0].toString());
+			assertEquals("all messages should be written", 2, outputData.size());
+			assertTrue("messages should be written in order",
+					Comparators.isInStrictOrder(outputData, new MessageComparator()));
+			assertEquals("stream should be closed 1 time", 1, closeCount);
+		}
+	}
+
+
+
+	@Test
 	public void testWriteMessageToClosedBucket() {
 		OutputStream<Message> bucket = buffer.addBucket();
 		bucket.close();

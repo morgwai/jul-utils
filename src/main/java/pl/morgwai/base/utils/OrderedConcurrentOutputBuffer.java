@@ -155,8 +155,14 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 				}
 			} while (headBucket != null && headBucket.closed);
 
-			if (headBucket == null && noMoreBuckets && outputClosed.compareAndSet(false, true)) {
-				// all buckets flushed (queue empty) and no more coming
+			// if a bucket was added and noMoreBuckets was signaled both right before the below
+			// check, headBucket is stale, so check tailBucket also
+			if (
+				headBucket == null && noMoreBuckets
+				&& tailBucket.closed && tailBucket.buffer == null
+				&& outputClosed.compareAndSet(false, true)
+			) {
+				// all buckets flushed and no more coming
 				output.close();
 			}
 		}
