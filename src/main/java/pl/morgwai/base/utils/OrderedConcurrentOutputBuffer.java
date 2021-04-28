@@ -37,7 +37,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 	Bucket tailBucket;
 
-	volatile boolean noMoreBuckets;  // volatile only for sanity check in addBucket() below
+	boolean noMoreBuckets;
 
 
 
@@ -47,19 +47,18 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * @throws IllegalStateException if {@link #signalNoMoreBuckets()} have been already called
 	 */
 	public Bucket addBucket() {
-		if (noMoreBuckets) {
-			throw new IllegalStateException("noMoreBuckets has been already signaled");
-		}
 		var bucket = new Bucket();
-		tailBucket.next = bucket;
-		// SAFE RACE:
-		// a thread that has flushed tailBucket right before the below check, will try to flush
-		// this new bucket also, but flush() is idempotent
-		if (tailBucket.closed && tailBucket.buffer == null) {
-			bucket.flush();
+		synchronized (tailBucket) {
+			if (noMoreBuckets) {
+				throw new IllegalStateException("noMoreBuckets has been already signaled");
+			}
+			if (tailBucket.closed && tailBucket.buffer == null) {
+				bucket.buffer = null;
+			}
+			tailBucket.next = bucket;
+			tailBucket = bucket;
+			return bucket;
 		}
-		tailBucket = bucket;
-		return bucket;
 	}
 
 
@@ -70,10 +69,9 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 */
 	public class Bucket implements OutputStream<MessageT> {
 
-		// the below 3 are volatile for addBucket()
-		volatile List<MessageT> buffer;  // (buffer == null && ! closed) <=> this is the head bucket
-		volatile boolean closed;
-		volatile Bucket next;
+		List<MessageT> buffer;  // (buffer == null && ! closed) <=> this is the head bucket
+		boolean closed;
+		Bucket next;
 
 
 
@@ -116,8 +114,9 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 					// flush recursively continuous chain of closed buckets from the beginning of
 					// the queue
 					next.flush();
-				} else {
-					closeOutputIfNoMoreBuckets();
+				} else if (noMoreBuckets) {
+					// all buckets flushed and no more coming
+					output.close();
 				}
 			}
 		}
@@ -136,20 +135,10 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 			if (closed) {
 				if (next != null) {
 					next.flush();
-				} else {
-					closeOutputIfNoMoreBuckets();
+				} else if (noMoreBuckets) {
+					// all buckets flushed and no more coming
+					output.close();
 				}
-			}
-		}
-
-
-
-		private void closeOutputIfNoMoreBuckets() {
-			// in case a new bucket was added and signalNoMoreBuckets() called right before the
-			// below check, tailBucket state must be examined *after* noMoreBuckets
-			if (noMoreBuckets && tailBucket.closed && tailBucket.buffer == null) {
-				// all buckets flushed and no more coming
-				output.close();
 			}
 		}
 
