@@ -227,6 +227,44 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 	@Test
+	public void testAddBucketAndSignalWhileFlushingTail()
+			throws InterruptedException {
+		// tries to trigger a race condition that was causing output to be closed too early
+		for (int i = 0; i < 100; i++) {
+			setup();
+			var bucket1 = buffer.addBucket();
+			bucket1.write(new Message(1, 1));
+			var bucket2 = buffer.addBucket();
+			bucket2.close();
+			Exception[] t2exceptionHolder = {null};
+			var t1 = new Thread(() -> bucket1.close());
+			var t2 = new Thread(() -> {
+				try {
+					var bucket3 = buffer.addBucket();
+					buffer.signalNoMoreBuckets();
+					Thread.sleep(3);
+					bucket3.write(new Message(3, 1));
+					bucket3.close();
+				} catch (Exception e) {
+					t2exceptionHolder[0] = e;
+				}
+			});
+			t1.start();
+			t2.start();
+			t1.join();
+			t2.join();
+
+			if (t2exceptionHolder[0] != null) fail(t2exceptionHolder[0].toString());
+			assertEquals("all messages should be written", 2, outputData.size());
+			assertTrue("messages should be written in order",
+					Comparators.isInStrictOrder(outputData, new MessageComparator()));
+			assertEquals("stream should be closed 1 time", 1, closeCount);
+		}
+	}
+
+
+
+	@Test
 	public void testWriteMessageToClosedBucket() {
 		OutputStream<Message> bucket = buffer.addBucket();
 		bucket.close();

@@ -116,9 +116,8 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 					// flush recursively continuous chain of closed buckets from the beginning of
 					// the queue
 					next.flush();
-				} else if (noMoreBuckets) {
-					// all buckets flushed and no more coming
-					output.close();
+				} else {
+					closeOutputIfNoMoreBuckets();
 				}
 			}
 		}
@@ -137,10 +136,20 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 			if (closed) {
 				if (next != null) {
 					next.flush();
-				} else if (noMoreBuckets) {
-					// all buckets flushed and no more coming
-					output.close();
+				} else {
+					closeOutputIfNoMoreBuckets();
 				}
+			}
+		}
+
+
+
+		private void closeOutputIfNoMoreBuckets() {
+			// in case a new bucket was added and signalNoMoreBuckets() called right before the
+			// below check, tailBucket state must be examined *after* noMoreBuckets
+			if (noMoreBuckets && tailBucket.closed && tailBucket.buffer == null) {
+				// all buckets flushed and no more coming
+				output.close();
 			}
 		}
 
