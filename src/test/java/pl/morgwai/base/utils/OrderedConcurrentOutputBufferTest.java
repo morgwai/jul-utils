@@ -29,8 +29,8 @@ public class OrderedConcurrentOutputBufferTest {
 	OrderedConcurrentOutputBuffer<Message> buffer;
 
 	OutputStream<Message> outputStream;
-	List<Message> outputData;
-	volatile int closeCount;
+	List<Message> outputData;  // outputStream.write(message) will add message to this list
+	volatile int closeCount;  // outputStream.close() will increase this counter
 
 
 
@@ -38,6 +38,14 @@ public class OrderedConcurrentOutputBufferTest {
 
 	Message nextMessage(int bucketNumber) {
 		return new Message(bucketNumber, ++bucketMessageNumbers[bucketNumber - 1]);
+	}
+
+	int sumUpMessageCount() {
+		int messageCount = 0;
+		for (int i = 0; i < bucketMessageNumbers.length; i++) {
+			messageCount += bucketMessageNumbers[i];
+		}
+		return messageCount;
 	}
 
 
@@ -74,48 +82,52 @@ public class OrderedConcurrentOutputBufferTest {
 		buffer.signalNoMoreBuckets();
 		bucket4.close();
 
-		assertEquals("17 messages should be written", 17, outputData.size());
+		assertEquals("all messages should be written", sumUpMessageCount(), outputData.size());
 		assertTrue("messages should be written in order",
-				Comparators.isInStrictOrder(outputData, new MessageComparator()));
+				Comparators.isInStrictOrder(outputData, messageComparator));
 		assertEquals("stream should be closed 1 time", 1, closeCount);
 	}
 
 
 
 	@Test
-	public void test1000Threds1000PerThread() throws InterruptedException {
-		test1000Threds(1000);
+	public void test1000Threds1000MessagesPerThread() throws InterruptedException {
+		testSeveralThreads(1000, 1000, 1000, 1000, 0, 0, 1000, 1000, 10);
 	}
 
 	@Test
-	public void test1000Threds1PerThread() throws InterruptedException {
-		test1000Threds(1, 1, 1, 1, 0);
+	public void test1000Threds1MessagePerThread() throws InterruptedException {
+		testSeveralThreads(1000, 1, 1, 1, 1, 0);
 	}
 
-	private void test1000Threds(int... messagesPerThread) throws InterruptedException {
+	/**
+	 * Creates <code>numberOfBucketThreads</code> threads, each of which adds 1 bucket and writes
+	 * <code>messagesPerThread[bucketNumber % length]</code> to it.
+	 */
+	void testSeveralThreads(int numberOfBucketThreads, int... messagesPerThread)
+			throws InterruptedException {
 		bucketCount = 0;
-		int targetBucketNumber = 1000;
 		int expectedMessageCount = 0;
-		bucketMessageNumbers = new int[targetBucketNumber];
-		Thread[] threads = new Thread[targetBucketNumber];
-		for (int i = 0; i < threads.length; i++) {
-			int threadMessageCount = messagesPerThread[i % messagesPerThread.length];
-			threads[i] = newBucketThread(threadMessageCount);
-			expectedMessageCount += threadMessageCount;
+		bucketMessageNumbers = new int[numberOfBucketThreads];
+		Thread[] bucketThreads = new Thread[numberOfBucketThreads];
+		for (int i = 0; i < bucketThreads.length; i++) {
+			int numberOfMessages = messagesPerThread[i % messagesPerThread.length];
+			bucketThreads[i] = newBucketThread(numberOfMessages);
+			expectedMessageCount += numberOfMessages;
 		}
-		for (int i = 0; i < threads.length; i++) threads[i].start();
-		for (int i = 0; i < threads.length; i++) threads[i].join();
+		for (int i = 0; i < bucketThreads.length; i++) bucketThreads[i].start();
+		for (int i = 0; i < bucketThreads.length; i++) bucketThreads[i].join();
 		buffer.signalNoMoreBuckets();
 
 		assertEquals("all messages should be written", expectedMessageCount, outputData.size());
 		assertTrue("messages should be written in order",
-				Comparators.isInStrictOrder(outputData, new MessageComparator()));
+				Comparators.isInStrictOrder(outputData, messageComparator));
 		assertEquals("stream should be closed 1 time", 1, closeCount);
 	}
 
 	int bucketCount;
 
-	private Thread newBucketThread(int messageCount) {
+	private Thread newBucketThread(int numberOfMessages) {
 		return new Thread(() -> {
 			int bucketNumber;
 			OutputStream<Message> bucket;
@@ -130,7 +142,7 @@ public class OrderedConcurrentOutputBufferTest {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {}
 			}
-			for (int i = 0; i < messageCount; i++) {
+			for (int i = 0; i < numberOfMessages; i++) {
 				bucket.write(nextMessage(bucketNumber));
 			}
 			if (log.isLoggable(Level.FINER)) log.finer("closing bucket " + bucketNumber);
@@ -183,7 +195,7 @@ public class OrderedConcurrentOutputBufferTest {
 
 			assertEquals("all messages should be written", 2, outputData.size());
 			assertTrue("messages should be written in order",
-					Comparators.isInStrictOrder(outputData, new MessageComparator()));
+					Comparators.isInStrictOrder(outputData, messageComparator));
 			assertEquals("stream should be closed 1 time", 1, closeCount);
 		}
 	}
@@ -219,7 +231,7 @@ public class OrderedConcurrentOutputBufferTest {
 			if (t2exceptionHolder[0] != null) fail(t2exceptionHolder[0].toString());
 			assertEquals("all messages should be written", 2, outputData.size());
 			assertTrue("messages should be written in order",
-					Comparators.isInStrictOrder(outputData, new MessageComparator()));
+					Comparators.isInStrictOrder(outputData, messageComparator));
 			assertEquals("stream should be closed 1 time", 1, closeCount);
 		}
 	}
@@ -257,7 +269,7 @@ public class OrderedConcurrentOutputBufferTest {
 			if (t2exceptionHolder[0] != null) fail(t2exceptionHolder[0].toString());
 			assertEquals("all messages should be written", 2, outputData.size());
 			assertTrue("messages should be written in order",
-					Comparators.isInStrictOrder(outputData, new MessageComparator()));
+					Comparators.isInStrictOrder(outputData, messageComparator));
 			assertEquals("stream should be closed 1 time", 1, closeCount);
 		}
 	}
@@ -306,15 +318,11 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 
-	static class MessageComparator implements Comparator<Message> {
-
-		@Override
-		public int compare(Message o1, Message o2) {
-			int bucketCompare = Integer.compare(o1.bucket, o2.bucket);
-			if (bucketCompare != 0) return bucketCompare;
-			return Integer.compare(o1.number, o2.number);
-		}
-	}
+	static Comparator<Message> messageComparator = (msg1, msg2) -> {
+		int bucketCompare = Integer.compare(msg1.bucket, msg2.bucket);
+		if (bucketCompare != 0) return bucketCompare;
+		return Integer.compare(msg1.number, msg2.number);
+	};
 
 
 
@@ -325,15 +333,16 @@ public class OrderedConcurrentOutputBufferTest {
 		outputStream = new OutputStream<>() {
 
 			@Override
-			public void write(Message value) {
+			public void write(Message message) {
 				if (closeCount > 0) throw new IllegalStateException("output already closed");
-				outputData.add(value);
-				if (log.isLoggable(Level.FINEST)) log.finest(value.toString());
+				outputData.add(message);
+				if (log.isLoggable(Level.FINEST)) log.finest(message.toString());
 			}
 
 			@Override
 			public void close() {
 				closeCount++;
+				if (log.isLoggable(Level.FINER)) log.finer("closing output stream");
 			}
 		};
 		buffer = new OrderedConcurrentOutputBuffer<>(outputStream);
@@ -341,15 +350,18 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 
+	// change the below value if you need logging
+	// FINER will log adding/closing buckets and closing the output stream
+	// FINEST will additionally log every message written to the output stream
+	static final Level LOG_LEVEL = Level.OFF;
+
+	static final Logger log = Logger.getLogger(OrderedConcurrentOutputBufferTest.class.getName());
+
 	@BeforeClass
 	public static void setupLogging() {
 		var handler = new ConsoleHandler();
-		handler.setLevel(Level.FINEST);
+		handler.setLevel(LOG_LEVEL);
 		log.addHandler(handler);
-		log.setLevel(Level.OFF);
+		log.setLevel(LOG_LEVEL);
 	}
-
-
-
-	static final Logger log = Logger.getLogger(OrderedConcurrentOutputBufferTest.class.getName());
 }
