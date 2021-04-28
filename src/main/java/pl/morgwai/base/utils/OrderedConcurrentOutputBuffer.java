@@ -35,7 +35,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 	OutputStream<MessageT> output;
 
-	Bucket tailBucket;
+	Bucket preallocatedTailBucket;  // flushed <=> all previous closed
 
 	boolean noMoreBuckets;
 
@@ -47,17 +47,15 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * @throws IllegalStateException if {@link #signalNoMoreBuckets()} have been already called
 	 */
 	public Bucket addBucket() {
-		var bucket = new Bucket();
-		synchronized (tailBucket) {
+		var newBucket = new Bucket();
+		synchronized (preallocatedTailBucket) {
 			if (noMoreBuckets) {
 				throw new IllegalStateException("noMoreBuckets has been already signaled");
 			}
-			if (tailBucket.closed && tailBucket.buffer == null) {
-				bucket.buffer = null;
-			}
-			tailBucket.next = bucket;
-			tailBucket = bucket;
-			return bucket;
+			preallocatedTailBucket.next = newBucket;
+			Bucket result = preallocatedTailBucket;
+			preallocatedTailBucket = newBucket;
+			return result;
 		}
 	}
 
@@ -108,17 +106,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		public synchronized void close() {
 			if (closed) throw new IllegalStateException(ALREADY_CLOSED_MESSAGE);
 			closed = true;
-			if (buffer == null) {
-				// this was the head bucket
-				if (next != null) {
-					// flush recursively continuous chain of closed buckets from the beginning of
-					// the queue
-					next.flush();
-				} else if (noMoreBuckets) {
-					// all buckets flushed and no more coming
-					output.close();
-				}
-			}
+			if (buffer == null) next.flush(); // this was the head bucket
 		}
 
 
@@ -129,16 +117,12 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		 * been already called, then the underlying output stream will be closed.
 		 */
 		private synchronized void flush() {
-			if (buffer == null) return;
 			for (MessageT bufferedMessage: buffer) output.write(bufferedMessage);
 			buffer = null;
-			if (closed) {
-				if (next != null) {
-					next.flush();
-				} else if (noMoreBuckets) {
-					// all buckets flushed and no more coming
-					output.close();
-				}
+			if (next != null) {
+				if (closed) next.flush();
+			} else {  // this is the preallocatedTailBucket
+				if (noMoreBuckets) output.close();  // all buckets flushed and no more coming
 			}
 		}
 
@@ -162,11 +146,9 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * flushed, then the underlying output stream will be closed.
 	 */
 	public void signalNoMoreBuckets() {
-		synchronized (tailBucket) {
+		synchronized (preallocatedTailBucket) {
 			noMoreBuckets = true;
-			if (tailBucket.closed && tailBucket.buffer == null) {
-				output.close();
-			}
+			if (preallocatedTailBucket.buffer == null) output.close();
 		}
 	}
 
@@ -174,9 +156,9 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 	public OrderedConcurrentOutputBuffer(OutputStream<MessageT> outputStream) {
 		this.output = outputStream;
-		tailBucket = new Bucket();
-		tailBucket.buffer = null;
-		tailBucket.closed = true;
+		preallocatedTailBucket = new Bucket();
+		preallocatedTailBucket.buffer = null;
+		preallocatedTailBucket.closed = false;
 		noMoreBuckets = false;
 	}
 }
