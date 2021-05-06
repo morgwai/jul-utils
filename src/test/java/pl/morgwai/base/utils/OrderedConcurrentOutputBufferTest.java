@@ -281,7 +281,7 @@ public class OrderedConcurrentOutputBufferTest {
 		OutputStream<Message> bucket = buffer.addBucket();
 		bucket.close();
 		try {
-			bucket.write(new Message(666, 666));;
+			bucket.write(new Message(666, 666));
 			fail("IllegalStateException should be thrown");
 		} catch (IllegalStateException e) {}
 	}
