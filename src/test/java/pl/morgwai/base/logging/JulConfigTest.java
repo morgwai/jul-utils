@@ -25,9 +25,10 @@ public class JulConfigTest {
 	@Test
 	public void testNamesFromProperty() {
 		System.setProperty(OVERRIDE_LEVEL_PROPERTY_NAME,
-				ConsoleHandler.class.getName() + "," + EXAMPLE_DOMAIN);
+				"," + ConsoleHandler.class.getName() + "," + EXAMPLE_DOMAIN);
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
+		System.setProperty(LEVEL_SUFFIX, Level.SEVERE.toString());
 
 		JulConfig.updateLogLevels();
 
@@ -39,6 +40,10 @@ public class JulConfigTest {
 				EXAMPLE_DOMAIN + " logger should have level as in the property",
 				System.getProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
 				Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString());
+		assertEquals(
+				"root logger should have level as in the property",
+				System.getProperty(LEVEL_SUFFIX),
+				Logger.getLogger("").getLevel().toString());
 	}
 
 
@@ -47,8 +52,9 @@ public class JulConfigTest {
 	public void testNamesFromParams() {
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
+		System.setProperty(LEVEL_SUFFIX, Level.SEVERE.toString());
 
-		JulConfig.updateLogLevels(ConsoleHandler.class.getName(), EXAMPLE_DOMAIN);
+		JulConfig.updateLogLevels(ConsoleHandler.class.getName(), EXAMPLE_DOMAIN, "");
 
 		assertEquals(
 				"ConsoleHandler should have level as in the property",
@@ -58,6 +64,10 @@ public class JulConfigTest {
 				EXAMPLE_DOMAIN + " logger should have level as in the property",
 				System.getProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
 				Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString());
+		assertEquals(
+				"root logger should have level as in the property",
+				System.getProperty(LEVEL_SUFFIX),
+				Logger.getLogger("").getLevel().toString());
 	}
 
 
@@ -97,6 +107,7 @@ public class JulConfigTest {
 		backupSystemProperty(OVERRIDE_LEVEL_PROPERTY_NAME);
 		backupSystemProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX);
 		backupSystemProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX);
+		backupSystemProperty(LEVEL_SUFFIX);
 	}
 
 	@After

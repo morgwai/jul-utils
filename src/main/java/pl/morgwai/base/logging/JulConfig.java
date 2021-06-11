@@ -15,15 +15,29 @@ public class JulConfig {
 
 
 	/**
-	 * Updates {@link Level}s of <code>java.util.logging</code> Loggers and Handlers with values
-	 * obtained from system properties.
-	 * Fully qualified names of Loggers and Handlers whose {@link Level}s should be updated by this
-	 * method are provided as arguments to this method or comma-separated on
-	 * {@link #OVERRIDE_LEVEL_PROPERTY_NAME} system property.
-	 * Name of the system property containing the new {@link Level} for a given Logger/Handler is
-	 * constructed by appending {@link #LEVEL_SUFFIX} to its fully-qualified-name.
+	 * Updates {@link Level}s of <code>java.util.logging</code> <code>Logger</code>s and
+	 * <code>Handler</code>s with values obtained from system properties.
+	 * Fully qualified names of <code>Logger</code>s and <code>Handler</code>s whose {@link Level}s
+	 * should be updated by this method are provided as arguments to this method or comma-separated
+	 * on {@link #OVERRIDE_LEVEL_PROPERTY_NAME} system property.
+	 * Name of the system property containing the new {@link Level} for a given
+	 * <code>Logger/Handler</code> is constructed by appending {@link #LEVEL_SUFFIX} to its
+	 * fully-qualified-name.
 	 * If a system property with a new {@link Level} is missing, it is ignored. If it is present,
-	 * the validity of the value is verified using {@link Level#parse(String)} method.
+	 * the validity of the value is verified using {@link Level#parse(String)} method.<br/>
+	 * <br/>
+	 * <b>Example:</b><br/>
+	 * Output all entries from <code>com.example</code> name-space with level <code>FINE</code> or
+	 * higher to the console. Entries from other name-spaces will be logged only if they have at
+	 * least level <code>WARNING</code>, unless configured otherwise in the default
+	 * <code>logging.properties</code> file:
+	 * <pre>
+	 *java -Djava.util.logging.overrideLevel=,com.example,java.util.logging.ConsoleHandler \
+	 *     -D.level=WARNING \
+	 *     -Dcom.example.level=FINE \
+	 *     -Djava.util.logging.ConsoleHandler.level=FINE \
+	 *     com.example.someproject.MainClass
+	 * </pre>
 	 */
 	public static void updateLogLevels(String... names) {
 		final var props = new Properties();
