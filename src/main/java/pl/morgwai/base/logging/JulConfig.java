@@ -51,12 +51,15 @@ public class JulConfig {
 		}
 
 		if (props.size() == 0) return;
-		var out = new ByteArrayOutputStream(estimatedByteSize * 2);
+		var outputBytes = new ByteArrayOutputStream(estimatedByteSize * 2);
 		try {
-			props.store(out, "");
+			props.store(outputBytes, "");
+			var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray());
+			outputBytes.close();
 			LogManager.getLogManager().updateConfiguration(
-					new ByteArrayInputStream(out.toByteArray()),
+					inputBytes,
 					(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal);
+			inputBytes.close();
 		} catch (IOException e) {  // this is probably impossible to happen...
 			throw new RuntimeException(e);
 		}
