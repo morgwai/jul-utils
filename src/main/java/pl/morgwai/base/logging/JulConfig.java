@@ -53,7 +53,7 @@ public class JulConfig {
 		if (props.size() == 0) return;
 		var outputBytes = new ByteArrayOutputStream(estimatedByteSize * 2);
 		try {
-			props.store(outputBytes, "");
+			props.store(outputBytes, null);
 			var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray());
 			outputBytes.close();
 			LogManager.getLogManager().updateConfiguration(
