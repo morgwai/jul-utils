@@ -37,15 +37,12 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 
-	OutputStream<MessageT> output;
-
-	// A buffer always keeps a preallocated bucket at the tail of the queue. As addBucket() is
-	// synchronized on the tail bucket, having a preallocated one there, prevents addBucket()
-	// to be delayed if the last bucket handed to user has a huge number of buffered messages and
-	// is just being flushed.
-	Bucket preallocatedTailBucket;
-
-	boolean noMoreBuckets;
+	public OrderedConcurrentOutputBuffer(OutputStream<MessageT> outputStream) {
+		this.output = outputStream;
+		preallocatedTailBucket = new Bucket();
+		preallocatedTailBucket.buffer = null;
+		noMoreBuckets = false;
+	}
 
 
 
@@ -69,6 +66,32 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 			return result;
 		}
 	}
+
+
+
+	/**
+	 * Indicates that no more new buckets will be added. If all buckets are already closed and
+	 * flushed, then the underlying output stream will be closed.
+	 */
+	public void signalNoMoreBuckets() {
+		synchronized (preallocatedTailBucket) {
+			noMoreBuckets = true;
+			// if all buckets are closed & flushed, then close the output stream
+			if (preallocatedTailBucket.buffer == null) output.close();
+		}
+	}
+
+
+
+	OutputStream<MessageT> output;
+
+	boolean noMoreBuckets;
+
+	// A buffer always keeps a preallocated bucket at the tail of the queue. As addBucket() is
+	// synchronized on the tail bucket, having a preallocated one there, prevents addBucket()
+	// to be delayed if the last bucket handed to user has a huge number of buffered messages and
+	// is just being flushed.
+	Bucket preallocatedTailBucket;
 
 
 
@@ -127,12 +150,10 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 
-		/**
-		 * Flushes this bucket and if it is already closed, then recursively flushes the next one.
-		 * If there is no next one (meaning this is preallocatedTailBucket) and
-		 * {@link #signalNoMoreBuckets()} has been already called, then the underlying output
-		 * stream will be closed.
-		 */
+		// Flushes this bucket and if it is already closed, then recursively flushes the next one.
+		// If there is no next one (meaning this is preallocatedTailBucket) and
+		// signalNoMoreBuckets() has been already called, then the underlying output stream will be
+		// closed.
 		private synchronized void flush() {
 			for (MessageT bufferedMessage: buffer) output.write(bufferedMessage);
 			buffer = null;
@@ -150,29 +171,6 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 			closed = false;
 			next = null;
 		}
-	}
-
-
-
-	/**
-	 * Indicates that no more new buckets will be added. If all buckets are already closed and
-	 * flushed, then the underlying output stream will be closed.
-	 */
-	public void signalNoMoreBuckets() {
-		synchronized (preallocatedTailBucket) {
-			noMoreBuckets = true;
-			// if all buckets are closed & flushed, then close the output stream
-			if (preallocatedTailBucket.buffer == null) output.close();
-		}
-	}
-
-
-
-	public OrderedConcurrentOutputBuffer(OutputStream<MessageT> outputStream) {
-		this.output = outputStream;
-		preallocatedTailBucket = new Bucket();
-		preallocatedTailBucket.buffer = null;
-		noMoreBuckets = false;
 	}
 
 
