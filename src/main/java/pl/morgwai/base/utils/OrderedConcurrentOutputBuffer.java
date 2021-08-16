@@ -30,7 +30,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 
-	public interface OutputStream<MessageT> {
+	public static interface OutputStream<MessageT> {
 		void write(MessageT message);
 		void close();
 	}
@@ -52,7 +52,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 *     first one if this is the first call)
 	 * @throws IllegalStateException if {@link #signalNoMoreBuckets()} have been already called
 	 */
-	public Bucket addBucket() {
+	public OutputStream<MessageT> addBucket() {
 		synchronized (preallocatedTailBucket) {
 			if (noMoreBuckets) {
 				throw new IllegalStateException("noMoreBuckets has been already signaled");
@@ -99,7 +99,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * A list of messages that will have a well defined position relatively to other buckets within
 	 * the {@link OrderedConcurrentOutputBuffer#output output stream}. All methods are thread-safe.
 	 */
-	public class Bucket implements OutputStream<MessageT> {
+	class Bucket implements OutputStream<MessageT> {
 
 		List<MessageT> buffer; // null <=> flushed <=> all previous buckets are closed & flushed
 		boolean closed;
