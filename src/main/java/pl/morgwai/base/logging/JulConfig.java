@@ -15,22 +15,24 @@ public class JulConfig {
 
 
 	/**
-	 * Updates {@link Level}s of <code>java.util.logging</code> <code>Logger</code>s and
-	 * <code>Handler</code>s with values obtained from system properties.
+	 * Updates {@link Level}s of <code>java.util.logging</code>
+	 * {@link java.util.logging.Logger Logger}s and {@link java.util.logging.Handler Handler}s with
+	 * values obtained from system properties.
+	 * <p>
 	 * Fully qualified names of <code>Logger</code>s and <code>Handler</code>s whose {@link Level}s
-	 * should be updated by this method are provided as arguments to this method or comma-separated
-	 * on {@link #OVERRIDE_LEVEL_PROPERTY_NAME} system property.
+	 * should be updated by this method are provided as arguments to this method adn/or comma
+	 * separated on {@link #OVERRIDE_LEVEL_PROPERTY_NAME} system property.<br/>
 	 * Name of the system property containing the new {@link Level} for a given
 	 * <code>Logger/Handler</code> is constructed by appending {@link #LEVEL_SUFFIX} to its
 	 * fully-qualified-name.
 	 * If a system property with a new {@link Level} is missing, it is ignored. If it is present,
-	 * the validity of the value is verified using {@link Level#parse(String)} method.<br/>
-	 * <br/>
+	 * the validity of the value is verified using {@link Level#parse(String)} method.</p>
+	 * <p>
 	 * <b>Example:</b><br/>
 	 * Output all entries from <code>com.example</code> name-space with level <code>FINE</code> or
 	 * higher to the console. Entries from other name-spaces will be logged only if they have at
 	 * least level <code>WARNING</code>, unless configured otherwise in the default
-	 * <code>logging.properties</code> file:
+	 * <code>logging.properties</code> file:</p>
 	 * <pre>
 	 *java -Djava.util.logging.overrideLevel=,com.example,java.util.logging.ConsoleHandler \
 	 *     -D.level=WARNING \
@@ -70,7 +72,7 @@ public class JulConfig {
 	private static int readLogLevels(Properties props, String[] loggerNames) {
 		int estimatedByteSize = 0;
 		for (var loggerName: loggerNames) {
-			final var loggerLevelPropertyName = loggerName + ".level";
+			final var loggerLevelPropertyName = loggerName + LEVEL_SUFFIX;
 			final var level = System.getProperty(loggerLevelPropertyName);
 			if (level == null) continue;
 			Level.parse(level);
