@@ -23,14 +23,15 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testNamesFromProperty() {
+	public void testNamesFromProperty() throws Exception {
 		System.setProperty(OVERRIDE_LEVEL_PROPERTY_NAME,
 				"," + ConsoleHandler.class.getName() + "," + EXAMPLE_DOMAIN);
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(LEVEL_SUFFIX, Level.SEVERE.toString());
+		System.setProperty(JUL_CONFIG_CLASS_PROPERTY_NAME, JulConfig.class.getName());
 
-		JulConfig.updateLogLevels();
+		LogManager.getLogManager().readConfiguration();
 
 		assertEquals(
 				"ConsoleHandler should have level as in the property",
@@ -93,6 +94,7 @@ public class JulConfigTest {
 
 
 	static final String OVERRIDE_LEVEL_PROPERTY_NAME = "java.util.logging.overrideLevel";
+	static final String JUL_CONFIG_CLASS_PROPERTY_NAME = "java.util.logging.config.class";
 	static final String EXAMPLE_DOMAIN = "hksxuq.bzvd";  // hopefully not in use
 
 
@@ -104,6 +106,7 @@ public class JulConfigTest {
 	@Before
 	public void backupSystemProperties() {
 		systemPropertiesBackup = new HashMap<>();
+		backupSystemProperty(JUL_CONFIG_CLASS_PROPERTY_NAME);
 		backupSystemProperty(OVERRIDE_LEVEL_PROPERTY_NAME);
 		backupSystemProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX);
 		backupSystemProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX);
@@ -130,7 +133,6 @@ public class JulConfigTest {
 	public void prepareJulConfig() throws IOException {
 		LogManager.getLogManager().updateConfiguration(
 				(key) -> (oldVal, newVal) -> {
-					if (key.equals(LEVEL_SUFFIX)) return Level.INFO.toString();
 					if (key.equals(LEVEL_SUFFIX)) return Level.INFO.toString();
 					return newVal;
 				});

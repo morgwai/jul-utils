@@ -67,6 +67,8 @@ public class JulConfig {
 		}
 	}
 
+	public static final String OVERRIDE_LEVEL_PROPERTY_NAME = "java.util.logging.overrideLevel";
+
 
 
 	private static int readLogLevels(Properties props, String[] loggerNames) {
@@ -83,8 +85,19 @@ public class JulConfig {
 		return estimatedByteSize;
 	}
 
-
-
 	public static final String LEVEL_SUFFIX = ".level";
-	public static final String OVERRIDE_LEVEL_PROPERTY_NAME = "java.util.logging.overrideLevel";
+
+
+
+	/**
+	 * For use with {@code java.util.logging.config.class} system property.
+	 * @see LogManager
+	 */
+	public JulConfig() throws Exception {
+		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY_NAME);
+		LogManager.getLogManager().readConfiguration();
+		updateLogLevels();
+	}
+
+	public static final String JUL_CONFIG_CLASS_PROPERTY_NAME = "java.util.logging.config.class";
 }
