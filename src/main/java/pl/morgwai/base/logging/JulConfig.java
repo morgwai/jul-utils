@@ -10,6 +10,10 @@ import java.util.logging.LogManager;
 
 
 
+/**
+ * Utility to update {@code java.util.logging} properties with values from system properties.
+ * @see #updateLogLevels(String...)
+ */
 public class JulConfig {
 
 
@@ -34,12 +38,12 @@ public class JulConfig {
 	 * least level <code>WARNING</code>, unless configured otherwise in the default
 	 * <code>logging.properties</code> file:</p>
 	 * <pre>
-	 *java -Djava.util.logging.overrideLevel=,com.example,java.util.logging.ConsoleHandler \
+	 *java -Djava.util.logging.config.class=pl.morgwai.base.logging.JulConfig \
+	 *     -Djava.util.logging.overrideLevel=,com.example,java.util.logging.ConsoleHandler \
 	 *     -D.level=WARNING \
 	 *     -Dcom.example.level=FINE \
 	 *     -Djava.util.logging.ConsoleHandler.level=FINE \
-	 *     com.example.someproject.MainClass
-	 * </pre>
+	 *     com.example.someproject.MainClass</pre>
 	 */
 	public static void updateLogLevels(String... names) {
 		final var props = new Properties();
