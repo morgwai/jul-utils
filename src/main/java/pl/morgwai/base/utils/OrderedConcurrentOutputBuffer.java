@@ -133,8 +133,8 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		// Each flushing is synchronized on the given bucket.
 		// The first unclosed bucket becomes the new head: its messages will be written directly to
 		// the underlying output stream from now on.
-		// If all buckets until are closed & flushed and signalNoMoreBuckets() has already been
-		// called, then the underlying output stream will be closed.
+		// If all buckets are closed & flushed and signalNoMoreBuckets() has already been called,
+		// then the underlying output stream will be closed.
 		@Override
 		public synchronized void close() {
 			if (closed) throw new IllegalStateException(BUCKET_CLOSED_MESSAGE);
