@@ -15,7 +15,7 @@ import java.util.logging.LogRecord;
  * A text log formatter similar to {@link java.util.logging.SimpleFormatter} that additionally
  * allows to format stack trace elements and to add log sequence id and thread id to log entries.
  */
-public class LogFormatter extends Formatter {
+public class JulFormatter extends Formatter {
 
 
 
@@ -23,7 +23,9 @@ public class LogFormatter extends Formatter {
 	 * Name of the logging or system property containing the main format for each record.
 	 * @see #format(LogRecord)
 	 */
-	public static final String FORMAT_PROPERTY_NAME = LogFormatter.class.getName() + ".format";
+	public static final String FORMAT_PROPERTY_NAME = JulFormatter.class.getName() + ".format";
+	public static final String DEFAULT_FORMAT =
+			"%7$5d %8$3d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
 	final String format;
 
 	/**
@@ -32,49 +34,63 @@ public class LogFormatter extends Formatter {
 	 * @see #format(LogRecord)
 	 */
 	public static final String STACKFRAME_FORMAT_PROPERTY_NAME =
-			LogFormatter.class.getName() + ".stackFrameFormat";
+			JulFormatter.class.getName() + ".stackFrameFormat";
 	final String stackFrameFormat;
+
+
+
+	/**
+	 * Creates a new formatter configured using supplied params.
+	 * If {@code format} is {@code null} then {@link #DEFAULT_FORMAT} is used.
+	 */
+	public JulFormatter (String format, String stackFrameFormat) {
+		if (format != null) {
+			this.format = format;
+		} else {
+			this.format = DEFAULT_FORMAT;
+		}
+		this.stackFrameFormat = stackFrameFormat;
+	}
 
 
 
 	/**
 	 * Creates a new formatter configured using either system properties or logging properties.
 	 * If both are present, system properties take precedence.
+	 * If {@link #FORMAT_PROPERTY_NAME} is not present in either logging or system properties, then
+	 * {@link #JUL_SIMPLE_FORMAT_PROPERTY_NAME} property is read and if present, its value is
+	 * prepended with {@code "%7$5d %8$3d "} and used instead. if it is also absent, then
+	 * {@link #DEFAULT_FORMAT} is used.
+	 *
 	 * @see #format(LogRecord)
 	 */
-	public LogFormatter() {
+	public JulFormatter() {
+		this(getFormatFromProperties(), getStackFrameFormatFromProperties());
+	}
+
+	static String getFormatFromProperties() {
 		var format = System.getProperty(FORMAT_PROPERTY_NAME);
 		if (format == null) format = LogManager.getLogManager().getProperty(FORMAT_PROPERTY_NAME);
 		if (format == null) {
-			final var simpleFormat = LogManager.getLogManager().getProperty(
-					JUL_SIMPLE_FORMAT_PROPERTY_NAME);
+			var simpleFormat = System.getProperty(JUL_SIMPLE_FORMAT_PROPERTY_NAME);
+			if (simpleFormat == null) {
+				simpleFormat = LogManager.getLogManager().getProperty(
+						JUL_SIMPLE_FORMAT_PROPERTY_NAME);
+			}
 			if (simpleFormat != null) {
 				format = "%7$5d %8$3d " + simpleFormat;
 			}
 		}
-		if (format == null) format = "%7$5d %8$3d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
-		this.format = format;
-
-		var stackFrameFormat = System.getProperty(STACKFRAME_FORMAT_PROPERTY_NAME);
-		if (stackFrameFormat == null) {
-			stackFrameFormat =
-					LogManager.getLogManager().getProperty(STACKFRAME_FORMAT_PROPERTY_NAME);
-		}
-		this.stackFrameFormat = stackFrameFormat;
+		return format;
 	}
 
-	public static final String JUL_SIMPLE_FORMAT_PROPERTY_NAME
-			= "java.util.logging.SimpleFormatter.format";
+	public static final String JUL_SIMPLE_FORMAT_PROPERTY_NAME =
+			"java.util.logging.SimpleFormatter.format";
 
-
-
-	/**
-	 * Creates a new formatter configured using supplied params.
-	 * @see #format(LogRecord)
-	 */
-	public LogFormatter (String format, String stackFrameFormat) {
-		this.format = format;
-		this.stackFrameFormat = stackFrameFormat;
+	static String getStackFrameFormatFromProperties() {
+		var stackFrameFormat = System.getProperty(STACKFRAME_FORMAT_PROPERTY_NAME);
+		if (stackFrameFormat != null) return stackFrameFormat;
+		return LogManager.getLogManager().getProperty(STACKFRAME_FORMAT_PROPERTY_NAME);
 	}
 
 
@@ -87,7 +103,7 @@ public class LogFormatter extends Formatter {
 	 * String.format(format, timestamp, source, loggerName, level, message, formattedThrown, logId,
 	 * threadId)}<br/>
 	 * where {@code format} is obtained from either {@link #FORMAT_PROPERTY_NAME} property or the
-	 * first param of {@link #LogFormatter(String, String)}.</p>
+	 * first param of {@link #JulFormatter(String, String)}.</p>
 	 * <p>
 	 * {@code formattedThrown} is obtained
 	 * by calling {@code record.getThrown().toString()} and appending<br/>
@@ -95,7 +111,7 @@ public class LogFormatter extends Formatter {
 	 * methodName, FileName, lineNumber, moduleName, moduleVersion, classLoaderName)}<br/>
 	 * where {@code stackFrameFormat} is obtained from either
 	 * {@link #STACKFRAME_FORMAT_PROPERTY_NAME} property or the second param of
-	 * {@link #LogFormatter(String, String)}.<br/>
+	 * {@link #JulFormatter(String, String)}.<br/>
 	 * If {@code stackFrameFormat} is {@code null} then
 	 * {@link Throwable#printStackTrace(java.io.PrintStream)} is used instead.</p>
 	 */
@@ -113,8 +129,8 @@ public class LogFormatter extends Formatter {
 			source = record.getLoggerName();
 		}
 
-		final var thrown = record.getThrown();
-		String formattedThrown;
+		String formattedThrown = "";
+		final Throwable thrown = record.getThrown();
 		if (thrown != null) {
 			if (stackFrameFormat == null) {
 				StringWriter sw = new StringWriter();
@@ -139,8 +155,6 @@ public class LogFormatter extends Formatter {
 				}
 				formattedThrown = throwableStringBuilder.toString();
 			}
-		} else {
-			formattedThrown = "";
 		}
 
 		return String.format(format,
