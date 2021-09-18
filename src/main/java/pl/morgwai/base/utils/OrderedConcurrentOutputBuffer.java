@@ -46,7 +46,6 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		this.output = outputStream;
 		tailGuard = new Bucket();
 		tailGuard.buffer = null;
-		noMoreBuckets = false;
 	}
 
 
@@ -90,7 +89,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 	OutputStream<MessageT> output;
 
-	boolean noMoreBuckets;
+	boolean noMoreBuckets = false;
 
 	// A buffer always has a preallocated guard bucket at the tail of the queue. As addBucket() is
 	// synchronized on the tail, having a guard, prevents addBucket() to be delayed if the last
@@ -106,7 +105,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		Object lock = new Object();
 
 		List<MessageT> buffer = new LinkedList<>();// null <=> flushed <=> all previous also flushed
-		boolean closed;
+		boolean closed = false;
 		Bucket next;  // null <=> this is the tailGuard
 		// (buffer == null && ! closed) <=> this is the head bucket (first unclosed one)
 
