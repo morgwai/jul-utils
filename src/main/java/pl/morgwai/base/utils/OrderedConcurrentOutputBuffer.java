@@ -54,7 +54,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	/**
 	 * Adds a new empty bucket at the end of this buffer. <b>Not</b> thread-safe.
 	 * @return bucket placed right after the one returned by a previous call to this method (or the
-	 *     first one if this is the first call).
+	 *     first one if this is the first call). All methods of the returned bucket are thread-safe.
 	 * @throws IllegalStateException if {@link #signalNoMoreBuckets()} have been already called.
 	 */
 	public OutputStream<MessageT> addBucket() {
@@ -76,7 +76,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 	/**
 	 * Indicates that no more new buckets will be added. If all buckets are already closed and
-	 * flushed, then the underlying output stream will be closed.
+	 * flushed, then the underlying output stream will be closed. Thread-safe.
 	 */
 	public void signalNoMoreBuckets() {
 		synchronized (tailGuard) {
