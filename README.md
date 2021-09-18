@@ -7,7 +7,7 @@ Some utility classes.<br/>
 
 ## MAIN USER CLASSES
 
-### [OrderedConcurrentOutputBuffer](src/main/java/pl/morgwai/base/utils/OrderedConcurrentOutputBuffer.java)
+### [OrderedConcurrentOutputBuffer](src/main/java/pl/morgwai/base/concurrent/OrderedConcurrentOutputBuffer.java)
 
 Buffers messages sent to some output stream until all of those that should be written before are available, so that they all can be written in the correct order. Useful for processing input streams in several concurrent threads when order of response messages must reflect the order of request messages.
 
