@@ -42,10 +42,21 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 
+	OutputStream<MessageT> output;
+
+	// A buffer always has a preallocated guard bucket at the tail of the queue. As addBucket() is
+	// synchronized on the tail, having a guard, prevents addBucket() to be delayed if the last
+	// bucket handed to user has a huge number of buffered messages and is just being flushed.
+	Bucket tailGuard;
+
+	boolean noMoreBuckets = false;  // See signalNoMoreBuckets().
+
+
+
 	public OrderedConcurrentOutputBuffer(OutputStream<MessageT> outputStream) {
 		this.output = outputStream;
 		tailGuard = new Bucket();
-		tailGuard.buffer = null;
+		tailGuard.buffer = null;  // the first bucket is initially flushed.
 	}
 
 
@@ -57,6 +68,10 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * @throws IllegalStateException if {@link #signalNoMoreBuckets()} have been already called.
 	 */
 	public OutputStream<MessageT> addBucket() {
+		// the below synchronization does not guarantee thread-safety: if 2 threads that call
+		// addBucket() synchronize on the same tailGuard, they will branch the queue into 2.
+		// synchronization here is for memory consistency with a thread that may be flushing
+		// tailGuard at the same time.
 		synchronized (tailGuard.lock) {
 			if (noMoreBuckets) {
 				throw new IllegalStateException("noMoreBuckets has been already signaled");
@@ -87,22 +102,11 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 
-	OutputStream<MessageT> output;
-
-	boolean noMoreBuckets = false;
-
-	// A buffer always has a preallocated guard bucket at the tail of the queue. As addBucket() is
-	// synchronized on the tail, having a guard, prevents addBucket() to be delayed if the last
-	// bucket handed to user has a huge number of buffered messages and is just being flushed.
-	Bucket tailGuard;
-
-
-
 	// A list of messages that will have a well defined position relatively to other buckets within
 	// the output stream. All methods are thread-safe.
 	class Bucket implements OutputStream<MessageT> {
 
-		Object lock = new Object();
+		Object lock = new Object();  // all bucket methods are synchronized on this lock
 
 		List<MessageT> buffer = new LinkedList<>();// null <=> flushed <=> all previous also flushed
 		boolean closed = false;
@@ -111,7 +115,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 
-		// Appends *message* to the end of this bucket. Synchronized on this bucket.
+		// Appends *message* to the end of this bucket.
 		// If this is the head bucket (first unclosed one), then the message will be written
 		// directly to the output stream. Otherwise it will be buffered in this bucket until all the
 		// previous buckets are closed and flushed.
@@ -129,7 +133,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 
-		// Marks this bucket as closed. Synchronized on this bucket. Idempotent.
+		// Marks this bucket as closed.
 		// If this is the head bucket (the first unclosed one), then flushes all buffered messages
 		// from subsequent buckets that can be sent now. Specifically, a continuous chain of
 		// subsequent closed buckets and the first unclosed one will be flushed.
