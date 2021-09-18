@@ -58,7 +58,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * @throws IllegalStateException if {@link #signalNoMoreBuckets()} have been already called.
 	 */
 	public OutputStream<MessageT> addBucket() {
-		synchronized (tailGuard) {
+		synchronized (tailGuard.lock) {
 			if (noMoreBuckets) {
 				throw new IllegalStateException("noMoreBuckets has been already signaled");
 			}
@@ -79,7 +79,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	 * flushed, then the underlying output stream will be closed. Thread-safe.
 	 */
 	public void signalNoMoreBuckets() {
-		synchronized (tailGuard) {
+		synchronized (tailGuard.lock) {
 			noMoreBuckets = true;
 			// if all buckets are closed & flushed, then close the output stream
 			if (tailGuard.buffer == null) output.close();
@@ -103,6 +103,8 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	// the output stream. All methods are thread-safe.
 	class Bucket implements OutputStream<MessageT> {
 
+		Object lock = new Object();
+
 		List<MessageT> buffer = new LinkedList<>();// null <=> flushed <=> all previous also flushed
 		boolean closed;
 		Bucket next;  // null <=> this is the tailGuard
@@ -115,12 +117,14 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		// directly to the output stream. Otherwise it will be buffered in this bucket until all the
 		// previous buckets are closed and flushed.
 		@Override
-		public synchronized void write(MessageT message) {
-			if (closed) throw new IllegalStateException(BUCKET_CLOSED_MESSAGE);
-			if (buffer == null) {
-				output.write(message);
-			} else {
-				buffer.add(message);
+		public void write(MessageT message) {
+			synchronized (lock) {
+				if (closed) throw new IllegalStateException(BUCKET_CLOSED_MESSAGE);
+				if (buffer == null) {
+					output.write(message);
+				} else {
+					buffer.add(message);
+				}
 			}
 		}
 
@@ -136,11 +140,13 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		// If all buckets are closed & flushed and signalNoMoreBuckets() has already been called,
 		// then the underlying output stream will be closed.
 		@Override
-		public synchronized void close() {
-			if (closed) throw new IllegalStateException(BUCKET_CLOSED_MESSAGE);
-			closed = true;
-			// if this is the head bucket, then flush subsequent continuous closed chain
-			if (buffer == null) next.flush();
+		public void close() {
+			synchronized (lock) {
+				if (closed) throw new IllegalStateException(BUCKET_CLOSED_MESSAGE);
+				closed = true;
+				// if this is the head bucket, then flush subsequent continuous closed chain
+				if (buffer == null) next.flush();
+			}
 		}
 
 
@@ -148,13 +154,15 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		// Flushes this bucket and if it is already closed, then recursively flushes the next one.
 		// If there is no next one (meaning this is tailGuard) and signalNoMoreBuckets() has been
 		// already called, then the underlying output stream will be closed.
-		private synchronized void flush() {
-			for (MessageT bufferedMessage: buffer) output.write(bufferedMessage);
-			buffer = null;
-			if (next != null) {
-				if (closed) next.flush();
-			} else {  // this is tailGuard, so all "real" buckets are closed & flushed
-				if (noMoreBuckets) output.close();
+		private void flush() {
+			synchronized (lock) {
+				for (MessageT bufferedMessage: buffer) output.write(bufferedMessage);
+				buffer = null;
+				if (next != null) {
+					if (closed) next.flush();
+				} else {  // this is tailGuard, so all "real" buckets are closed & flushed
+					if (noMoreBuckets) output.close();
+				}
 			}
 		}
 	}
