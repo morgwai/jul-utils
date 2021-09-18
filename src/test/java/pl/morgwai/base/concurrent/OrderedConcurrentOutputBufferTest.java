@@ -1,5 +1,5 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
-package pl.morgwai.base.utils;
+package pl.morgwai.base.concurrent;
 
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -14,7 +14,7 @@ import org.junit.Test;
 
 import com.google.common.collect.Comparators;
 
-import pl.morgwai.base.utils.OrderedConcurrentOutputBuffer.OutputStream;
+import pl.morgwai.base.concurrent.OrderedConcurrentOutputBuffer.OutputStream;
 
 import static org.junit.Assert.*;
 
