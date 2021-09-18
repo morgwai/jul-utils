@@ -103,7 +103,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	// the output stream. All methods are thread-safe.
 	class Bucket implements OutputStream<MessageT> {
 
-		List<MessageT> buffer; // null <=> flushed <=> all previous buckets are closed & flushed
+		List<MessageT> buffer = new LinkedList<>();// null <=> flushed <=> all previous also flushed
 		boolean closed;
 		Bucket next;  // null <=> this is the tailGuard
 		// (buffer == null && ! closed) <=> this is the head bucket (first unclosed one)
@@ -156,14 +156,6 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 			} else {  // this is tailGuard, so all "real" buckets are closed & flushed
 				if (noMoreBuckets) output.close();
 			}
-		}
-
-
-
-		Bucket() {
-			buffer = new LinkedList<>();
-			closed = false;
-			next = null;
 		}
 	}
 
