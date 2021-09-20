@@ -19,5 +19,5 @@ A text log formatter similar to `SimpleFormatter` that additionally allows to fo
 
 ### [JulConfig](src/main/java/pl/morgwai/base/logging/JulConfig.java)
 
-Updates logging levels of `java.util.logging` `Logger`s `Handler`s with values obtained from system properties.<br/>
-Note: updating can be applied to an existing java app at run time: just add java-utils jar to the class-path and define desired system properties.
+Overrides logging levels of `java.util.logging` `Logger`s `Handler`s with values obtained from system properties.<br/>
+Note: overriding can be applied to an existing java app at run time: just add java-utils jar to the class-path and define desired system properties.</p>

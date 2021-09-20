@@ -11,24 +11,24 @@ import java.util.logging.LogManager;
 
 
 /**
- * Utility to update {@code java.util.logging} properties with values from system properties.
+ * Utility to override {@code java.util.logging} properties with values from system properties.
  * <p>
- * Note: updating can be applied to an existing java app at run time: just add java-utils jar to the
- * class-path and define desired system properties.</p>
+ * Note: overriding can be applied to an existing java app at run time: just add java-utils jar to
+ * the class-path and define desired system properties.</p>
  *
- * @see #updateLogLevels(String...)
+ * @see #overrideLogLevels(String...)
  */
 public class JulConfig {
 
 
 
 	/**
-	 * Updates {@link Level}s of <code>java.util.logging</code>
+	 * Overrides {@link Level}s of <code>java.util.logging</code>
 	 * {@link java.util.logging.Logger Logger}s and {@link java.util.logging.Handler Handler}s with
 	 * values obtained from system properties.
 	 * <p>
 	 * Fully qualified names of <code>Logger</code>s and <code>Handler</code>s whose {@link Level}s
-	 * should be updated by this method are provided as arguments to this method adn/or comma
+	 * should be overridden by this method are provided as arguments to this method and/or comma
 	 * separated on {@value #OVERRIDE_LEVEL_PROPERTY_NAME} system property.<br/>
 	 * Name of the system property containing the new {@link Level} for a given
 	 * <code>Logger/Handler</code> is constructed by appending {@value #LEVEL_SUFFIX} to its
@@ -49,7 +49,7 @@ public class JulConfig {
 	 *     -Djava.util.logging.ConsoleHandler.level=FINE \
 	 *     com.example.someproject.MainClass</pre>
 	 */
-	public static void updateLogLevels(String... names) {
+	public static void overrideLogLevels(String... names) {
 		final var props = new Properties();
 		int estimatedByteSize = 0;
 
@@ -77,14 +77,14 @@ public class JulConfig {
 
 	/**
 	 * Name of the system property that can contain comma separated, fully qualified names of
-	 * {@link Logger}s and {@link java.util.logging.Handler}s whose {@link java.util.logging.Level}s
-	 * will be updated by {@link #updateLogLevels(String...)}.
+	 * {@link java.util.logging.Logger}s and {@link java.util.logging.Handler}s whose
+	 * {@link java.util.logging.Level}s will be overridden by {@link #overrideLogLevels(String...)}.
 	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY_NAME = "java.util.logging.overrideLevel";
 
 	/**
-	 * Reads system properties containing updated levels for {@code loggerNames} and puts them into
-	 * {@code props}.
+	 * Reads system properties containing overridden levels for {@code loggerNames} and puts them
+	 * into {@code props}.
 	 * @return estimated byte size of the data put into {@code props}.
 	 */
 	private static int readLogLevels(Properties props, String[] loggerNames) {
@@ -110,14 +110,14 @@ public class JulConfig {
 
 
 	/**
-	 * Reads logging config normally and then calls {@link #updateLogLevels(String...)}.
+	 * Reads logging config normally and then calls {@link #overrideLogLevels(String...)}.
 	 * For use with {@value #JUL_CONFIG_CLASS_PROPERTY_NAME} system property.
 	 * @see LogManager
 	 */
 	public JulConfig() throws Exception {
 		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY_NAME);
 		LogManager.getLogManager().readConfiguration();
-		updateLogLevels();
+		overrideLogLevels();
 	}
 
 	/**
