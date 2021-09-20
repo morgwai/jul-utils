@@ -51,17 +51,17 @@ public class JulConfig {
 	 */
 	public static void overrideLogLevels(String... names) {
 		final var props = new Properties();
-		int estimatedByteSize = 0;
+		int characterCount = 30;  // 30 is date comment character length
 
-		if (names.length > 0) estimatedByteSize += readLogLevels(props, names);
+		if (names.length > 0) characterCount += readLogLevels(props, names);
 
 		final var loggersProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY_NAME);
 		if (loggersProperty != null) {
-			estimatedByteSize += readLogLevels(props, loggersProperty.split(","));
+			characterCount += readLogLevels(props, loggersProperty.split(","));
 		}
 
 		if (props.size() == 0) return;
-		var outputBytes = new ByteArrayOutputStream(estimatedByteSize * 2 + 30);//30 is date comment
+		var outputBytes = new ByteArrayOutputStream(characterCount * 2);// 2 is in case of utf chars
 		try {
 			props.store(outputBytes, null);
 			var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray());
@@ -85,21 +85,21 @@ public class JulConfig {
 	/**
 	 * Reads system properties containing overridden levels for {@code loggerNames} and puts them
 	 * into {@code props}.
-	 * @return estimated byte size of the data put into {@code props}.
+	 * @return number of characters put into {@code props}.
 	 */
 	private static int readLogLevels(Properties props, String[] loggerNames) {
-		int estimatedByteSize = 0;
+		int characterCount = 0;
 		for (var loggerName: loggerNames) {
 			final var loggerLevelPropertyName = loggerName + LEVEL_SUFFIX;
 			final var level = System.getProperty(loggerLevelPropertyName);
 			if (level == null) continue;
 			Level.parse(level);
 			props.put(loggerLevelPropertyName, level);
-			estimatedByteSize += loggerLevelPropertyName.length();
-			estimatedByteSize += level.length();
-			estimatedByteSize += 2;  // '=' and '\n'
+			characterCount += loggerLevelPropertyName.length();
+			characterCount += level.length();
+			characterCount += 2;  // '=' and '\n'
 		}
-		return estimatedByteSize;
+		return characterCount;
 	}
 
 	/**
