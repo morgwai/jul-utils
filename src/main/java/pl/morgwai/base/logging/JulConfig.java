@@ -5,8 +5,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 
 
@@ -71,10 +73,18 @@ public class JulConfig {
 		}
 	}
 
+	/**
+	 * Name of the system property that can contain comma separated, fully qualified names of
+	 * {@link Logger}s and {@link Handler}s whose {@link Level}s will be updated by
+	 * {@link #updateLogLevels(String...)}.
+	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY_NAME = "java.util.logging.overrideLevel";
 
-
-
+	/**
+	 * Reads system properties containing updated levels for {@code loggerNames} and puts them into
+	 * {@code props}.
+	 * @return estimated byte size of data put into {@code props}.
+	 */
 	private static int readLogLevels(Properties props, String[] loggerNames) {
 		int estimatedByteSize = 0;
 		for (var loggerName: loggerNames) {
@@ -89,12 +99,16 @@ public class JulConfig {
 		return estimatedByteSize;
 	}
 
+	/**
+	 * {@value #LEVEL_SUFFIX}
+	 */
 	public static final String LEVEL_SUFFIX = ".level";
 
 
 
 	/**
-	 * For use with {@code java.util.logging.config.class} system property.
+	 * Reads logging config normally and then calls {@link #updateLogLevels(String...)}.
+	 * For use with {@value #JUL_CONFIG_CLASS_PROPERTY_NAME} system property.
 	 * @see LogManager
 	 */
 	public JulConfig() throws Exception {
@@ -103,5 +117,8 @@ public class JulConfig {
 		updateLogLevels();
 	}
 
+	/**
+	 * {@value #JUL_CONFIG_CLASS_PROPERTY_NAME}
+	 */
 	public static final String JUL_CONFIG_CLASS_PROPERTY_NAME = "java.util.logging.config.class";
 }
