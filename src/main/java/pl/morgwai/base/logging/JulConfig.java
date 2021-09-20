@@ -59,7 +59,7 @@ public class JulConfig {
 		}
 
 		if (props.size() == 0) return;
-		var outputBytes = new ByteArrayOutputStream(estimatedByteSize * 2);
+		var outputBytes = new ByteArrayOutputStream(estimatedByteSize * 2 + 30);//30 is date comment
 		try {
 			props.store(outputBytes, null);
 			var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray());
@@ -95,6 +95,7 @@ public class JulConfig {
 			props.put(loggerLevelPropertyName, level);
 			estimatedByteSize += loggerLevelPropertyName.length();
 			estimatedByteSize += level.length();
+			estimatedByteSize += 2;  // '=' and '\n'
 		}
 		return estimatedByteSize;
 	}
