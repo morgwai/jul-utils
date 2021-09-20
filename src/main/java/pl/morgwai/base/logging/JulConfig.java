@@ -12,6 +12,10 @@ import java.util.logging.LogManager;
 
 /**
  * Utility to update {@code java.util.logging} properties with values from system properties.
+ * <p>
+ * Note: updating can be applied to an existing java app at run time: just add java-utils jar to the
+ * class-path and define desired system properties.</p>
+ *
  * @see #updateLogLevels(String...)
  */
 public class JulConfig {
@@ -25,9 +29,9 @@ public class JulConfig {
 	 * <p>
 	 * Fully qualified names of <code>Logger</code>s and <code>Handler</code>s whose {@link Level}s
 	 * should be updated by this method are provided as arguments to this method adn/or comma
-	 * separated on {@link #OVERRIDE_LEVEL_PROPERTY_NAME} system property.<br/>
+	 * separated on {@value #OVERRIDE_LEVEL_PROPERTY_NAME} system property.<br/>
 	 * Name of the system property containing the new {@link Level} for a given
-	 * <code>Logger/Handler</code> is constructed by appending {@link #LEVEL_SUFFIX} to its
+	 * <code>Logger/Handler</code> is constructed by appending {@value #LEVEL_SUFFIX} to its
 	 * fully-qualified-name.
 	 * If a system property with a new {@link Level} is missing, it is ignored. If it is present,
 	 * the validity of the value is verified using {@link Level#parse(String)} method.</p>
@@ -81,7 +85,7 @@ public class JulConfig {
 	/**
 	 * Reads system properties containing updated levels for {@code loggerNames} and puts them into
 	 * {@code props}.
-	 * @return estimated byte size of data put into {@code props}.
+	 * @return estimated byte size of the data put into {@code props}.
 	 */
 	private static int readLogLevels(Properties props, String[] loggerNames) {
 		int estimatedByteSize = 0;
