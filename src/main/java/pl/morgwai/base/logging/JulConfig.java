@@ -34,7 +34,7 @@ public class JulConfig {
 	 * <code>Logger/Handler</code> is constructed by appending {@value #LEVEL_SUFFIX} to its
 	 * fully-qualified-name.
 	 * If a system property with a new {@link Level} is missing, it is ignored. If it is present,
-	 * the validity of the value is verified using {@link Level#parse(String)} method.</p>
+	 * its validity is verified using {@link Level#parse(String)} method.</p>
 	 * <p>
 	 * <b>Example:</b><br/>
 	 * Output all entries from <code>com.example</code> name-space with level <code>FINE</code> or
