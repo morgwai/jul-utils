@@ -72,7 +72,7 @@ public class JulFormatter extends Formatter {
 	 * prepended with {@code "%7$5d %8$3d "} and used instead. if it is also absent, then
 	 * {@value #DEFAULT_FORMAT} is used.</p>
 	 * <p>
-	 * The value of {@link #STACKFRAME_FORMAT_PROPERTY_NAME} property is used as the format for 
+	 * The value of {@link #STACKFRAME_FORMAT_PROPERTY_NAME} property is used as the format for
 	 * stack trace elements. If it is not present in either logging or system properties, then
 	 * {@code null} is passed.</p>
 	 *
