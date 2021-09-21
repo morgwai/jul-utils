@@ -12,14 +12,18 @@ import java.util.List;
  * Useful for processing input streams in several concurrent threads when order of response messages
  * must reflect the order of request messages.
  * <p>
- * A buffer consists of ordered buckets implementing {@link OutputStream} just as the underlying
- * output stream passed to {@link #OrderedConcurrentOutputBuffer(OutputStream) the constructor}.
+ * A buffer consists of ordered buckets. Each bucket implements {@link OutputStream} just as the
+ * underlying output stream passed to
+ * {@link #OrderedConcurrentOutputBuffer(OutputStream) the constructor}.
  * Each bucket gets flushed automatically to the output stream after all the previous buckets are
  * {@link OutputStream#close() closed}. A user can {@link #addBucket() add a new bucket} at the end
  * of the buffer, {@link OutputStream#write(Object) write messages} to it and finally
  * {@link OutputStream#close() close it} to indicate that no more messages will be written to it and
  * trigger flushing of subsequent bucket(s).<br/>
- * Within each bucket, messages are written to the output in the order they were buffered.</p>
+ * Within each bucket, messages are written to the output in the order they were buffered.<br/>
+ * When it is known that no more buckets will be added, {@link #signalNoMoreBuckets()} should be
+ * called. After this, when all existing buckets are closed, the underlying output stream will be
+ * closed automatically.</p>
  * <p>
  * All bucket methods and {@link #signalNoMoreBuckets()} are thread-safe. {@link #addBucket()} is
  * <b>not</b> thread-safe and concurrent invocations must be synchronized (in case of websockets and
@@ -62,7 +66,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 	/**
-	 * Adds a new empty bucket at the end of this buffer. <b>Not</b> thread-safe.
+	 * Adds a new empty bucket at the end of this buffer. This method is <b>not</b> thread-safe.
 	 * @return bucket placed right after the one returned by a previous call to this method (or the
 	 *     first one if this is the first call). All methods of the returned bucket are thread-safe.
 	 * @throws IllegalStateException if {@link #signalNoMoreBuckets()} have been already called.
@@ -89,8 +93,9 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 	/**
-	 * Indicates that no more new buckets will be added. If all buckets are already closed and
-	 * flushed, then the underlying output stream will be closed. Thread-safe.
+	 * Indicates that no more new buckets will be added. After a call to this method, when all
+	 * existing buckets are closed, the underlying output stream will be closed automatically.
+	 * This method is thread-safe.
 	 */
 	public void signalNoMoreBuckets() {
 		synchronized (tailGuard.lock) {
