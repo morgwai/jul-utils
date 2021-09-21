@@ -24,12 +24,10 @@ public class JulFormatter extends Formatter {
 	 * @see #format(LogRecord)
 	 */
 	public static final String FORMAT_PROPERTY_NAME = JulFormatter.class.getName() + ".format";
-	public static final String DEFAULT_FORMAT =
-			"%7$5d %8$3d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
 	final String format;
 
 	/**
-	 * Name of the logging or system property containing a format for stack frames of logged
+	 * Name of the logging or system property containing the format for stack frames of logged
 	 * throwables.
 	 * @see #format(LogRecord)
 	 */
@@ -41,7 +39,11 @@ public class JulFormatter extends Formatter {
 
 	/**
 	 * Creates a new formatter configured using supplied params.
-	 * If {@code format} is {@code null} then {@link #DEFAULT_FORMAT} is used.
+	 * @param format the main format for log records.
+	 *     If it's {@code null} then {@value #DEFAULT_FORMAT} is used.
+	 * @param stackFrameFormat format for stack trace elements of logged throwables.
+	 *
+	 * @see #format(LogRecord)
 	 */
 	public JulFormatter (String format, String stackFrameFormat) {
 		if (format != null) {
@@ -52,16 +54,29 @@ public class JulFormatter extends Formatter {
 		this.stackFrameFormat = stackFrameFormat;
 	}
 
+	/**
+	 * {@value #DEFAULT_FORMAT}
+	 */
+	public static final String DEFAULT_FORMAT =
+			"%7$5d %8$3d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
+
 
 
 	/**
 	 * Creates a new formatter configured using either system properties or logging properties.
 	 * If both are present, system properties take precedence.
-	 * If {@link #FORMAT_PROPERTY_NAME} is not present in either logging or system properties, then
-	 * {@link #JUL_SIMPLE_FORMAT_PROPERTY_NAME} property is read and if present, its value is
+	 * <p>
+	 * By default the value of {@link #FORMAT_PROPERTY_NAME} property is used as the main format
+	 * for log records. If it is not present in either logging or system properties, then
+	 * {@value #JUL_SIMPLE_FORMAT_PROPERTY_NAME} property is read and if present, its value is
 	 * prepended with {@code "%7$5d %8$3d "} and used instead. if it is also absent, then
-	 * {@link #DEFAULT_FORMAT} is used.
+	 * {@value #DEFAULT_FORMAT} is used.</p>
+	 * <p>
+	 * The value of {@link #STACKFRAME_FORMAT_PROPERTY_NAME} property is used as the format for 
+	 * stack trace elements. If it is not present in either logging or system properties, then
+	 * {@code null} is passed.</p>
 	 *
+	 * @see #JulFormatter(String, String)
 	 * @see #format(LogRecord)
 	 */
 	public JulFormatter() {
@@ -84,6 +99,9 @@ public class JulFormatter extends Formatter {
 		return format;
 	}
 
+	/**
+	 * {@value #JUL_SIMPLE_FORMAT_PROPERTY_NAME}
+	 */
 	public static final String JUL_SIMPLE_FORMAT_PROPERTY_NAME =
 			"java.util.logging.SimpleFormatter.format";
 
@@ -113,7 +131,8 @@ public class JulFormatter extends Formatter {
 	 * {@link #STACKFRAME_FORMAT_PROPERTY_NAME} property or the second param of
 	 * {@link #JulFormatter(String, String)}.<br/>
 	 * If {@code stackFrameFormat} is {@code null} then
-	 * {@link Throwable#printStackTrace(java.io.PrintStream)} is used instead.</p>
+	 * {@link Throwable#printStackTrace(java.io.PrintStream)} is called instead of
+	 * {@link String#format(String, Object...)}.</p>
 	 */
 	@Override
 	public String format(LogRecord record) {
@@ -129,42 +148,43 @@ public class JulFormatter extends Formatter {
 			source = record.getLoggerName();
 		}
 
-		String formattedThrown = "";
-		final Throwable thrown = record.getThrown();
-		if (thrown != null) {
-			if (stackFrameFormat == null) {
-				StringWriter sw = new StringWriter();
-				PrintWriter pw = new PrintWriter(sw);
-				pw.println();
-				thrown.printStackTrace(pw);
-				pw.close();
-				formattedThrown = sw.toString();
-			} else {
-				StringBuilder throwableStringBuilder = new StringBuilder(thrown.toString());
-				for (var stackFrame: thrown.getStackTrace()) {
-					throwableStringBuilder.append(String.format(stackFrameFormat,
-							record.getSequenceNumber(),
-							record.getThreadID(),
-							stackFrame.getClassName(),
-							stackFrame.getMethodName(),
-							stackFrame.getFileName(),
-							stackFrame.getLineNumber(),
-							stackFrame.getModuleName(),
-							stackFrame.getModuleVersion(),
-							stackFrame.getClassLoaderName()));
-				}
-				formattedThrown = throwableStringBuilder.toString();
-			}
-		}
-
 		return String.format(format,
 				timestamp,
 				source,
 				record.getLoggerName(),
 				record.getLevel().getLocalizedName(),
 				formatMessage(record),
-				formattedThrown,
+				getFormaatedThrown(record),
 				record.getSequenceNumber(),
 				record.getThreadID());
+	}
+
+	String getFormaatedThrown(LogRecord record) {
+		Throwable thrown = record.getThrown();
+		if (thrown == null) return "";
+
+		if (stackFrameFormat == null) {
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			pw.println();
+			thrown.printStackTrace(pw);
+			pw.close();
+			return sw.toString();
+		}
+
+		StringBuilder throwableStringBuilder = new StringBuilder(thrown.toString());
+		for (var stackFrame: thrown.getStackTrace()) {
+			throwableStringBuilder.append(String.format(stackFrameFormat,
+					record.getSequenceNumber(),
+					record.getThreadID(),
+					stackFrame.getClassName(),
+					stackFrame.getMethodName(),
+					stackFrame.getFileName(),
+					stackFrame.getLineNumber(),
+					stackFrame.getModuleName(),
+					stackFrame.getModuleVersion(),
+					stackFrame.getClassLoaderName()));
+		}
+		return throwableStringBuilder.toString();
 	}
 }
