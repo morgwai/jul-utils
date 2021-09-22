@@ -14,9 +14,8 @@ import java.util.logging.LogManager;
  * Utility to override {@code java.util.logging} properties with values from system properties.
  * <p>
  * Note: overriding can be applied to an existing java app at run time: just add java-utils jar to
- * the class-path and define desired system properties.</p>
- *
- * @see #overrideLogLevels(String...)
+ * the class-path and define system properties as described in {@link #JulConfig()} and
+ * {@link #overrideLogLevels(String...)}.</p>
  */
 public class JulConfig {
 
@@ -39,8 +38,8 @@ public class JulConfig {
 	 * <b>Example:</b><br/>
 	 * Output all entries from <code>com.example</code> name-space with level <code>FINE</code> or
 	 * higher to the console. Entries from other name-spaces will be logged only if they have at
-	 * least level <code>WARNING</code>, unless configured otherwise in the default
-	 * <code>logging.properties</code> file:</p>
+	 * least level <code>WARNING</code> (unless configured otherwise in the default
+	 * <code>logging.properties</code> file) :</p>
 	 * <pre>
 	 *java -Djava.util.logging.config.class=pl.morgwai.base.logging.JulConfig \
 	 *     -Djava.util.logging.overrideLevel=,com.example,java.util.logging.ConsoleHandler \
@@ -111,7 +110,10 @@ public class JulConfig {
 
 	/**
 	 * Reads logging config normally and then calls {@link #overrideLogLevels(String...)}.
-	 * For use with {@value #JUL_CONFIG_CLASS_PROPERTY_NAME} system property.
+	 * For use with {@value #JUL_CONFIG_CLASS_PROPERTY_NAME} system property: when this property is
+	 * set to the fully qualified name of this class, then {@link LogManager} will call this
+	 * constructor instead of reading the configuration the normal way.
+	 *
 	 * @see LogManager
 	 */
 	public JulConfig() throws Exception {
