@@ -90,6 +90,7 @@
 				<version>3.2.0</version>
 				<configuration>
 					<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+					<overview>${basedir}/src/main/java/overview.html</overview>
 				</configuration>
 				<executions>
 					<execution>
