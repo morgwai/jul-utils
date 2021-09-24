@@ -20,4 +20,9 @@ A text log formatter similar to `SimpleFormatter` that additionally allows to fo
 ### [JulConfig](src/main/java/pl/morgwai/base/logging/JulConfig.java)
 
 Overrides logging levels of `java.util.logging` `Logger`s `Handler`s with values obtained from system properties.<br/>
-Note: overriding can be applied to an existing java app at run time: just add java-utils jar to the class-path and define desired system properties.</p>
+Note: overriding can be applied to an existing java app at run time: just add java-utils jar to the class-path and define desired system properties.
+
+
+### [JulManualResetLogManager](src/main/java/pl/morgwai/base/logging/JulManualResetLogManager.java)
+
+A LogManager that does not get reset automatically at JVM shutdown. Useful if logs from user shutdown hooks are important.
