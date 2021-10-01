@@ -12,13 +12,13 @@ import java.util.logging.LogManager;
  * To use this class, define system property named
  * {@value #JUL_LOG_MANAGER_PROPERTY_NAME} with fully qualified name of this class as a value:</p>
  * <pre>
- *java -Djava.util.logging.manager=pl.morgwai.base.logging.JulManualResetLogManager \
- *    MyMainClass</pre>
+ * java -Djava.util.logging.manager=pl.morgwai.base.logging.JulManualResetLogManager \
+ *     MyMainClass</pre>
  * <p>
  * It is then user's responsibility to call {@link #manualReset()} at the end of his shutdown
  * hook:</p>
  * <pre>
- *((pl.morgwai.base.logging.JulManualResetLogManager) LogManager.getLogManager()).manualReset();
+ * ((pl.morgwai.base.logging.JulManualResetLogManager) LogManager.getLogManager()).manualReset();
  * </pre>
  */
 public class JulManualResetLogManager extends LogManager {
