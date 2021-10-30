@@ -154,12 +154,12 @@ public class JulFormatter extends Formatter {
 				record.getLoggerName(),
 				record.getLevel().getLocalizedName(),
 				formatMessage(record),
-				getFormaatedThrown(record),
+				getFormattedThrown(record),
 				record.getSequenceNumber(),
 				record.getThreadID());
 	}
 
-	String getFormaatedThrown(LogRecord record) {
+	String getFormattedThrown(LogRecord record) {
 		Throwable thrown = record.getThrown();
 		if (thrown == null) return "";
 

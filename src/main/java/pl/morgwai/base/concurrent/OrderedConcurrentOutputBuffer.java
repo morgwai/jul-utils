@@ -39,14 +39,14 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 
 
 
-	public static interface OutputStream<MessageT> {
+	public interface OutputStream<MessageT> {
 		void write(MessageT message);
 		void close();
 	}
 
 
 
-	OutputStream<MessageT> output;
+	final OutputStream<MessageT> output;
 
 	// A buffer always has a preallocated guard bucket at the tail of the queue. As addBucket() is
 	// synchronized on the tail, having a guard, prevents addBucket() to be delayed if the last
@@ -111,7 +111,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 	// the output stream. All methods are thread-safe.
 	class Bucket implements OutputStream<MessageT> {
 
-		Object lock = new Object();  // all bucket methods are synchronized on this lock
+		final Object lock = new Object();  // all bucket methods are synchronized on this lock
 
 		List<MessageT> buffer = new LinkedList<>();// null <=> flushed <=> all previous also flushed
 		boolean closed = false;
