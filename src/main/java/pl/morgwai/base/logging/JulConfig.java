@@ -13,7 +13,7 @@ import java.util.logging.LogManager;
 /**
  * Utility to override {@code java.util.logging} properties with values from system properties.
  * <p>
- * Note: overriding can be applied to an existing java app at run time: just add java-utils jar to
+ * Note: overriding can be applied to an existing java app at startup: just add java-utils jar to
  * the class-path and define system properties as described in {@link #JulConfig()} and
  * {@link #overrideLogLevels(String...)}.</p>
  */
