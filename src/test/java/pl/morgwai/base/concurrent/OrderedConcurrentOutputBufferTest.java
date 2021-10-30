@@ -40,9 +40,7 @@ public class OrderedConcurrentOutputBufferTest {
 
 	int sumUpMessageCount() {
 		int messageCount = 0;
-		for (int i = 0; i < bucketMessageNumbers.length; i++) {
-			messageCount += bucketMessageNumbers[i];
-		}
+		for (int bucketMessageCount: bucketMessageNumbers) messageCount += bucketMessageCount;
 		return messageCount;
 	}
 
@@ -89,12 +87,12 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 	@Test
-	public void test1000Threds1000MessagesPerThread() throws InterruptedException {
+	public void test1000Threads1000MessagesPerThread() throws InterruptedException {
 		testSeveralThreads(1000, 1000, 1000, 1000, 0, 0, 1000, 1000, 10);
 	}
 
 	@Test
-	public void test1000Threds1MessagePerThread() throws InterruptedException {
+	public void test1000Threads1MessagePerThread() throws InterruptedException {
 		testSeveralThreads(1000, 1, 1, 1, 1, 0);
 	}
 
@@ -113,8 +111,8 @@ public class OrderedConcurrentOutputBufferTest {
 			bucketThreads[i] = newBucketThread(numberOfMessages);
 			expectedMessageCount += numberOfMessages;
 		}
-		for (int i = 0; i < bucketThreads.length; i++) bucketThreads[i].start();
-		for (int i = 0; i < bucketThreads.length; i++) bucketThreads[i].join();
+		for (var bucketThread: bucketThreads) bucketThread.start();
+		for (var bucketThread: bucketThreads) bucketThread.join();
 		buffer.signalNoMoreBuckets();
 
 		assertEquals("all messages should be written", expectedMessageCount, outputData.size());
@@ -138,7 +136,7 @@ public class OrderedConcurrentOutputBufferTest {
 				// make some threads a bit slower to start
 				try {
 					Thread.sleep(100);
-				} catch (InterruptedException e) {}
+				} catch (InterruptedException ignored) {}
 			}
 			for (int i = 0; i < numberOfMessages; i++) {
 				bucket.write(nextMessage(bucketNumber));
@@ -156,8 +154,8 @@ public class OrderedConcurrentOutputBufferTest {
 		for (int i = 0; i < 5000; i++) {
 			setup();
 			var bucket = buffer.addBucket();
-			var t1 = new Thread(() -> bucket.close());
-			var t2 = new Thread(() -> buffer.signalNoMoreBuckets());
+			var t1 = new Thread(bucket::close);
+			var t2 = new Thread(buffer::signalNoMoreBuckets);
 			t1.start();
 			t2.start();
 			t1.join();
@@ -170,7 +168,7 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 	@Test
-	public void testConcurrentCloseOfSubequentBucketsFollowedByClosedBuckets()
+	public void testConcurrentCloseOfSubsequentBucketsFollowedByClosedBuckets()
 			throws InterruptedException {
 		// tries to trigger a race condition that was suppressing flushing sequence
 		for (int i = 0; i < 5000; i++) {
@@ -184,8 +182,8 @@ public class OrderedConcurrentOutputBufferTest {
 			bucket4.write(new Message(4, 1));
 			bucket4.close();
 			buffer.signalNoMoreBuckets();
-			var t1 = new Thread(() -> bucket1.close());
-			var t2 = new Thread(() -> bucket2.close());
+			var t1 = new Thread(bucket1::close);
+			var t2 = new Thread(bucket2::close);
 			t1.start();
 			t2.start();
 			t1.join();
@@ -209,7 +207,7 @@ public class OrderedConcurrentOutputBufferTest {
 			var bucket1 = buffer.addBucket();
 			bucket1.write(new Message(1, 1));
 			Exception[] t2exceptionHolder = {null};
-			var t1 = new Thread(() -> bucket1.close());
+			var t1 = new Thread(bucket1::close);
 			var t2 = new Thread(() -> {
 				try {
 					var bucket2 = buffer.addBucket();
@@ -247,7 +245,7 @@ public class OrderedConcurrentOutputBufferTest {
 			var bucket2 = buffer.addBucket();
 			bucket2.close();
 			Exception[] t2exceptionHolder = {null};
-			var t1 = new Thread(() -> bucket1.close());
+			var t1 = new Thread(bucket1::close);
 			var t2 = new Thread(() -> {
 				try {
 					var bucket3 = buffer.addBucket();
@@ -281,7 +279,7 @@ public class OrderedConcurrentOutputBufferTest {
 		try {
 			bucket.write(new Message(666, 666));
 			fail("IllegalStateException should be thrown");
-		} catch (IllegalStateException e) {}
+		} catch (IllegalStateException ignored) {}
 	}
 
 
@@ -293,7 +291,7 @@ public class OrderedConcurrentOutputBufferTest {
 		try {
 			buffer.addBucket();
 			fail("IllegalStateException should be thrown");
-		} catch (IllegalStateException e) {}
+		} catch (IllegalStateException ignored) {}
 	}
 
 
@@ -316,11 +314,9 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 
-	static Comparator<Message> messageComparator = (msg1, msg2) -> {
-		int bucketCompare = Integer.compare(msg1.bucket, msg2.bucket);
-		if (bucketCompare != 0) return bucketCompare;
-		return Integer.compare(msg1.number, msg2.number);
-	};
+	static Comparator<Message> messageComparator =
+			Comparator.comparingInt((Message msg) -> msg.bucket)
+					.thenComparingInt(msg -> msg.number);
 
 
 
