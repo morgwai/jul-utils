@@ -23,7 +23,7 @@ public class JulFormatter extends Formatter {
 	 * Name of the logging or system property containing the main format for each record.
 	 * @see #format(LogRecord)
 	 */
-	public static final String FORMAT_PROPERTY_NAME = JulFormatter.class.getName() + ".format";
+	public static final String FORMAT_PROPERTY = JulFormatter.class.getName() + ".format";
 	final String format;
 
 	/**
@@ -31,7 +31,7 @@ public class JulFormatter extends Formatter {
 	 * throwables.
 	 * @see #format(LogRecord)
 	 */
-	public static final String STACKFRAME_FORMAT_PROPERTY_NAME =
+	public static final String STACKFRAME_FORMAT_PROPERTY =
 			JulFormatter.class.getName() + ".stackFrameFormat";
 	final String stackFrameFormat;
 
@@ -66,13 +66,13 @@ public class JulFormatter extends Formatter {
 	 * Creates a new formatter configured using either system properties or logging properties.
 	 * If both are present, system properties take precedence.
 	 * <p>
-	 * By default the value of {@link #FORMAT_PROPERTY_NAME} property is used as the main format
+	 * By default the value of {@link #FORMAT_PROPERTY} property is used as the main format
 	 * for log records. If it is not present in either logging or system properties, then
 	 * {@value #JUL_SIMPLE_FORMAT_PROPERTY_NAME} property is read and if present, its value is
 	 * prepended with {@code "%7$5d %8$3d "} and used instead. if it is also absent, then
 	 * {@value #DEFAULT_FORMAT} is used.</p>
 	 * <p>
-	 * The value of {@link #STACKFRAME_FORMAT_PROPERTY_NAME} property is used as the format for
+	 * The value of {@link #STACKFRAME_FORMAT_PROPERTY} property is used as the format for
 	 * stack trace elements. If it is not present in either logging or system properties, then
 	 * {@code null} is passed.</p>
 	 *
@@ -84,8 +84,8 @@ public class JulFormatter extends Formatter {
 	}
 
 	static String getFormatFromProperties() {
-		var format = System.getProperty(FORMAT_PROPERTY_NAME);
-		if (format == null) format = LogManager.getLogManager().getProperty(FORMAT_PROPERTY_NAME);
+		var format = System.getProperty(FORMAT_PROPERTY);
+		if (format == null) format = LogManager.getLogManager().getProperty(FORMAT_PROPERTY);
 		if (format == null) {
 			var simpleFormat = System.getProperty(JUL_SIMPLE_FORMAT_PROPERTY_NAME);
 			if (simpleFormat == null) {
@@ -106,9 +106,9 @@ public class JulFormatter extends Formatter {
 			"java.util.logging.SimpleFormatter.format";
 
 	static String getStackFrameFormatFromProperties() {
-		var stackFrameFormat = System.getProperty(STACKFRAME_FORMAT_PROPERTY_NAME);
+		var stackFrameFormat = System.getProperty(STACKFRAME_FORMAT_PROPERTY);
 		if (stackFrameFormat != null) return stackFrameFormat;
-		return LogManager.getLogManager().getProperty(STACKFRAME_FORMAT_PROPERTY_NAME);
+		return LogManager.getLogManager().getProperty(STACKFRAME_FORMAT_PROPERTY);
 	}
 
 
@@ -120,7 +120,7 @@ public class JulFormatter extends Formatter {
 	 * {@link String#format(String, Object...)
 	 * String.format(format, timestamp, source, loggerName, level, message, formattedThrown, logId,
 	 * threadId)}<br/>
-	 * where {@code format} is obtained from either {@link #FORMAT_PROPERTY_NAME} property or the
+	 * where {@code format} is obtained from either {@link #FORMAT_PROPERTY} property or the
 	 * first param of {@link #JulFormatter(String, String)}.</p>
 	 * <p>
 	 * {@code formattedThrown} is obtained
@@ -128,7 +128,7 @@ public class JulFormatter extends Formatter {
 	 * {@link String#format(String, Object...) String.format(stackFrameFormat, logId, className,
 	 * methodName, FileName, lineNumber, moduleName, moduleVersion, classLoaderName)}<br/>
 	 * where {@code stackFrameFormat} is obtained from either
-	 * {@link #STACKFRAME_FORMAT_PROPERTY_NAME} property or the second param of
+	 * {@link #STACKFRAME_FORMAT_PROPERTY} property or the second param of
 	 * {@link #JulFormatter(String, String)}.<br/>
 	 * If {@code stackFrameFormat} is {@code null} then
 	 * {@link Throwable#printStackTrace(java.io.PrintStream)} is called instead of

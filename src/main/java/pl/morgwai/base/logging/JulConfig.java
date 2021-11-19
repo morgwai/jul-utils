@@ -28,7 +28,7 @@ public class JulConfig {
 	 * <p>
 	 * Fully qualified names of <code>Logger</code>s and <code>Handler</code>s whose {@link Level}s
 	 * should be overridden by this method are provided as arguments to this method and/or comma
-	 * separated on {@value #OVERRIDE_LEVEL_PROPERTY_NAME} system property.<br/>
+	 * separated on {@value #OVERRIDE_LEVEL_PROPERTY} system property.<br/>
 	 * Name of the system property containing the new {@link Level} for a given
 	 * <code>Logger/Handler</code> is constructed by appending {@value #LEVEL_SUFFIX} to its
 	 * fully-qualified-name.
@@ -54,7 +54,7 @@ public class JulConfig {
 
 		if (names.length > 0) characterCount += readLogLevels(props, names);
 
-		final var loggersProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY_NAME);
+		final var loggersProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
 		if (loggersProperty != null) {
 			characterCount += readLogLevels(props, loggersProperty.split(","));
 		}
@@ -79,7 +79,7 @@ public class JulConfig {
 	 * {@link java.util.logging.Logger}s and {@link java.util.logging.Handler}s whose
 	 * {@link java.util.logging.Level}s will be overridden by {@link #overrideLogLevels(String...)}.
 	 */
-	public static final String OVERRIDE_LEVEL_PROPERTY_NAME = "java.util.logging.overrideLevel";
+	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
 
 	/**
 	 * Reads system properties containing overridden levels for {@code loggerNames} and puts them
@@ -110,20 +110,20 @@ public class JulConfig {
 
 	/**
 	 * Reads logging config normally and then calls {@link #overrideLogLevels(String...)}.
-	 * For use with {@value #JUL_CONFIG_CLASS_PROPERTY_NAME} system property: when this property is
+	 * For use with {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is
 	 * set to the fully qualified name of this class, then {@link LogManager} will call this
 	 * constructor instead of reading the configuration the normal way.
 	 *
 	 * @see LogManager
 	 */
 	public JulConfig() throws Exception {
-		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY_NAME);
+		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY);
 		LogManager.getLogManager().readConfiguration();
 		overrideLogLevels();
 	}
 
 	/**
-	 * {@value #JUL_CONFIG_CLASS_PROPERTY_NAME}
+	 * {@value #JUL_CONFIG_CLASS_PROPERTY}
 	 */
-	public static final String JUL_CONFIG_CLASS_PROPERTY_NAME = "java.util.logging.config.class";
+	public static final String JUL_CONFIG_CLASS_PROPERTY = "java.util.logging.config.class";
 }
