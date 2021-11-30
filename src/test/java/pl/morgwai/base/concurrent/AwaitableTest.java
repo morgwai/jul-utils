@@ -29,28 +29,28 @@ public class AwaitableTest {
 			threads[i].start();
 		}
 
-		final var allCompleted = Awaitable.awaitMultiple(
+		final var unompleted = Awaitable.awaitMultiple(
 				100_495l,
 				TimeUnit.MICROSECONDS,
 				true,
 				Awaitable.ofJoin(threads[0]),
 				Awaitable.ofJoin(threads[1]),
 				Awaitable.ofJoin(threads[2]));
-		assertTrue("all tasks should be marked as completed", allCompleted);
+		assertTrue("all tasks should be marked as completed", unompleted.isEmpty());
 	}
 
 
 
 	@Test
 	public void testNotAllTasksCompleted() throws InterruptedException {
-		final var allCompleted = Awaitable.awaitMultiple(
+		final var unompleted = Awaitable.awaitMultiple(
 			20l,
 			(timeout) -> true,
 			(timeout) -> true,
 			(timeout) -> false,
 			(timeout) -> true
 		);
-		assertFalse("result should indicate not all tasks were completedd", allCompleted);
+		assertFalse("result should indicate not all tasks were completedd", unompleted.isEmpty());
 	}
 
 
@@ -61,7 +61,7 @@ public class AwaitableTest {
 		final long COMBINED_TIMEOUT = FIRST_DUARATION + 30;
 		final long MAX_INACCURACY = 5l;  // 1ms is enough in 99.9% cases. See message below.
 
-		final var allCompleted = Awaitable.awaitMultiple(
+		final var unompleted = Awaitable.awaitMultiple(
 			COMBINED_TIMEOUT,
 			TimeUnit.MILLISECONDS,
 			true,
@@ -87,14 +87,14 @@ public class AwaitableTest {
 				return true;
 			}
 		);
-		assertTrue("all tasks should be marked as completed", allCompleted);
+		assertTrue("all tasks should be marked as completed", unompleted.isEmpty());
 	}
 
 
 
 	@Test
 	public void testNoTimeout() throws InterruptedException {
-		final var allCompleted = Awaitable.awaitMultiple(
+		final var unompleted = Awaitable.awaitMultiple(
 			0l,
 			TimeUnit.MILLISECONDS,
 			true,
@@ -111,7 +111,7 @@ public class AwaitableTest {
 				return true;
 			}
 		);
-		assertTrue("all tasks should be marked as completed", allCompleted);
+		assertTrue("all tasks should be marked as completed", unompleted.isEmpty());
 	}
 
 

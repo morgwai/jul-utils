@@ -2,6 +2,8 @@
 package pl.morgwai.base.concurrent;
 
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -34,33 +36,32 @@ public interface Awaitable {
 	 * {@link InterruptedException} is thrown while awaiting.</p>
 	 * <p>
 	 * Note: internally all time measurements are done in nanoseconds, hence this function is not
-	 * suitable for timeouts spanning several decades (not that it would make sense, but I'm just
-	 * sayin...&nbsp;;-)&nbsp;&nbsp;).</p>
-	 * @return {@code true} if all {@code tasks} complete cleanly. {@code false} otherwise;
+	 * suitable for timeouts spanning several decades (not that it would make much sense, but I'm
+	 * just sayin...&nbsp;;-)&nbsp;&nbsp;).</p>
+	 * @return an empty list if all tasks completed, list of uncompleted tasks otherwise.
 	 */
-	static boolean awaitMultiple(
+	static List<Awaitable> awaitMultiple(
 			long timeout, TimeUnit unit, boolean continueOnInterrupt, Awaitable... tasks)
 			throws InterruptedException {
 		final var startTimestamp = System.nanoTime();
 		var remainingTime =  unit.toNanos(timeout);
-		var allCompleted = true;
+		final var uncompleted = new LinkedList<Awaitable>();
 		InterruptedException interrupted = null;
 		for (var task: tasks) {
 			try {
-				allCompleted &= task.await(remainingTime, TimeUnit.NANOSECONDS);
+				if ( ! task.await(remainingTime, TimeUnit.NANOSECONDS)) uncompleted.add(task);
 				if (interrupted == null && timeout != 0l) {
 					remainingTime -= System.nanoTime() - startTimestamp;
 					if (remainingTime < 1l) remainingTime = 1l;
 				}
 			} catch (InterruptedException e) {
 				if ( ! continueOnInterrupt) throw e;
-				allCompleted = false;
 				remainingTime = 1l;
 				interrupted = e;
 			}
 		}
 		if (interrupted != null) throw interrupted;
-		return allCompleted;
+		return uncompleted;
 	}
 
 
@@ -77,7 +78,7 @@ public interface Awaitable {
 	 * awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, true, tasks)} converting {@code tasks}
 	 * using {@link #toAwaitable(InMillis)}.
 	 */
-	static boolean awaitMultiple(long timeoutMillis, Awaitable.InMillis... tasks)
+	static List<Awaitable> awaitMultiple(long timeoutMillis, Awaitable.InMillis... tasks)
 			throws InterruptedException {
 		return Awaitable.awaitMultiple(
 			timeoutMillis,
@@ -131,6 +132,13 @@ public interface Awaitable {
 		@Override
 		public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
 			return awaitHandler.await(timeout, unit);
+		}
+
+
+
+		@Override
+		public String toString() {
+			return "GenericAwaitable { subject = " + subject + '}';
 		}
 	}
 
