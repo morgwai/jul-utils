@@ -14,9 +14,11 @@ public class AwaitableTest {
 
 
 	@Test
-	public void testFastCompletingThreads() throws InterruptedException {
+	public void testAwaitableOfJoinThread() throws InterruptedException {
 		final var threads = new Thread[3];
 		for (int i = 0; i < 3; i++) {
+			// it would be cool to create anonymous subclass of Thread that examines params of
+			// join(...), unfortunately join(...) is final...
 			threads[i] = new Thread(
 				() -> {
 					try {
@@ -28,7 +30,9 @@ public class AwaitableTest {
 		}
 
 		final var allCompleted = Awaitable.awaitMultiple(
-				100l,
+				100_495l,
+				TimeUnit.MICROSECONDS,
+				true,
 				Awaitable.ofJoin(threads[0]),
 				Awaitable.ofJoin(threads[1]),
 				Awaitable.ofJoin(threads[2]));

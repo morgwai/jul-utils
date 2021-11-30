@@ -34,14 +34,15 @@ public interface Awaitable {
 	 * {@link InterruptedException} is thrown while awaiting.</p>
 	 * <p>
 	 * Note: internally all time measurements are done in nanoseconds, hence this function is not
-	 * suitable for timeouts spanning several years.</p>
+	 * suitable for timeouts spanning several decades (not that it would make sense, but I'm just
+	 * sayin...&nbsp;;-)&nbsp;&nbsp;).</p>
 	 * @return {@code true} if all {@code tasks} complete cleanly. {@code false} otherwise;
 	 */
 	static boolean awaitMultiple(
 			long timeout, TimeUnit unit, boolean continueOnInterrupt, Awaitable... tasks)
 			throws InterruptedException {
 		final var startTimestamp = System.nanoTime();
-		var remainingTime = TimeUnit.NANOSECONDS.convert(timeout, unit);
+		var remainingTime =  unit.toNanos(timeout);
 		var allCompleted = true;
 		InterruptedException interrupted = null;
 		for (var task: tasks) {
@@ -89,28 +90,72 @@ public interface Awaitable {
 
 
 	/**
-	 * Converts given {@link Awaitable.InMillis} to {@link Awaitable}.
+	 * Converts given {@link Awaitable.InMillis} to {@link Awaitable} unless {@code task} already
+	 * implements {@link Awaitable}.
+	 * <p>
 	 * Timeout supplied to {@link Awaitable#await(long, TimeUnit)} is converted to millis using
 	 * {@link TimeUnit#convert(long, TimeUnit)}, except when it is smaller than 1ms yet non-zero,
-	 * in which case it will be rounded up to 1ms.
+	 * in which case it will be rounded up to 1ms.</p>
 	 */
 	static Awaitable toAwaitable(Awaitable.InMillis task) {
+		if (task instanceof Awaitable) return (Awaitable) task;
 		return (timeout, unit) -> task.await(
-				timeout == 0l ? 0l : Math.max(1l, TimeUnit.MILLISECONDS.convert(timeout, unit)));
+				timeout == 0l ? 0l : Math.max(1l, unit.toMillis(timeout)));
 	}
 
 
 
-	static Awaitable.InMillis ofJoin(Thread thread) {
-		return (timeoutMillis) -> {
-			thread.join(timeoutMillis);
-			return ! thread.isAlive();
-		};
+	class GenericAwaitable<T> implements Awaitable, Awaitable.InMillis {
+
+		T subject;
+		public T getSubject() { return subject; }
+
+		Awaitable awaitHandler;
+
+
+
+		public GenericAwaitable(T subject, Awaitable awaitHandler) {
+			this.subject = subject;
+			this.awaitHandler = awaitHandler;
+		}
+
+
+
+		@Override
+		public boolean await(long timeoutMillis) throws InterruptedException {
+			return await(timeoutMillis, TimeUnit.MILLISECONDS);
+		}
+
+
+
+		@Override
+		public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
+			return awaitHandler.await(timeout, unit);
+		}
 	}
 
 
 
-	static Awaitable.InMillis ofAwaitTermination(ExecutorService executor) {
-		return (timeoutMillis) -> executor.awaitTermination(timeoutMillis, TimeUnit.MILLISECONDS);
+	static GenericAwaitable<Thread> ofJoin(Thread thread) {
+		return new GenericAwaitable<>(
+			thread,
+			(timeout, unit) -> {
+				final var timeoutMillis = unit.toMillis(timeout);
+				if (timeout == 0l || unit.ordinal() >= TimeUnit.MILLISECONDS.ordinal()) {
+					thread.join(timeoutMillis);
+				} else {
+					thread.join(timeoutMillis, (int) (unit.toNanos(timeout) % 1000l));
+				}
+				return ! thread.isAlive();
+			}
+		);
+	}
+
+
+
+	static GenericAwaitable<ExecutorService> ofAwaitTermination(ExecutorService executor) {
+		return new GenericAwaitable<>(
+				executor,
+				(timeout, unit) -> executor.awaitTermination(timeout, unit));
 	}
 }
