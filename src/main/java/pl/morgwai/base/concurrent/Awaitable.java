@@ -27,8 +27,7 @@ public interface Awaitable {
 
 	/**
 	 * Awaits for multiple timed blocking operations, such as {@link Thread#join(long)},
-	 * {@link Object#wait(long)}, {@link Thread#sleep(long)},
-	 * {@link ExecutorService#awaitTermination(long, TimeUnit)} etc.
+	 * {@link Object#wait(long)}, {@link ExecutorService#awaitTermination(long, TimeUnit)} etc.
 	 * <p>
 	 * If {@code timeout} passes before completing all {@code tasks}, continues to await for
 	 * remaining tasks with timeout of 1 nanosecond.<br/>
