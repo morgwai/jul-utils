@@ -1,9 +1,16 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.concurrent;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Comparators;
 import org.junit.Test;
+
+import pl.morgwai.base.concurrent.Awaitable.GenericAwaitable;
 
 import static org.junit.Assert.*;
 
@@ -42,14 +49,34 @@ public class AwaitableTest {
 
 	@Test
 	public void testNotAllTasksCompleted() throws InterruptedException {
-		final var uncompleted = Awaitable.awaitMultiple(
-			20l,
-			(timeout) -> true,
-			(timeout) -> true,
-			(timeout) -> false,
-			(timeout) -> true
-		);
-		assertFalse("result should indicate not all tasks were completedd", uncompleted.isEmpty());
+		final var NUMBER_OF_TASKS = 20;
+		final var taskNumbersToFail = new TreeSet<Integer>();
+		taskNumbersToFail.add(7);
+		taskNumbersToFail.add(9);
+		taskNumbersToFail.add(14);
+		assertTrue("test data integrity check", taskNumbersToFail.last() < NUMBER_OF_TASKS);
+		final List<GenericAwaitable<Integer>> tasks = new ArrayList<>(NUMBER_OF_TASKS);
+		for (int i = 0; i < NUMBER_OF_TASKS; i++) {
+			final var taskNumber = i;
+			tasks.add(new GenericAwaitable<Integer>(
+				i,
+				(timeout, unit) -> {
+					if (taskNumbersToFail.contains(taskNumber)) return false;
+					return true;
+				}
+			));
+		}
+
+		final List<GenericAwaitable<Integer>> uncompletedTasks = Awaitable.awaitMultiple(5l, tasks);
+		assertEquals("number of uncompleted tasks should match",
+				taskNumbersToFail.size(), uncompletedTasks.size());
+		for (var task: uncompletedTasks) {
+			assertTrue("uncompleted task should be one of those expected to fail ",
+					taskNumbersToFail.contains(task.getSubject()));
+		}
+		assertTrue("uncompleted tasks should be in order", Comparators.isInStrictOrder(
+				uncompletedTasks,
+				Comparator.comparingInt(GenericAwaitable::getSubject)));
 	}
 
 

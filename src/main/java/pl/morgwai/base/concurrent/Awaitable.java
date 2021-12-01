@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 
@@ -39,14 +40,14 @@ public interface Awaitable {
 	 * just sayin...&nbsp;;-)&nbsp;&nbsp;).</p>
 	 * @return an empty list if all tasks completed, list of uncompleted tasks otherwise.
 	 */
-	static List<Awaitable> awaitMultiple(
-			long timeout, TimeUnit unit, boolean continueOnInterrupt, Awaitable... tasks)
+	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
+			long timeout, TimeUnit unit, boolean continueOnInterrupt, List<TaskT> tasks)
 			throws InterruptedException {
 		final var startTimestamp = System.nanoTime();
 		var remainingTime =  unit.toNanos(timeout);
-		final var uncompleted = new LinkedList<Awaitable>();
+		final var uncompleted = new LinkedList<TaskT>();
 		InterruptedException interrupted = null;
-		for (var task: tasks) {
+		for (TaskT task: tasks) {
 			try {
 				if ( ! task.await(remainingTime, TimeUnit.NANOSECONDS)) uncompleted.add(task);
 				if (interrupted == null && timeout != 0l) {
@@ -64,16 +65,42 @@ public interface Awaitable {
 	}
 
 	/**
-	 * Calls {@link #awaitMultiple(long, TimeUnit, boolean, Awaitable...)
+	 * Calls {@link #awaitMultiple(long, TimeUnit, boolean, List)
 	 * awaitMultiple(timeout, unit, true, tasks)}.
 	 */
-	static List<Awaitable> awaitMultiple(long timeout, TimeUnit unit, Awaitable... tasks)
+	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
+			long timeout, TimeUnit unit, List<TaskT> tasks)
 			throws InterruptedException {
 		return awaitMultiple(timeout, unit, true, tasks);
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(long, TimeUnit, boolean, List)
+	 * awaitMultiple(timeout, unit, continueOnInterrupt, Arrays.asList(tasks))}.
+	 */
+	@SafeVarargs
+	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
+			long timeout, TimeUnit unit, boolean continueOnInterrupt, TaskT... tasks)
+			throws InterruptedException {
+		return awaitMultiple(timeout, unit, continueOnInterrupt, Arrays.asList(tasks));
+	}
+
+	/**
+	 * Calls {@link #awaitMultiple(long, TimeUnit, boolean, List)
+	 * awaitMultiple(timeout, unit, true, Arrays.asList(tasks))}.
+	 */
+	@SafeVarargs
+	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
+			long timeout, TimeUnit unit, TaskT... tasks)
+			throws InterruptedException {
+		return awaitMultiple(timeout, unit, true, Arrays.asList(tasks));
+	}
 
 
+
+	/**
+	 * A simplified {@link Awaitable} that always takes timeout in millis.
+	 */
 	@FunctionalInterface
 	interface InMillis {
 		boolean await(long timeoutMillis) throws InterruptedException;
@@ -82,38 +109,65 @@ public interface Awaitable {
 
 
 	/**
-	 * Calls {@link #awaitMultiple(long, TimeUnit, boolean, Awaitable...)
-	 * awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, true, tasks)} converting {@code tasks}
-	 * using {@link #toAwaitable(InMillis)}.
+	 * Calls {@link #awaitMultiple(long, TimeUnit, boolean, List)
+	 * awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, true, tasks)} wrapping {@code tasks}
+	 * with {@link InMillisAdapter}.
 	 */
-	static List<Awaitable> awaitMultiple(long timeoutMillis, Awaitable.InMillis... tasks)
+	static <TaskT extends Awaitable.InMillis> List<TaskT> awaitMultiple(
+			long timeoutMillis, List<TaskT> tasks)
 			throws InterruptedException {
 		return Awaitable.awaitMultiple(
 			timeoutMillis,
 			TimeUnit.MILLISECONDS,
 			true,
-			Arrays.stream(tasks).map((task) -> toAwaitable(task)).toArray(Awaitable[]::new)
-		);
+			tasks.stream().map(
+				(task) -> new InMillisAdapter<>(task)
+			).collect(Collectors.toList())
+		).stream().map(
+			(adapter) -> adapter.getWrapped()
+		).collect(Collectors.toList());
+	}
+
+	/**
+	 * Calls {@link #awaitMultiple(long, List) awaitMultiple(timeout Arrays.asList(tasks))}.
+	 */
+	@SafeVarargs
+	static <TaskT extends Awaitable.InMillis> List<TaskT> awaitMultiple(
+			long timeoutMillis, TaskT... tasks)
+			throws InterruptedException {
+		return awaitMultiple(timeoutMillis, Arrays.asList(tasks));
 	}
 
 
 
 	/**
-	 * Converts given {@link Awaitable.InMillis} to {@link Awaitable} unless {@code task} already
-	 * implements {@link Awaitable}.
+	 * Adapts {@link Awaitable.InMillis} to {@link Awaitable} API.
 	 * <p>
 	 * Timeout supplied to {@link Awaitable#await(long, TimeUnit)} is converted to millis using
 	 * {@link TimeUnit#convert(long, TimeUnit)}, except when it is smaller than 1ms yet non-zero,
 	 * in which case it will be rounded up to 1ms.</p>
 	 */
-	static Awaitable toAwaitable(Awaitable.InMillis task) {
-		if (task instanceof Awaitable) return (Awaitable) task;
-		return (timeout, unit) -> task.await(
-				timeout == 0l ? 0l : Math.max(1l, unit.toMillis(timeout)));
+	class InMillisAdapter<TaskT extends Awaitable.InMillis> implements Awaitable {
+
+		TaskT wrapped;
+		public TaskT getWrapped() { return wrapped; }
+
+		public InMillisAdapter(TaskT toAdapt) { this.wrapped = toAdapt; }
+
+		@Override
+		public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
+			if (wrapped instanceof Awaitable) return ((Awaitable) wrapped).await(timeout, unit);
+			return wrapped.await(timeout == 0l ? 0l : Math.max(1l, unit.toMillis(timeout)));
+		}
 	}
 
 
 
+	/**
+	 * A helper class that implements both {@link Awaitable} and {@link Awaitable.InMillis}.
+	 * @see Awaitable#ofJoin(Thread)
+	 * @see Awaitable#ofAwaitTermination(ExecutorService)
+	 */
 	class GenericAwaitable<T> implements Awaitable, Awaitable.InMillis {
 
 		T subject;
@@ -152,6 +206,9 @@ public interface Awaitable {
 
 
 
+	/**
+	 * Creates {@link Awaitable} of {@link Thread#join(long) joining a thread}.
+	 */
 	static GenericAwaitable<Thread> ofJoin(Thread thread) {
 		return new GenericAwaitable<>(
 			thread,
@@ -169,6 +226,10 @@ public interface Awaitable {
 
 
 
+	/**
+	 * Creates {@link Awaitable} of
+	 * {@link ExecutorService#awaitTermination(long, TimeUnit) terminating an executor}.
+	 */
 	static GenericAwaitable<ExecutorService> ofAwaitTermination(ExecutorService executor) {
 		return new GenericAwaitable<>(
 				executor,
