@@ -64,6 +64,15 @@ public interface Awaitable {
 		return uncompleted;
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(long, TimeUnit, boolean, Awaitable...)
+	 * awaitMultiple(timeout, unit, true, tasks)}.
+	 */
+	static List<Awaitable> awaitMultiple(long timeout, TimeUnit unit, Awaitable... tasks)
+			throws InterruptedException {
+		return awaitMultiple(timeout, unit, true, tasks);
+	}
+
 
 
 	@FunctionalInterface

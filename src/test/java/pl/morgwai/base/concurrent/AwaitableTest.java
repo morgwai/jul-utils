@@ -32,7 +32,6 @@ public class AwaitableTest {
 		final var unompleted = Awaitable.awaitMultiple(
 				100_495l,
 				TimeUnit.MICROSECONDS,
-				true,
 				Awaitable.ofJoin(threads[0]),
 				Awaitable.ofJoin(threads[1]),
 				Awaitable.ofJoin(threads[2]));
@@ -64,7 +63,6 @@ public class AwaitableTest {
 		final var unompleted = Awaitable.awaitMultiple(
 			COMBINED_TIMEOUT,
 			TimeUnit.MILLISECONDS,
-			true,
 			(timeout, unit) -> {
 				assertEquals("1st task should get the full timeout",
 						COMBINED_TIMEOUT, TimeUnit.MILLISECONDS.convert(timeout, unit));
@@ -97,7 +95,6 @@ public class AwaitableTest {
 		final var unompleted = Awaitable.awaitMultiple(
 			0l,
 			TimeUnit.MILLISECONDS,
-			true,
 			(timeout, unit) -> {
 				assertEquals("there should be no timeout", 0l, timeout);
 				return true;
