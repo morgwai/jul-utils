@@ -166,7 +166,7 @@ public interface Awaitable {
 	/**
 	 * A helper class that implements both {@link Awaitable} and {@link Awaitable.InMillis}.
 	 * @see Awaitable#ofJoin(Thread)
-	 * @see Awaitable#ofAwaitTermination(ExecutorService)
+	 * @see Awaitable#ofTermination(ExecutorService)
 	 */
 	class GenericAwaitable<T> implements Awaitable, Awaitable.InMillis {
 
@@ -228,9 +228,9 @@ public interface Awaitable {
 
 	/**
 	 * Creates {@link Awaitable} of
-	 * {@link ExecutorService#awaitTermination(long, TimeUnit) terminating an executor}.
+	 * {@link ExecutorService#awaitTermination(long, TimeUnit) termination of an executor}.
 	 */
-	static GenericAwaitable<ExecutorService> ofAwaitTermination(ExecutorService executor) {
+	static GenericAwaitable<ExecutorService> ofTermination(ExecutorService executor) {
 		return new GenericAwaitable<>(
 				executor,
 				(timeout, unit) -> executor.awaitTermination(timeout, unit));
