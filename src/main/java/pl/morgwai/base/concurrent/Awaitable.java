@@ -27,6 +27,20 @@ public interface Awaitable {
 
 
 
+	class CombinedInterruptedException extends InterruptedException {
+
+		final List<? extends Awaitable> uncompleted;
+		public List<? extends Awaitable> getUncompleted() { return uncompleted; }
+
+		public CombinedInterruptedException(List<? extends Awaitable> uncompleted) {
+			this.uncompleted = uncompleted;
+		}
+
+		private static final long serialVersionUID = 1745601970917052988L;
+	}
+
+
+
 	/**
 	 * Awaits for multiple timed blocking operations, such as {@link Thread#join(long)},
 	 * {@link Object#wait(long)}, {@link ExecutorService#awaitTermination(long, TimeUnit)} etc.
@@ -43,25 +57,31 @@ public interface Awaitable {
 	 */
 	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
 			long timeout, TimeUnit unit, boolean continueOnInterrupt, Stream<TaskT> tasks)
-			throws InterruptedException {
+			throws CombinedInterruptedException {
 		final var startTimestamp = System.nanoTime();
 		var remainingTime =  unit.toNanos(timeout);
 		final var uncompleted = new LinkedList<TaskT>();
-		InterruptedException interrupted = null;
-		for (TaskT task: (Iterable<TaskT>)  tasks::iterator) {
+		final var taskIterator = tasks.iterator();
+		boolean interrupted = false;
+		while (taskIterator.hasNext()) {
+			final var task = taskIterator.next();
 			try {
 				if ( ! task.await(remainingTime, TimeUnit.NANOSECONDS)) uncompleted.add(task);
-				if (interrupted == null && timeout != 0l) {
+				if (timeout != 0l && ! interrupted) {
 					remainingTime -= System.nanoTime() - startTimestamp;
 					if (remainingTime < 1l) remainingTime = 1l;
 				}
 			} catch (InterruptedException e) {
-				if ( ! continueOnInterrupt) throw e;
+				uncompleted.add(task);
+				if ( ! continueOnInterrupt) {
+					while (taskIterator.hasNext()) uncompleted.add(taskIterator.next());
+					throw new CombinedInterruptedException(uncompleted);
+				}
 				remainingTime = 1l;
-				interrupted = e;
+				interrupted = true;
 			}
 		}
-		if (interrupted != null) throw interrupted;
+		if (interrupted) throw new CombinedInterruptedException(uncompleted);
 		return uncompleted;
 	}
 
@@ -71,7 +91,7 @@ public interface Awaitable {
 	 */
 	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
 			long timeout, TimeUnit unit, Stream<TaskT> tasks)
-			throws InterruptedException {
+			throws CombinedInterruptedException {
 		return awaitMultiple(timeout, unit, true, tasks);
 	}
 
@@ -81,7 +101,7 @@ public interface Awaitable {
 	 */
 	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
 			long timeout, TimeUnit unit, List<TaskT> tasks)
-			throws InterruptedException {
+			throws CombinedInterruptedException {
 		return awaitMultiple(timeout, unit, true, tasks.stream());
 	}
 
@@ -92,7 +112,7 @@ public interface Awaitable {
 	@SafeVarargs
 	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
 			long timeout, TimeUnit unit, boolean continueOnInterrupt, TaskT... tasks)
-			throws InterruptedException {
+			throws CombinedInterruptedException {
 		return awaitMultiple(timeout, unit, continueOnInterrupt, Arrays.stream(tasks));
 	}
 
@@ -103,7 +123,7 @@ public interface Awaitable {
 	@SafeVarargs
 	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
 			long timeout, TimeUnit unit, TaskT... tasks)
-			throws InterruptedException {
+			throws CombinedInterruptedException {
 		return awaitMultiple(timeout, unit, true, Arrays.stream(tasks));
 	}
 
@@ -126,7 +146,7 @@ public interface Awaitable {
 	 */
 	static <TaskT extends Awaitable.InMillis> List<TaskT> awaitMultiple(
 			long timeoutMillis, List<TaskT> tasks)
-			throws InterruptedException {
+			throws CombinedInterruptedException {
 		return (
 			Awaitable.awaitMultiple(
 				timeoutMillis,
@@ -145,7 +165,7 @@ public interface Awaitable {
 	@SafeVarargs
 	static <TaskT extends Awaitable.InMillis> List<TaskT> awaitMultiple(
 			long timeoutMillis, TaskT... tasks)
-			throws InterruptedException {
+			throws CombinedInterruptedException {
 		return awaitMultiple(timeoutMillis, Arrays.asList(tasks));
 	}
 
@@ -169,6 +189,11 @@ public interface Awaitable {
 		public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
 			if (wrapped instanceof Awaitable) return ((Awaitable) wrapped).await(timeout, unit);
 			return wrapped.await(timeout == 0l ? 0l : Math.max(1l, unit.toMillis(timeout)));
+		}
+
+		@Override
+		public String toString() {
+			return "InMillisAdapter { wrapped = " + wrapped + '}';
 		}
 	}
 

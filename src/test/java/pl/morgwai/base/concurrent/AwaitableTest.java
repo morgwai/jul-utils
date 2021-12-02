@@ -10,7 +10,9 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.collect.Comparators;
 import org.junit.Test;
 
+import pl.morgwai.base.concurrent.Awaitable.CombinedInterruptedException;
 import pl.morgwai.base.concurrent.Awaitable.GenericAwaitable;
+import pl.morgwai.base.concurrent.Awaitable.InMillisAdapter;
 
 import static org.junit.Assert.*;
 
@@ -143,39 +145,51 @@ public class AwaitableTest {
 	public void testInterruptAndContinue(boolean noTimeout) throws InterruptedException {
 		final long combinedTimeout = noTimeout ? 0l : 100l;
 		final AssertionError[] errorHolder = {null};
-		final boolean[] secondTaskCompletedHolder = {false, false};
+		final boolean[] taskExecuted = {false, false, false, false};
+		final Awaitable.InMillis[] tasks = {
+			(timeoutMillis) -> {
+				taskExecuted[0] = true;
+				assertEquals("task-0 should get the full timeout",
+						combinedTimeout, timeoutMillis);
+				return true;
+			},
+			(timeoutMillis) -> {
+				taskExecuted[1] = true;
+				Thread.sleep(100l);
+				fail("InterruptedException should be thrown");
+				return true;
+			},
+			(timeoutMillis) -> {
+				taskExecuted[2] = true;
+				assertEquals("after an interrupt tasks should get 1ms timeout",
+						1l, timeoutMillis);
+				return true;
+			},
+			(timeoutMillis) -> {
+				taskExecuted[3] = true;
+				assertEquals("after an interrupt tasks should get 1ms timeout",
+						1l, timeoutMillis);
+				return false;
+			}
+		};
 
 		final var awaitingThread = new Thread(
 			() -> {
 				try {
 					try {
-						Awaitable.awaitMultiple(
-							combinedTimeout,
-							(timeoutMillis) -> {
-								assertEquals("1st task should get the full timeout",
-										combinedTimeout, timeoutMillis);
-								Thread.sleep(100l);
-								fail("InterruptedException should be thrown");
-								return true;
-							},
-							(timeoutMillis) -> {
-								assertEquals("after an interrupt tasks should get 1ms timeout",
-										1l, timeoutMillis);
-								secondTaskCompletedHolder[0] = true;
-								return true;
-							},
-							(timeoutMillis) -> {
-								assertEquals("after an interrupt tasks should get 1ms timeout",
-										1l, timeoutMillis);
-								secondTaskCompletedHolder[1] = true;
-								return true;
-							}
-						);
+						Awaitable.awaitMultiple(combinedTimeout, tasks);
 						fail("InterruptedException should be thrown");
-					} catch (InterruptedException e) {  // expected
+					} catch (CombinedInterruptedException e) {
+						final var uncompleted = e.getUncompleted();
+						assertEquals("2 tasks should not complete", 2, uncompleted.size());
+						assertSame("task-1 should not complete",
+								tasks[1], ((InMillisAdapter<?>) uncompleted.get(0)).getWrapped());
+						assertSame("task-3 should not complete",
+								tasks[3], ((InMillisAdapter<?>) uncompleted.get(1)).getWrapped());
 					}
-					assertTrue("2nd task should complete", secondTaskCompletedHolder[0]);
-					assertTrue("3rd task should complete", secondTaskCompletedHolder[1]);
+					for (int i = 0; i < taskExecuted.length; i++) {
+						assertTrue("task-" + i + " should be executed", taskExecuted[i]);
+					}
 				} catch (AssertionError e) {
 					errorHolder[0] = e;
 				}
@@ -203,28 +217,47 @@ public class AwaitableTest {
 
 	@Test
 	public void testInterruptAndAbort() throws InterruptedException {
+		final long TIMEOUT = 100l;
 		final AssertionError[] errorHolder = {null};
+		final boolean[] taskExecuted = {false, false, false};
+		final Awaitable[] tasks = {
+			(timeout, unit) -> {
+				taskExecuted[0] = true;
+				assertEquals("task-o should get the full timeout",
+						TIMEOUT, unit.toMillis(timeout));
+				return true;
+			},
+			(timeout, unit) -> {
+				taskExecuted[1] = true;
+				Thread.sleep(unit.toMillis(timeout));
+				fail("InterruptedException should be thrown");
+				return true;
+			},
+			(timeout, unit) -> {
+				taskExecuted[2] = true;
+				fail("2nd task should not be executed");
+				return true;
+			}
+		};
 
 		final var awaitingThread = new Thread(
 			() -> {
 				try {
 					try {
-						Awaitable.awaitMultiple(
-							100l,
-							TimeUnit.MILLISECONDS,
-							false,
-							(timeout, unit) -> {
-								Thread.sleep(TimeUnit.MILLISECONDS.convert(timeout, unit));
-								fail("InterruptedException should be thrown");
-								return true;
-							},
-							(timeout, unit) -> {
-								fail("2nd task should not be awaited for");
-								return true;
-							}
-						);
+						Awaitable.awaitMultiple(TIMEOUT, TimeUnit.MILLISECONDS, false, tasks);
 						fail("InterruptedException should be thrown");
-					} catch (InterruptedException e) {  // expected
+					} catch (CombinedInterruptedException e) {  // expected
+						final var uncompleted = e.getUncompleted();
+						assertEquals("2 tasks should not complete", 2, uncompleted.size());
+						assertSame("task-1 should not complete",
+								tasks[1], uncompleted.get(0));
+						assertSame("task-2 should not complete",
+								tasks[2], uncompleted.get(1));
+						for (int i = 0; i < taskExecuted.length - 1; i++) {
+							assertTrue("task-" + i + " should be executed", taskExecuted[i]);
+						}
+						assertFalse("task-" + (taskExecuted.length - 1) + " should NOT be executed",
+								taskExecuted[taskExecuted.length - 1]);
 					}
 				} catch (AssertionError e) {
 					errorHolder[0] = e;
