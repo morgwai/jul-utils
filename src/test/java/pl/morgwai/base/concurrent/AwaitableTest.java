@@ -37,9 +37,9 @@ public class AwaitableTest {
 		}
 
 		final var uncompleted = Awaitable.awaitMultiple(
+				(thread) -> Awaitable.ofJoin(thread),
 				100_495l,
 				TimeUnit.MICROSECONDS,
-				(thread) -> Awaitable.ofJoin(thread),
 				threads);
 		assertTrue("all tasks should be marked as completed", uncompleted.isEmpty());
 	}
@@ -56,12 +56,12 @@ public class AwaitableTest {
 		assertTrue("test data integrity check", taskNumbersToFail.last() < NUMBER_OF_TASKS);
 
 		final List<Integer> uncompletedTasks = Awaitable.awaitMultiple(
-				5l,
-				TimeUnit.DAYS,
 				(taskNumber) -> (timeout, unit) -> {
 					if (taskNumbersToFail.contains(taskNumber)) return false;
 					return true;
 				},
+				5l,
+				TimeUnit.DAYS,
 				IntStream.range(0, 20).boxed());
 		assertEquals("number of uncompleted tasks should match",
 				taskNumbersToFail.size(), uncompletedTasks.size());
@@ -235,10 +235,10 @@ public class AwaitableTest {
 				try {
 					try {
 						Awaitable.awaitMultiple(
+								(t)->t,
 								TIMEOUT,
 								TimeUnit.MILLISECONDS,
 								false,
-								(t)->t,
 								Arrays.stream(tasks));
 						fail("InterruptedException should be thrown");
 					} catch (CombinedInterruptedException e) {  // expected

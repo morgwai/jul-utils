@@ -85,10 +85,10 @@ public interface Awaitable {
 	 * @return an empty list if all tasks completed, list of uncompleted tasks otherwise.
 	 */
 	static <T> List<T> awaitMultiple(
+		Function<T, Awaitable.WithUnit> adapter,
 		long timeout,
 		TimeUnit unit,
 		boolean continueOnInterrupt,
-		Function<T, Awaitable.WithUnit> adapter,
 		Stream<T> objects
 	) throws CombinedInterruptedException {
 		final var startTimestamp = System.nanoTime();
@@ -137,76 +137,76 @@ public interface Awaitable {
 
 
 	static <T> List<T> awaitMultiple(
-		long timeout, TimeUnit unit, Function<T, Awaitable.WithUnit> adapter, Stream<T> objects
+		Function<T, Awaitable.WithUnit> adapter, long timeout, TimeUnit unit, Stream<T> objects
 	) throws CombinedInterruptedException {
-		return awaitMultiple(timeout, unit, true, adapter, objects);
+		return awaitMultiple(adapter, timeout, unit, true, objects);
 	}
 
 	static <T> List<T> awaitMultiple(
-		long timeout, TimeUnit unit, Function<T, Awaitable.WithUnit> adapter, List<T> objects
+		Function<T, Awaitable.WithUnit> adapter, long timeout, TimeUnit unit, List<T> objects
 	) throws CombinedInterruptedException {
-		return awaitMultiple(timeout, unit, true, adapter, objects.stream());
+		return awaitMultiple(adapter, timeout, unit, true, objects.stream());
 	}
 
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
-		long timeout, TimeUnit unit, Function<T, Awaitable.WithUnit> adapter, T... objects
+		Function<T, Awaitable.WithUnit> adapter, long timeout, TimeUnit unit, T... objects
 	) throws CombinedInterruptedException {
-		return awaitMultiple(timeout, unit, true, adapter, Arrays.stream(objects));
+		return awaitMultiple(adapter, timeout, unit, true, Arrays.stream(objects));
 	}
 
 	static <TaskT extends Awaitable.WithUnit> List<TaskT> awaitMultiple(
 		long timeout, TimeUnit unit, Stream<TaskT> tasks
 	) throws CombinedInterruptedException {
-		return awaitMultiple(timeout, unit, true, (t) -> t, tasks);
+		return awaitMultiple((t) -> t, timeout, unit, true, tasks);
 	}
 
 	static <TaskT extends Awaitable.WithUnit> List<TaskT> awaitMultiple(
 		long timeout, TimeUnit unit, List<TaskT> tasks
 	) throws CombinedInterruptedException {
-		return awaitMultiple(timeout, unit, true, (t) -> t, tasks.stream());
+		return awaitMultiple((t) -> t, timeout, unit, true, tasks.stream());
 	}
 
 	@SafeVarargs
 	static <TaskT extends Awaitable.WithUnit> List<TaskT> awaitMultiple(
 		long timeout, TimeUnit unit, TaskT... tasks
 	) throws CombinedInterruptedException {
-		return awaitMultiple(timeout, unit, true, (t) -> t, Arrays.stream(tasks));
+		return awaitMultiple((t) -> t, timeout, unit, true, Arrays.stream(tasks));
 	}
 
 
 
 	static <T> List<T> awaitMultiple(
-			long timeoutMillis, Function<T, Awaitable> adapter, Stream<T> objects)
+			Function<T, Awaitable.WithUnit> adapter, long timeoutMillis, Stream<T> objects)
 			throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
+				(object) -> adapter.apply(object).toAwaitableWithUnit(),
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
-				(object) -> adapter.apply(object).toAwaitableWithUnit(),
 				objects);
 	}
 
 	static <T> List<T> awaitMultiple(
-			long timeoutMillis, Function<T, Awaitable> adapter, List<T> objects)
+			Function<T, Awaitable.WithUnit> adapter, long timeoutMillis, List<T> objects)
 			throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
+				(object) -> adapter.apply(object).toAwaitableWithUnit(),
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
-				(object) -> adapter.apply(object).toAwaitableWithUnit(),
 				objects.stream());
 	}
 
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
-			long timeoutMillis, Function<T, Awaitable> adapter, T... objects)
+			Function<T, Awaitable.WithUnit> adapter, long timeoutMillis, T... objects)
 			throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
+				(object) -> adapter.apply(object).toAwaitableWithUnit(),
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
-				(object) -> adapter.apply(object).toAwaitableWithUnit(),
 				Arrays.stream(objects));
 	}
 
@@ -214,10 +214,10 @@ public interface Awaitable {
 			long timeoutMillis, Stream<TaskT> tasks)
 			throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
+				(task) -> task.toAwaitableWithUnit(),
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
-				(task) -> task.toAwaitableWithUnit(),
 				tasks);
 	}
 
@@ -225,10 +225,10 @@ public interface Awaitable {
 			long timeoutMillis, List<TaskT> tasks)
 			throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
+				(task) -> task.toAwaitableWithUnit(),
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
-				(task) -> task.toAwaitableWithUnit(),
 				tasks.stream());
 	}
 
@@ -237,10 +237,10 @@ public interface Awaitable {
 			long timeoutMillis, TaskT... tasks)
 			throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
+				(task) -> task.toAwaitableWithUnit(),
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
-				(task) -> task.toAwaitableWithUnit(),
 				Arrays.stream(tasks));
 	}
 
