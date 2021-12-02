@@ -15,7 +15,7 @@ import java.util.stream.Stream;
  * An object performing {@link #await(long) timed blocking operation}, such as
  * {@link Thread#join(long)}, {@link Object#wait(long)},
  * {@link ExecutorService#awaitTermination(long, TimeUnit)} etc.
- * @see #awaitMultiple(long, TimeUnit, boolean, Function, Stream)
+ * @see #awaitMultiple(Function, long, TimeUnit, boolean, Stream)
  */
 @FunctionalInterface
 public interface Awaitable {
@@ -54,6 +54,9 @@ public interface Awaitable {
 
 
 
+		/**
+		 * Calls {@link #await(long, TimeUnit) await(timeoutMillis, TimeUnit.MILLISECONDS)}.
+		 */
 		@Override
 		default boolean await(long timeoutMillis) throws InterruptedException {
 			return await(timeoutMillis, TimeUnit.MILLISECONDS);
@@ -61,6 +64,9 @@ public interface Awaitable {
 
 
 
+		/**
+		 * Returns this.
+		 */
 		@Override
 		default Awaitable.WithUnit toAwaitableWithUnit() {
 			return this;
@@ -122,6 +128,11 @@ public interface Awaitable {
 
 
 
+	/**
+	 * An {@link InterruptedException} that contains the {@link #getUncompleted() list of tasks}
+	 * passed to {@link Awaitable#awaitMultiple(Function, long, TimeUnit, boolean, Stream)} that
+	 * were not completed due to an interrupt.
+	 */
 	class CombinedInterruptedException extends InterruptedException {
 
 		final List<?> uncompleted;
@@ -136,18 +147,27 @@ public interface Awaitable {
 
 
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	static <T> List<T> awaitMultiple(
 		Function<T, Awaitable.WithUnit> adapter, long timeout, TimeUnit unit, Stream<T> objects
 	) throws CombinedInterruptedException {
 		return awaitMultiple(adapter, timeout, unit, true, objects);
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	static <T> List<T> awaitMultiple(
 		Function<T, Awaitable.WithUnit> adapter, long timeout, TimeUnit unit, List<T> objects
 	) throws CombinedInterruptedException {
 		return awaitMultiple(adapter, timeout, unit, true, objects.stream());
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
 		Function<T, Awaitable.WithUnit> adapter, long timeout, TimeUnit unit, T... objects
@@ -155,18 +175,27 @@ public interface Awaitable {
 		return awaitMultiple(adapter, timeout, unit, true, Arrays.stream(objects));
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	static <TaskT extends Awaitable.WithUnit> List<TaskT> awaitMultiple(
 		long timeout, TimeUnit unit, Stream<TaskT> tasks
 	) throws CombinedInterruptedException {
 		return awaitMultiple((t) -> t, timeout, unit, true, tasks);
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	static <TaskT extends Awaitable.WithUnit> List<TaskT> awaitMultiple(
 		long timeout, TimeUnit unit, List<TaskT> tasks
 	) throws CombinedInterruptedException {
 		return awaitMultiple((t) -> t, timeout, unit, true, tasks.stream());
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	@SafeVarargs
 	static <TaskT extends Awaitable.WithUnit> List<TaskT> awaitMultiple(
 		long timeout, TimeUnit unit, TaskT... tasks
@@ -176,6 +205,9 @@ public interface Awaitable {
 
 
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	static <T> List<T> awaitMultiple(
 			Function<T, Awaitable.WithUnit> adapter, long timeoutMillis, Stream<T> objects)
 			throws CombinedInterruptedException {
@@ -187,6 +219,9 @@ public interface Awaitable {
 				objects);
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	static <T> List<T> awaitMultiple(
 			Function<T, Awaitable.WithUnit> adapter, long timeoutMillis, List<T> objects)
 			throws CombinedInterruptedException {
@@ -198,6 +233,9 @@ public interface Awaitable {
 				objects.stream());
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
 			Function<T, Awaitable.WithUnit> adapter, long timeoutMillis, T... objects)
@@ -210,6 +248,9 @@ public interface Awaitable {
 				Arrays.stream(objects));
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
 			long timeoutMillis, Stream<TaskT> tasks)
 			throws CombinedInterruptedException {
@@ -221,6 +262,9 @@ public interface Awaitable {
 				tasks);
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
 			long timeoutMillis, List<TaskT> tasks)
 			throws CombinedInterruptedException {
@@ -232,6 +276,9 @@ public interface Awaitable {
 				tasks.stream());
 	}
 
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
 	@SafeVarargs
 	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
 			long timeoutMillis, TaskT... tasks)
@@ -247,7 +294,7 @@ public interface Awaitable {
 
 
 	/**
-	 * Creates {@link Awaitable.WithUnit} of {@link Thread#join(long) joining a thread}.
+	 * Creates {@link Awaitable.WithUnit} of {@link Thread#join(long, int) joining a thread}.
 	 */
 	static Awaitable.WithUnit ofJoin(Thread thread) {
 		return (timeout, unit) -> {
