@@ -1,18 +1,16 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.concurrent;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import com.google.common.collect.Comparators;
 import org.junit.Test;
 
 import pl.morgwai.base.concurrent.Awaitable.CombinedInterruptedException;
-import pl.morgwai.base.concurrent.Awaitable.GenericAwaitable;
 
 import static org.junit.Assert.*;
 
@@ -26,7 +24,7 @@ public class AwaitableTest {
 	public void testAwaitableOfJoinThread() throws InterruptedException {
 		final var threads = new Thread[3];
 		for (int i = 0; i < 3; i++) {
-			// it would be cool to create anonymous subclass of Thread that examines params of
+			// it would be cool to create anonymous subclass of Thread that verifies params of
 			// join(...), unfortunately join(...) is final...
 			threads[i] = new Thread(
 				() -> {
@@ -41,9 +39,8 @@ public class AwaitableTest {
 		final var uncompleted = Awaitable.awaitMultiple(
 				100_495l,
 				TimeUnit.MICROSECONDS,
-				Awaitable.ofJoin(threads[0]),
-				Awaitable.ofJoin(threads[1]),
-				Awaitable.ofJoin(threads[2]));
+				(thread) -> Awaitable.ofJoin(thread),
+				threads);
 		assertTrue("all tasks should be marked as completed", uncompleted.isEmpty());
 	}
 
@@ -57,28 +54,23 @@ public class AwaitableTest {
 		taskNumbersToFail.add(9);
 		taskNumbersToFail.add(14);
 		assertTrue("test data integrity check", taskNumbersToFail.last() < NUMBER_OF_TASKS);
-		final List<GenericAwaitable<Integer>> tasks = new ArrayList<>(NUMBER_OF_TASKS);
-		for (int i = 0; i < NUMBER_OF_TASKS; i++) {
-			final var taskNumber = i;
-			tasks.add(new GenericAwaitable<Integer>(
-				i,
-				(timeout, unit) -> {
+
+		final List<Integer> uncompletedTasks = Awaitable.awaitMultiple(
+				5l,
+				TimeUnit.DAYS,
+				(taskNumber) -> (timeout, unit) -> {
 					if (taskNumbersToFail.contains(taskNumber)) return false;
 					return true;
-				}
-			));
-		}
-
-		final List<GenericAwaitable<Integer>> uncompletedTasks = Awaitable.awaitMultiple(5l, tasks);
+				},
+				IntStream.range(0, 20).boxed());
 		assertEquals("number of uncompleted tasks should match",
 				taskNumbersToFail.size(), uncompletedTasks.size());
 		for (var task: uncompletedTasks) {
 			assertTrue("uncompleted task should be one of those expected to fail ",
-					taskNumbersToFail.contains(task.getSubject()));
+					taskNumbersToFail.contains(task));
 		}
 		assertTrue("uncompleted tasks should be in order", Comparators.isInStrictOrder(
-				uncompletedTasks,
-				Comparator.comparingInt(GenericAwaitable::getSubject)));
+				uncompletedTasks, Integer::compare));
 	}
 
 
@@ -146,7 +138,7 @@ public class AwaitableTest {
 		final long combinedTimeout = noTimeout ? 0l : 100l;
 		final AssertionError[] errorHolder = {null};
 		final boolean[] taskExecuted = {false, false, false, false};
-		final Awaitable.InMillis[] tasks = {
+		final Awaitable[] tasks = {
 			(timeoutMillis) -> {
 				taskExecuted[0] = true;
 				assertEquals("task-0 should get the full timeout",
@@ -218,7 +210,7 @@ public class AwaitableTest {
 		final long TIMEOUT = 100l;
 		final AssertionError[] errorHolder = {null};
 		final boolean[] taskExecuted = {false, false, false};
-		final Awaitable[] tasks = {
+		final Awaitable.WithUnit[] tasks = {
 			(timeout, unit) -> {
 				taskExecuted[0] = true;
 				assertEquals("task-0 should get the full timeout",
