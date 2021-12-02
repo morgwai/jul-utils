@@ -2,6 +2,7 @@
 package pl.morgwai.base.concurrent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
@@ -12,7 +13,6 @@ import org.junit.Test;
 
 import pl.morgwai.base.concurrent.Awaitable.CombinedInterruptedException;
 import pl.morgwai.base.concurrent.Awaitable.GenericAwaitable;
-import pl.morgwai.base.concurrent.Awaitable.InMillisAdapter;
 
 import static org.junit.Assert.*;
 
@@ -182,10 +182,8 @@ public class AwaitableTest {
 					} catch (CombinedInterruptedException e) {
 						final var uncompleted = e.getUncompleted();
 						assertEquals("2 tasks should not complete", 2, uncompleted.size());
-						assertSame("task-1 should not complete",
-								tasks[1], ((InMillisAdapter<?>) uncompleted.get(0)).getWrapped());
-						assertSame("task-3 should not complete",
-								tasks[3], ((InMillisAdapter<?>) uncompleted.get(1)).getWrapped());
+						assertSame("task-1 should not complete", tasks[1], uncompleted.get(0));
+						assertSame("task-3 should not complete", tasks[3], uncompleted.get(1));
 					}
 					for (int i = 0; i < taskExecuted.length; i++) {
 						assertTrue("task-" + i + " should be executed", taskExecuted[i]);
@@ -223,7 +221,7 @@ public class AwaitableTest {
 		final Awaitable[] tasks = {
 			(timeout, unit) -> {
 				taskExecuted[0] = true;
-				assertEquals("task-o should get the full timeout",
+				assertEquals("task-0 should get the full timeout",
 						TIMEOUT, unit.toMillis(timeout));
 				return true;
 			},
@@ -235,7 +233,7 @@ public class AwaitableTest {
 			},
 			(timeout, unit) -> {
 				taskExecuted[2] = true;
-				fail("2nd task should not be executed");
+				fail("task-2 should not be executed");
 				return true;
 			}
 		};
@@ -244,19 +242,22 @@ public class AwaitableTest {
 			() -> {
 				try {
 					try {
-						Awaitable.awaitMultiple(TIMEOUT, TimeUnit.MILLISECONDS, false, tasks);
+						Awaitable.awaitMultiple(
+								TIMEOUT,
+								TimeUnit.MILLISECONDS,
+								false,
+								(t)->t,
+								Arrays.stream(tasks));
 						fail("InterruptedException should be thrown");
 					} catch (CombinedInterruptedException e) {  // expected
 						final var uncompleted = e.getUncompleted();
 						assertEquals("2 tasks should not complete", 2, uncompleted.size());
-						assertSame("task-1 should not complete",
-								tasks[1], uncompleted.get(0));
-						assertSame("task-2 should not complete",
-								tasks[2], uncompleted.get(1));
+						assertSame("task-1 should not complete", tasks[1], uncompleted.get(0));
+						assertSame("task-2 should not complete", tasks[2], uncompleted.get(1));
 						for (int i = 0; i < taskExecuted.length - 1; i++) {
 							assertTrue("task-" + i + " should be executed", taskExecuted[i]);
 						}
-						assertFalse("task-" + (taskExecuted.length - 1) + " should NOT be executed",
+						assertFalse("the last task should NOT be executed",
 								taskExecuted[taskExecuted.length - 1]);
 					}
 				} catch (AssertionError e) {
