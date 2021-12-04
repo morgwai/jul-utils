@@ -76,6 +76,33 @@ public interface Awaitable {
 
 
 	/**
+	 * Creates {@link Awaitable.WithUnit} of {@link Thread#join(long, int) joining a thread}.
+	 */
+	static Awaitable.WithUnit ofJoin(Thread thread) {
+		return (timeout, unit) -> {
+				final var timeoutMillis = unit.toMillis(timeout);
+				if (timeout == 0l || unit.ordinal() >= TimeUnit.MILLISECONDS.ordinal()) {
+					thread.join(timeoutMillis);
+				} else {
+					thread.join(timeoutMillis, (int) (unit.toNanos(timeout) % 1000l));
+				}
+				return ! thread.isAlive();
+		};
+	}
+
+
+
+	/**
+	 * Creates {@link Awaitable.WithUnit} of
+	 * {@link ExecutorService#awaitTermination(long, TimeUnit) termination of an executor}.
+	 */
+	static Awaitable.WithUnit ofTermination(ExecutorService executor) {
+		return (timeout, unit) -> executor.awaitTermination(timeout, unit);
+	}
+
+
+
+	/**
 	 * Awaits for multiple timed blocking operations, such as {@link Thread#join(long)},
 	 * {@link Object#wait(long)}, {@link ExecutorService#awaitTermination(long, TimeUnit)} etc,
 	 * specified by {@code toAwaitable}.
@@ -175,34 +202,6 @@ public interface Awaitable {
 		return awaitMultiple(adapter, timeout, unit, true, Arrays.stream(objects));
 	}
 
-	/**
-	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
-	 */
-	static <TaskT extends Awaitable.WithUnit> List<TaskT> awaitMultiple(
-		long timeout, TimeUnit unit, Stream<TaskT> tasks
-	) throws CombinedInterruptedException {
-		return awaitMultiple((t) -> t, timeout, unit, true, tasks);
-	}
-
-	/**
-	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
-	 */
-	static <TaskT extends Awaitable.WithUnit> List<TaskT> awaitMultiple(
-		long timeout, TimeUnit unit, List<TaskT> tasks
-	) throws CombinedInterruptedException {
-		return awaitMultiple((t) -> t, timeout, unit, true, tasks.stream());
-	}
-
-	/**
-	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
-	 */
-	@SafeVarargs
-	static <TaskT extends Awaitable.WithUnit> List<TaskT> awaitMultiple(
-		long timeout, TimeUnit unit, TaskT... tasks
-	) throws CombinedInterruptedException {
-		return awaitMultiple((t) -> t, timeout, unit, true, Arrays.stream(tasks));
-	}
-
 
 
 	/**
@@ -212,7 +211,7 @@ public interface Awaitable {
 			Function<T, Awaitable.WithUnit> adapter, long timeoutMillis, Stream<T> objects)
 			throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
-				(object) -> adapter.apply(object).toAwaitableWithUnit(),
+				(object) -> adapter.apply(object),
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
@@ -226,7 +225,7 @@ public interface Awaitable {
 			Function<T, Awaitable.WithUnit> adapter, long timeoutMillis, List<T> objects)
 			throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
-				(object) -> adapter.apply(object).toAwaitableWithUnit(),
+				(object) -> adapter.apply(object),
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
@@ -241,35 +240,62 @@ public interface Awaitable {
 			Function<T, Awaitable.WithUnit> adapter, long timeoutMillis, T... objects)
 			throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
-				(object) -> adapter.apply(object).toAwaitableWithUnit(),
+				(object) -> adapter.apply(object),
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
 				Arrays.stream(objects));
 	}
 
+
+
 	/**
 	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
 	 */
 	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
-			long timeoutMillis, Stream<TaskT> tasks)
-			throws CombinedInterruptedException {
-		return Awaitable.awaitMultiple(
-				(task) -> task.toAwaitableWithUnit(),
-				timeoutMillis,
-				TimeUnit.MILLISECONDS,
-				true,
-				tasks);
+		long timeout, TimeUnit unit, Stream<TaskT> tasks
+	) throws CombinedInterruptedException {
+		return awaitMultiple(Awaitable::toAwaitableWithUnit, timeout, unit, true, tasks);
 	}
 
 	/**
 	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
 	 */
 	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
-			long timeoutMillis, List<TaskT> tasks)
-			throws CombinedInterruptedException {
+		long timeout, TimeUnit unit, List<TaskT> tasks
+	) throws CombinedInterruptedException {
+		return awaitMultiple(Awaitable::toAwaitableWithUnit, timeout, unit, true, tasks.stream());
+	}
+
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
+	@SafeVarargs
+	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
+		long timeout, TimeUnit unit, TaskT... tasks
+	) throws CombinedInterruptedException {
+		return awaitMultiple(
+				Awaitable::toAwaitableWithUnit, timeout, unit, true, Arrays.stream(tasks));
+	}
+
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
+	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
+		long timeoutMillis, Stream<TaskT> tasks
+	) throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
-				(task) -> task.toAwaitableWithUnit(),
+				Awaitable::toAwaitableWithUnit, timeoutMillis, TimeUnit.MILLISECONDS, true, tasks);
+	}
+
+	/**
+	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
+	 */
+	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
+		long timeoutMillis, List<TaskT> tasks
+	) throws CombinedInterruptedException {
+		return Awaitable.awaitMultiple(
+				Awaitable::toAwaitableWithUnit,
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
@@ -280,41 +306,13 @@ public interface Awaitable {
 	 * Calls {@link #awaitMultiple(Function, long, TimeUnit, boolean, Stream)}.
 	 */
 	@SafeVarargs
-	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(
-			long timeoutMillis, TaskT... tasks)
+	static <TaskT extends Awaitable> List<TaskT> awaitMultiple(long timeoutMillis, TaskT... tasks)
 			throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(
-				(task) -> task.toAwaitableWithUnit(),
+				Awaitable::toAwaitableWithUnit,
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
 				true,
 				Arrays.stream(tasks));
-	}
-
-
-
-	/**
-	 * Creates {@link Awaitable.WithUnit} of {@link Thread#join(long, int) joining a thread}.
-	 */
-	static Awaitable.WithUnit ofJoin(Thread thread) {
-		return (timeout, unit) -> {
-				final var timeoutMillis = unit.toMillis(timeout);
-				if (timeout == 0l || unit.ordinal() >= TimeUnit.MILLISECONDS.ordinal()) {
-					thread.join(timeoutMillis);
-				} else {
-					thread.join(timeoutMillis, (int) (unit.toNanos(timeout) % 1000l));
-				}
-				return ! thread.isAlive();
-		};
-	}
-
-
-
-	/**
-	 * Creates {@link Awaitable.WithUnit} of
-	 * {@link ExecutorService#awaitTermination(long, TimeUnit) termination of an executor}.
-	 */
-	static Awaitable.WithUnit ofTermination(ExecutorService executor) {
-		return (timeout, unit) -> executor.awaitTermination(timeout, unit);
 	}
 }

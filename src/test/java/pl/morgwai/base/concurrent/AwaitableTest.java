@@ -77,26 +77,26 @@ public class AwaitableTest {
 
 	@Test
 	public void testRemainingTimeoutAdjusting() throws InterruptedException {
-		final long FIRST_DUARATION = 10l;
-		final long COMBINED_TIMEOUT = FIRST_DUARATION + 30;
+		final long FIRST_DURATION = 10l;
+		final long COMBINED_TIMEOUT = FIRST_DURATION + 30l;
 		final long MAX_INACCURACY = 5l;  // 1ms is enough in 99.9% cases. See message below.
 
 		final var uncompleted = Awaitable.awaitMultiple(
 			COMBINED_TIMEOUT,
 			TimeUnit.MILLISECONDS,
-			(timeout, unit) -> {
+			(Awaitable.WithUnit) (timeout, unit) -> {
 				assertEquals("1st task should get the full timeout",
 						COMBINED_TIMEOUT, TimeUnit.MILLISECONDS.convert(timeout, unit));
-				Thread.sleep(FIRST_DUARATION);
+				Thread.sleep(FIRST_DURATION);
 				return true;
 			},
 			(timeout, unit) -> {
 				final var timeoutMillis = TimeUnit.MILLISECONDS.convert(timeout, unit);
 				assertTrue("timeouts of subsequent tasks should be correctly adjusted",
-						COMBINED_TIMEOUT - FIRST_DUARATION >= timeoutMillis);
-				assertTrue("timeout adjustment accuracy should be within range (this may sometimes"
-						+ " fail if another process was using much CPU, so just try again)",
-						COMBINED_TIMEOUT - FIRST_DUARATION - timeoutMillis <= MAX_INACCURACY);
+						COMBINED_TIMEOUT - FIRST_DURATION >= timeoutMillis);
+				assertTrue("timeout adjustment accuracy should be within range (this may fail if "
+						+ "another process was using much CPU or VM was warming up, so try again)",
+						COMBINED_TIMEOUT - FIRST_DURATION - timeoutMillis <= MAX_INACCURACY);
 				Thread.sleep(TimeUnit.MILLISECONDS.convert(timeout, unit) + MAX_INACCURACY);
 				return true;
 			},
@@ -115,16 +115,15 @@ public class AwaitableTest {
 	public void testNoTimeout() throws InterruptedException {
 		final var uncompleted = Awaitable.awaitMultiple(
 			0l,
-			TimeUnit.MILLISECONDS,
-			(timeout, unit) -> {
+			(Awaitable.WithUnit) (timeout, unit) -> {
 				assertEquals("there should be no timeout", 0l, timeout);
 				return true;
 			},
-			(timeout, unit) -> {
+			(Awaitable.WithUnit) (timeout, unit) -> {
 				assertEquals("there should be no timeout", 0l, timeout);
 				return true;
 			},
-			(timeout, unit) -> {
+			(Awaitable) (timeout) -> {
 				assertEquals("there should be no timeout", 0l, timeout);
 				return true;
 			}
@@ -169,7 +168,7 @@ public class AwaitableTest {
 			() -> {
 				try {
 					try {
-						Awaitable.awaitMultiple(combinedTimeout, tasks);
+						Awaitable.awaitMultiple(combinedTimeout, TimeUnit.MILLISECONDS, tasks);
 						fail("InterruptedException should be thrown");
 					} catch (CombinedInterruptedException e) {
 						final var uncompleted = e.getUncompleted();
