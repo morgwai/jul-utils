@@ -1,10 +1,12 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.concurrent;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.Comparators;
@@ -40,7 +42,7 @@ public class AwaitableTest {
 				100_495l,
 				TimeUnit.MICROSECONDS,
 				(thread) -> Awaitable.ofJoin(thread),
-				threads);
+				Arrays.asList(threads));
 		assertTrue("all tasks should be marked as completed", uncompleted.isEmpty());
 	}
 
@@ -62,7 +64,7 @@ public class AwaitableTest {
 					if (taskNumbersToFail.contains(taskNumber)) return false;
 					return true;
 				},
-				IntStream.range(0, 20).boxed());
+				IntStream.range(0, 20).boxed().collect(Collectors.toList()));
 		assertEquals("number of uncompleted tasks should match",
 				taskNumbersToFail.size(), uncompletedTasks.size());
 		for (var task: uncompletedTasks) {
@@ -81,16 +83,16 @@ public class AwaitableTest {
 		final long COMBINED_TIMEOUT = FIRST_DURATION + 30l;
 		final long MAX_INACCURACY = 5l;  // 1ms is enough in 99.9% cases. See message below.
 
-		final var allCompleted = Awaitable.awaitMultipleTasks(
+		final var allCompleted = Awaitable.awaitMultiple(
 			COMBINED_TIMEOUT,
 			TimeUnit.MILLISECONDS,
-			(Awaitable.WithUnit) (timeout, unit) -> {
+			(timeout, unit) -> {
 				assertEquals("1st task should get the full timeout",
 						COMBINED_TIMEOUT, TimeUnit.MILLISECONDS.convert(timeout, unit));
 				Thread.sleep(FIRST_DURATION);
 				return true;
 			},
-			(Awaitable.WithUnit) (timeout, unit) -> {
+			(timeout, unit) -> {
 				final var timeoutMillis = TimeUnit.MILLISECONDS.convert(timeout, unit);
 				assertTrue("timeouts of subsequent tasks should be correctly adjusted",
 						COMBINED_TIMEOUT - FIRST_DURATION >= timeoutMillis);
@@ -100,7 +102,7 @@ public class AwaitableTest {
 				Thread.sleep(TimeUnit.MILLISECONDS.convert(timeout, unit) + MAX_INACCURACY);
 				return true;
 			},
-			(Awaitable.WithUnit) (timeout, unit) -> {
+			(timeout, unit) -> {
 				assertEquals("after timeout has been exceeded subsequent task should get 1ns",
 						1l, TimeUnit.NANOSECONDS.convert(timeout, unit));
 				return true;
@@ -113,7 +115,7 @@ public class AwaitableTest {
 
 	@Test
 	public void testNoTimeout() throws InterruptedException {
-		final var allCompleted = Awaitable.awaitMultipleTasks(
+		final var allCompleted = Awaitable.awaitMultiple(
 			0l,
 			(timeout) -> {
 				assertEquals("there should be no timeout", 0l, timeout);
@@ -172,7 +174,8 @@ public class AwaitableTest {
 								combinedTimeout,
 								TimeUnit.MILLISECONDS,
 								(i) -> tasks[i],
-								IntStream.range(0, tasks.length).boxed());
+								IntStream.range(0, tasks.length).boxed()
+										.collect(Collectors.toList()));
 						fail("InterruptedException should be thrown");
 					} catch (CombinedInterruptedException e) {
 						final var uncompleted = e.getUncompleted();
@@ -242,7 +245,7 @@ public class AwaitableTest {
 								TimeUnit.MILLISECONDS,
 								false,
 								IntStream.range(0, tasks.length).boxed().map(
-										(i) -> Map.entry(i, tasks[i])));
+										(i) -> Map.entry(i, (Awaitable) tasks[i])).iterator());
 						fail("InterruptedException should be thrown");
 					} catch (CombinedInterruptedException e) {  // expected
 						final var uncompleted = e.getUncompleted();
