@@ -193,7 +193,7 @@ public interface Awaitable {
 
 
 	static <T> List<T> awaitMultiple(
-		long timeout, TimeUnit unit, Function<T, Awaitable> adapter, List<T> objects
+		long timeout, TimeUnit unit, Function<? super T, Awaitable> adapter, List<T> objects
 	) throws CombinedInterruptedException {
 		return awaitMultiple(
 				timeout,
@@ -205,7 +205,7 @@ public interface Awaitable {
 	}
 
 	static <T> List<T> awaitMultiple(
-		long timeoutMillis, Function<T, Awaitable> adapter, List<T> objects
+		long timeoutMillis, Function<? super T, Awaitable> adapter, List<T> objects
 	) throws CombinedInterruptedException {
 		return Awaitable.awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, adapter, objects);
 	}
