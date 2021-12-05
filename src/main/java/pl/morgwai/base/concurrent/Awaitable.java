@@ -6,10 +6,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 
 
@@ -17,7 +17,7 @@ import java.util.stream.Stream;
  * An object performing {@link #await(long) timed blocking operation}, such as
  * {@link Thread#join(long)}, {@link Object#wait(long)},
  * {@link ExecutorService#awaitTermination(long, TimeUnit)} etc.
- * @see #awaitMultiple(Function, long, TimeUnit, boolean, Stream)
+ * @see #awaitMultiple(long, TimeUnit, boolean, Iterator))
  */
 @FunctionalInterface
 public interface Awaitable {
@@ -105,96 +105,121 @@ public interface Awaitable {
 
 
 	/**
-	 * Awaits for multiple timed blocking operations, such as {@link Thread#join(long)},
-	 * {@link Object#wait(long)}, {@link ExecutorService#awaitTermination(long, TimeUnit)} etc,
-	 * specified by {@code toAwaitable}.
+	 * Awaits for multiple timed blocking operations} specified by {@code operationEntries}
+	 * Each entry maps an object on which the awaiting operation should be performed (for example a
+	 * {@link Thread} to be {@link Thread#join(long) joined} or an {@link ExecutorService executor}
+	 * to be {@link ExecutorService#awaitTermination(long, TimeUnit) terminated}) to
+	 * a {@link Awaitable closure performing the given operation}.
 	 * <p>
-	 * If {@code timeout} passes before completing all {@code tasks}, continues to await for
-	 * remaining tasks with timeout of 1 nanosecond.<br/>
+	 * If {@code timeout} passes before all operations are completed, continues to perform remaining
+	 * ones with timeout of 1 nanosecond.<br/>
 	 * If {@code continueOnInterrupt} is {@code true}, does so also in case
-	 * {@link InterruptedException} is thrown while awaiting.</p>
+	 * {@link InterruptedException} is thrown by any of the operations.</p>
 	 * <p>
 	 * Note: internally all time measurements are done in nanoseconds, hence this function is not
 	 * suitable for timeouts spanning several decades (not that it would make much sense, but I'm
 	 * just sayin...&nbsp;;-)&nbsp;&nbsp;).</p>
+	 * <p>
+	 * Note: this is a "low-level" core version: there are several "frontend" functions defined in
+	 * this class with more convenient API.</p>
 	 * @return an empty list if all tasks completed, list of uncompleted tasks otherwise.
+	 * @throws AwaitInterruptedException if any of the operations throws
+	 *     {@link InterruptedException}.
 	 */
 	static <T> List<T> awaitMultiple(
 		long timeout,
 		TimeUnit unit,
 		boolean continueOnInterrupt,
-		Iterator<Map.Entry<T, Awaitable>> taskEntries
-	) throws CombinedInterruptedException {
+		Iterator<Map.Entry<T, Awaitable>> operationEntries
+	) throws AwaitInterruptedException {
 		final var startTimestamp = System.nanoTime();
 		var remainingTime =  unit.toNanos(timeout);
-		final var uncompleted = new LinkedList<T>();
+		final var failedTasks = new LinkedList<T>();
+		final var interruptedTasks = new LinkedList<T>();
 		boolean interrupted = false;
-		while (taskEntries.hasNext()) {
-			final var taskEntry = taskEntries.next();
+		while (operationEntries.hasNext()) {
+			final var operationEntry = operationEntries.next();
 			try {
-				if ( ! taskEntry.getValue().toAwaitableWithUnit()
+				if ( ! operationEntry.getValue().toAwaitableWithUnit()
 						.await(remainingTime, TimeUnit.NANOSECONDS)) {
-					uncompleted.add(taskEntry.getKey());
+					failedTasks.add(operationEntry.getKey());
 				}
 				if (timeout != 0l && ! interrupted) {
 					remainingTime -= System.nanoTime() - startTimestamp;
 					if (remainingTime < 1l) remainingTime = 1l;
 				}
 			} catch (InterruptedException e) {
-				uncompleted.add(taskEntry.getKey());
+				interruptedTasks.add(operationEntry.getKey());
 				if ( ! continueOnInterrupt) {
-					while (taskEntries.hasNext()) uncompleted.add(taskEntries.next().getKey());
-					throw new CombinedInterruptedException(uncompleted);
+					throw new AwaitInterruptedException(
+							failedTasks, interruptedTasks, operationEntries);
 				}
 				remainingTime = 1l;
 				interrupted = true;
 			}
 		}
-		if (interrupted) throw new CombinedInterruptedException(uncompleted);
-		return uncompleted;
+		if (interrupted) {
+			throw new AwaitInterruptedException(
+					failedTasks, interruptedTasks, operationEntries);
+		}
+		return failedTasks;
 	}
 
 
 
 	/**
-	 * An {@link InterruptedException} that contains the {@link #getUncompleted() list of tasks}
-	 * passed to {@link Awaitable#awaitMultiple(Function, long, TimeUnit, boolean, Stream)} that
-	 * were not completed due to an interrupt.
+	 * An {@link InterruptedException} that contains await state of operations passed to one of
+	 * {@link Awaitable#awaitMultiple(long, TimeUnit, boolean, Iterator) awaitMultipe(...)
+	 * functions}.
 	 */
-	class CombinedInterruptedException extends InterruptedException {
+	class AwaitInterruptedException extends InterruptedException {
 
-		final List<?> uncompleted;
-		public List<?> getUncompleted() { return uncompleted; }
+		final List<?> failed;
+		public List<?> getFailed() { return failed; }
 
-		public CombinedInterruptedException(List<?> uncompleted) {
-			this.uncompleted = uncompleted;
+		final List<?> interrupted;
+		public List<?> getInterrupted() { return interrupted; }
+
+		final Iterator<Map.Entry<?, Awaitable>> unexecuted;
+		public Iterator<Map.Entry<?, Awaitable>> getUnexecuted() { return unexecuted; }
+
+		public <T> AwaitInterruptedException(
+				List<T> failed, List<T> interrupted, Iterator<Map.Entry<T, Awaitable>> unexecuted) {
+			this.failed = failed;
+			this.interrupted = interrupted;
+			@SuppressWarnings("unchecked") final Iterator<Map.Entry<?, Awaitable>> tmp =
+					(Iterator<Entry<?, Awaitable>>) (Iterator<?>) unexecuted;
+			this.unexecuted = tmp;
 		}
 
-		private static final long serialVersionUID = 1745601970917052988L;
+		private static final long serialVersionUID = 4840433122434594416L;
 	}
 
 
 
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
-		long timeout, TimeUnit unit, Map.Entry<T, Awaitable>... taskEntries
-	) throws CombinedInterruptedException {
-		return awaitMultiple(timeout, unit, true, Arrays.asList(taskEntries).iterator());
+		long timeout, TimeUnit unit, Map.Entry<T, Awaitable>... operationEntries
+	) throws AwaitInterruptedException {
+		return awaitMultiple(timeout, unit, true, Arrays.asList(operationEntries).iterator());
 	}
 
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
-		long timeoutMillis, Map.Entry<T, Awaitable>... taskEntries
-	) throws CombinedInterruptedException {
+		long timeoutMillis, Map.Entry<T, Awaitable>... operationEntries
+	) throws AwaitInterruptedException {
 		return awaitMultiple(
-				timeoutMillis, TimeUnit.MILLISECONDS, true, Arrays.asList(taskEntries).iterator());
+				timeoutMillis,
+				TimeUnit.MILLISECONDS,
+				true,
+				Arrays.asList(operationEntries).iterator());
 	}
 
 
 
 	static <T> List<T> awaitMultiple(
 		long timeout, TimeUnit unit, Function<? super T, Awaitable> adapter, List<T> objects
-	) throws CombinedInterruptedException {
+	) throws AwaitInterruptedException {
 		return awaitMultiple(
 				timeout,
 				unit,
@@ -206,38 +231,38 @@ public interface Awaitable {
 
 	static <T> List<T> awaitMultiple(
 		long timeoutMillis, Function<? super T, Awaitable> adapter, List<T> objects
-	) throws CombinedInterruptedException {
+	) throws AwaitInterruptedException {
 		return Awaitable.awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, adapter, objects);
 	}
 
 
 
-	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable... tasks)
-			throws CombinedInterruptedException {
+	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable... operations)
+			throws AwaitInterruptedException {
 		return (
 			awaitMultiple(
 				timeout,
 				unit,
 				true,
-				Arrays.stream(tasks)
-					.map((task) -> Map.entry(task, task))
+				Arrays.stream(operations)
+					.map((operation) -> Map.entry(operation, operation))
 					.iterator()
 			).isEmpty()
 		);
 	}
 
-	static boolean awaitMultiple(long timeoutMillis, Awaitable... tasks)
-			throws CombinedInterruptedException {
-		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, tasks);
+	static boolean awaitMultiple(long timeoutMillis, Awaitable... operations)
+			throws AwaitInterruptedException {
+		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, operations);
 	}
 
-	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable.WithUnit... tasks)
-			throws CombinedInterruptedException {
-		return awaitMultiple(timeout, unit, (Awaitable[]) tasks);
+	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable.WithUnit... operations)
+			throws AwaitInterruptedException {
+		return awaitMultiple(timeout, unit, (Awaitable[]) operations);
 	}
 
-	static boolean awaitMultiple(long timeoutMillis, Awaitable.WithUnit... tasks)
-			throws CombinedInterruptedException {
-		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, (Awaitable[]) tasks);
+	static boolean awaitMultiple(long timeoutMillis, Awaitable.WithUnit... operations)
+			throws AwaitInterruptedException {
+		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, (Awaitable[]) operations);
 	}
 }

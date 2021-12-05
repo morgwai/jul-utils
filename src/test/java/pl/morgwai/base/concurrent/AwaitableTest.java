@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
 import com.google.common.collect.Comparators;
 import org.junit.Test;
 
-import pl.morgwai.base.concurrent.Awaitable.CombinedInterruptedException;
+import pl.morgwai.base.concurrent.Awaitable.AwaitInterruptedException;
 
 import static org.junit.Assert.*;
 
@@ -38,12 +38,12 @@ public class AwaitableTest {
 			threads[i].start();
 		}
 
-		final var uncompleted = Awaitable.awaitMultiple(
+		final var failed = Awaitable.awaitMultiple(
 				100_495l,
 				TimeUnit.MICROSECONDS,
 				(thread) -> Awaitable.ofJoin(thread),
 				Arrays.asList(threads));
-		assertTrue("all tasks should be marked as completed", uncompleted.isEmpty());
+		assertTrue("all tasks should be marked as completed", failed.isEmpty());
 	}
 
 
@@ -51,28 +51,28 @@ public class AwaitableTest {
 	@Test
 	public void testNotAllTasksCompleted() throws InterruptedException {
 		final var NUMBER_OF_TASKS = 20;
-		final var taskNumbersToFail = new TreeSet<Integer>();
-		taskNumbersToFail.add(7);
-		taskNumbersToFail.add(9);
-		taskNumbersToFail.add(14);
-		assertTrue("test data integrity check", taskNumbersToFail.last() < NUMBER_OF_TASKS);
+		final var tasksToFail = new TreeSet<Integer>();
+		tasksToFail.add(7);
+		tasksToFail.add(9);
+		tasksToFail.add(14);
+		assertTrue("test data integrity check", tasksToFail.last() < NUMBER_OF_TASKS);
 
-		final List<Integer> uncompletedTasks = Awaitable.awaitMultiple(
+		final List<Integer> failed = Awaitable.awaitMultiple(
 				5l,
 				TimeUnit.DAYS,
 				(taskNumber) -> (Awaitable.WithUnit) (timeout, unit) -> {
-					if (taskNumbersToFail.contains(taskNumber)) return false;
+					if (tasksToFail.contains(taskNumber)) return false;
 					return true;
 				},
 				IntStream.range(0, 20).boxed().collect(Collectors.toList()));
-		assertEquals("number of uncompleted tasks should match",
-				taskNumbersToFail.size(), uncompletedTasks.size());
-		for (var task: uncompletedTasks) {
-			assertTrue("uncompleted task should be one of those expected to fail ",
-					taskNumbersToFail.contains(task));
+		assertEquals("number of failed tasks should match",
+				tasksToFail.size(), failed.size());
+		for (var task: failed) {
+			assertTrue("failed task should be one of those expected to fail ",
+					tasksToFail.contains(task));
 		}
 		assertTrue("uncompleted tasks should be in order", Comparators.isInStrictOrder(
-				uncompletedTasks, Integer::compare));
+				failed, Integer::compare));
 	}
 
 
@@ -177,11 +177,14 @@ public class AwaitableTest {
 								IntStream.range(0, tasks.length).boxed()
 										.collect(Collectors.toList()));
 						fail("InterruptedException should be thrown");
-					} catch (CombinedInterruptedException e) {
-						final var uncompleted = e.getUncompleted();
-						assertEquals("2 tasks should not complete", 2, uncompleted.size());
-						assertEquals("task-1 should not complete", 1, uncompleted.get(0));
-						assertEquals("task-3 should not complete", 3, uncompleted.get(1));
+					} catch (AwaitInterruptedException e) {
+						final var failed = e.getFailed();
+						final var interrupted = e.getInterrupted();
+						assertEquals("1 task should fail", 1, failed.size());
+						assertEquals("1 task should be interrupted", 1, interrupted.size());
+						assertFalse("all tasks should be exexcuted", e.getUnexecuted().hasNext());
+						assertEquals("task-1 should be interrupted", 1, interrupted.get(0));
+						assertEquals("task-3 should fail", 3, failed.get(0));
 					}
 					for (int i = 0; i < taskExecuted.length; i++) {
 						assertTrue("task-" + i + " should be executed", taskExecuted[i]);
@@ -247,11 +250,19 @@ public class AwaitableTest {
 								IntStream.range(0, tasks.length).boxed().map(
 										(i) -> Map.entry(i, (Awaitable) tasks[i])).iterator());
 						fail("InterruptedException should be thrown");
-					} catch (CombinedInterruptedException e) {  // expected
-						final var uncompleted = e.getUncompleted();
-						assertEquals("2 tasks should not complete", 2, uncompleted.size());
-						assertEquals("task-1 should not complete", 1, uncompleted.get(0));
-						assertEquals("task-2 should not complete", 2, uncompleted.get(1));
+					} catch (AwaitInterruptedException e) {
+						final var interrupted = e.getInterrupted();
+						final var unexecuted = e.getUnexecuted();
+						assertTrue("no task should fail", e.getFailed().isEmpty());
+						assertEquals("1 task should be interrupted", 1, interrupted.size());
+						assertEquals("task-1 should be interrupted", 1, interrupted.get(0));
+						assertTrue("not all tasks should be exexcuted",
+								e.getUnexecuted().hasNext());
+						assertEquals("task-2 should not be exeucted", 2,
+								unexecuted.next().getKey());
+						assertFalse("only 1 task should not be exexcuted",
+								e.getUnexecuted().hasNext());
+
 						for (int i = 0; i < taskExecuted.length - 1; i++) {
 							assertTrue("task-" + i + " should be executed", taskExecuted[i]);
 						}
