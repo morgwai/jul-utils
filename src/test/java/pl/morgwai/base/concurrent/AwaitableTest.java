@@ -3,7 +3,6 @@ package pl.morgwai.base.concurrent;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -238,17 +237,16 @@ public class AwaitableTest {
 				return true;
 			}
 		};
-
 		final var awaitingThread = new Thread(
 			() -> {
 				try {
 					try {
 						Awaitable.awaitMultiple(
 								TIMEOUT,
-								TimeUnit.MILLISECONDS,
 								false,
-								IntStream.range(0, tasks.length).boxed().map(
-										(i) -> Map.entry(i, (Awaitable) tasks[i])).iterator());
+								(i) -> tasks[i],
+								IntStream.range(0, tasks.length).boxed()
+										.collect(Collectors.toList()));
 						fail("InterruptedException should be thrown");
 					} catch (AwaitInterruptedException e) {
 						final var interrupted = e.getInterrupted();
@@ -274,6 +272,7 @@ public class AwaitableTest {
 				}
 			}
 		);
+
 		awaitingThread.start();
 		Thread.sleep(5l);
 		awaitingThread.interrupt();

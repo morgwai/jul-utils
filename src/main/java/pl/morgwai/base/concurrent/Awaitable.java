@@ -199,6 +199,30 @@ public interface Awaitable {
 
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
+		long timeout,
+		TimeUnit unit,
+		boolean continueOnInterrupt,
+		Map.Entry<T, Awaitable>... operationEntries
+	) throws AwaitInterruptedException {
+		return awaitMultiple(
+				timeout, unit, continueOnInterrupt, Arrays.asList(operationEntries).iterator());
+	}
+
+	@SafeVarargs
+	static <T> List<T> awaitMultiple(
+		long timeoutMillis,
+		boolean continueOnInterrupt,
+		Map.Entry<T, Awaitable>... operationEntries
+	) throws AwaitInterruptedException {
+		return awaitMultiple(
+				timeoutMillis,
+				TimeUnit.MILLISECONDS,
+				continueOnInterrupt,
+				Arrays.asList(operationEntries).iterator());
+	}
+
+	@SafeVarargs
+	static <T> List<T> awaitMultiple(
 		long timeout, TimeUnit unit, Map.Entry<T, Awaitable>... operationEntries
 	) throws AwaitInterruptedException {
 		return awaitMultiple(timeout, unit, true, Arrays.asList(operationEntries).iterator());
@@ -218,32 +242,54 @@ public interface Awaitable {
 
 
 	static <T> List<T> awaitMultiple(
-		long timeout, TimeUnit unit, Function<? super T, Awaitable> adapter, List<T> objects
+		long timeout,
+		TimeUnit unit,
+		boolean continueOnInterrupt,
+		Function<? super T, Awaitable> adapter,
+		List<T> objects
 	) throws AwaitInterruptedException {
 		return awaitMultiple(
 				timeout,
 				unit,
-				true,
+				continueOnInterrupt,
 				objects.stream()
 					.map((object) -> Map.entry(object, adapter.apply(object)))
 					.iterator());
 	}
 
 	static <T> List<T> awaitMultiple(
+		long timeoutMillis,
+		boolean continueOnInterrupt,
+		Function<? super T, Awaitable> adapter,
+		List<T> objects
+	) throws AwaitInterruptedException {
+		return Awaitable.awaitMultiple(
+				timeoutMillis, TimeUnit.MILLISECONDS, continueOnInterrupt, adapter, objects);
+	}
+
+	static <T> List<T> awaitMultiple(
+		long timeout, TimeUnit unit, Function<? super T, Awaitable> adapter, List<T> objects
+	) throws AwaitInterruptedException {
+		return Awaitable.awaitMultiple(timeout, unit, true, adapter, objects);
+	}
+
+	static <T> List<T> awaitMultiple(
 		long timeoutMillis, Function<? super T, Awaitable> adapter, List<T> objects
 	) throws AwaitInterruptedException {
-		return Awaitable.awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, adapter, objects);
+		return Awaitable.awaitMultiple(
+				timeoutMillis, TimeUnit.MILLISECONDS, true, adapter, objects);
 	}
 
 
 
-	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable... operations)
-			throws AwaitInterruptedException {
+	static boolean awaitMultiple(
+		long timeout, TimeUnit unit, boolean continueOnInterrupt, Awaitable... operations
+	) throws AwaitInterruptedException {
 		return (
 			awaitMultiple(
 				timeout,
 				unit,
-				true,
+				continueOnInterrupt,
 				Arrays.stream(operations)
 					.map((operation) -> Map.entry(operation, operation))
 					.iterator()
@@ -251,18 +297,43 @@ public interface Awaitable {
 		);
 	}
 
+	static boolean awaitMultiple(
+		long timeoutMillis, boolean continueOnInterrupt, Awaitable... operations
+	) throws AwaitInterruptedException {
+		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, continueOnInterrupt, operations);
+	}
+
+	static boolean awaitMultiple(
+		long timeout, TimeUnit unit, boolean continueOnInterrupt, Awaitable.WithUnit... operations
+	) throws AwaitInterruptedException {
+		return awaitMultiple(timeout, unit, continueOnInterrupt, (Awaitable[]) operations);
+	}
+
+	static boolean awaitMultiple(
+		long timeoutMillis, boolean continueOnInterrupt, Awaitable.WithUnit... operations
+	) throws AwaitInterruptedException {
+		return awaitMultiple(
+			timeoutMillis, TimeUnit.MILLISECONDS, continueOnInterrupt, (Awaitable[]) operations
+		);
+	}
+
+	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable... operations)
+			throws AwaitInterruptedException {
+		return awaitMultiple(timeout, unit, true, operations);
+	}
+
 	static boolean awaitMultiple(long timeoutMillis, Awaitable... operations)
 			throws AwaitInterruptedException {
-		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, operations);
+		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, true, operations);
 	}
 
 	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable.WithUnit... operations)
 			throws AwaitInterruptedException {
-		return awaitMultiple(timeout, unit, (Awaitable[]) operations);
+		return awaitMultiple(timeout, unit, true, (Awaitable[]) operations);
 	}
 
 	static boolean awaitMultiple(long timeoutMillis, Awaitable.WithUnit... operations)
 			throws AwaitInterruptedException {
-		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, (Awaitable[]) operations);
+		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, true, (Awaitable[]) operations);
 	}
 }
