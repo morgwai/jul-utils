@@ -33,7 +33,7 @@ public interface Awaitable {
 
 
 	/**
-	 * Adapts {@link Awaitable} to {@link Awaitable.WithUnit}.
+	 * Adapts this {@code Awaitable} to {@link Awaitable.WithUnit}.
 	 * <p>
 	 * Timeout supplied to {@link Awaitable.WithUnit#await(long, TimeUnit)} is converted to millis
 	 * using {@link TimeUnit#convert(long, TimeUnit)}, except when it is smaller than 1ms yet
@@ -52,6 +52,10 @@ public interface Awaitable {
 	@FunctionalInterface
 	interface WithUnit extends Awaitable {
 
+		/**
+		 * A version of {@link #await(long)} method that additionally accepts {@link TimeUnit}
+		 * param.
+		 */
 		boolean await(long timeout, TimeUnit unit) throws InterruptedException;
 
 
@@ -105,7 +109,7 @@ public interface Awaitable {
 
 
 	/**
-	 * Awaits for multiple timed blocking operations} specified by {@code operationEntries}
+	 * Awaits for multiple timed blocking operations} specified by {@code operationEntries}.
 	 * Each entry maps an object on which the awaiting operation should be performed (for example a
 	 * {@link Thread} to be {@link Thread#join(long) joined} or an {@link ExecutorService executor}
 	 * to be {@link ExecutorService#awaitTermination(long, TimeUnit) terminated}) to
@@ -121,7 +125,20 @@ public interface Awaitable {
 	 * just sayin...&nbsp;;-)&nbsp;&nbsp;).</p>
 	 * <p>
 	 * Note: this is a "low-level" core version: there are several "frontend" functions defined in
-	 * this class with more convenient API.</p>
+	 * this class with more convenient API divided into 3 families:<ul>
+	 *   <li>a family that accepts varargs of {@code operationEntries}
+	 *     ({@code Map.Entry<T, Awaitable>}). This family returns a list of entry keys for which
+	 *     their respective {@link Awaitable operations} failed (returned {@code false})</li>
+	 *   <li>a family that accepts a {@link List} of objects and an {@code adapter} {@link Function}
+	 *     that returns an {@link Awaitable operation} for a given object. Similarly to the
+	 *     previous family, this one returns a list of objects for which their respective
+	 *     {@link Awaitable operations} failed (returned {@code false})</li>
+	 *   <li>a family that accepts varargs of {@link Awaitable operations}. This family returns
+	 *     {@code true} if all {@code operations} succeeded, {@code false} otherwise.</li>
+	 * </ul>
+	 * Within each family there are variants that either accept {@code (long timeout, TimeUnit
+	 * unit)} params or a single {@code long timeoutMillis} param and either accept
+	 * {@code boolean continueOnInterrupt} param or always pass {@code true}.</p>
 	 * @return an empty list if all tasks completed, list of uncompleted tasks otherwise.
 	 * @throws AwaitInterruptedException if any of the operations throws
 	 *     {@link InterruptedException}.
@@ -197,6 +214,9 @@ public interface Awaitable {
 
 
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
 		long timeout,
@@ -208,6 +228,9 @@ public interface Awaitable {
 				timeout, unit, continueOnInterrupt, Arrays.asList(operationEntries).iterator());
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
 		long timeoutMillis,
@@ -221,6 +244,9 @@ public interface Awaitable {
 				Arrays.asList(operationEntries).iterator());
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
 		long timeout, TimeUnit unit, Map.Entry<T, Awaitable>... operationEntries
@@ -228,6 +254,9 @@ public interface Awaitable {
 		return awaitMultiple(timeout, unit, true, Arrays.asList(operationEntries).iterator());
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
 		long timeoutMillis, Map.Entry<T, Awaitable>... operationEntries
@@ -241,6 +270,9 @@ public interface Awaitable {
 
 
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static <T> List<T> awaitMultiple(
 		long timeout,
 		TimeUnit unit,
@@ -257,6 +289,9 @@ public interface Awaitable {
 					.iterator());
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static <T> List<T> awaitMultiple(
 		long timeoutMillis,
 		boolean continueOnInterrupt,
@@ -267,12 +302,18 @@ public interface Awaitable {
 				timeoutMillis, TimeUnit.MILLISECONDS, continueOnInterrupt, adapter, objects);
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static <T> List<T> awaitMultiple(
 		long timeout, TimeUnit unit, Function<? super T, Awaitable> adapter, List<T> objects
 	) throws AwaitInterruptedException {
 		return Awaitable.awaitMultiple(timeout, unit, true, adapter, objects);
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static <T> List<T> awaitMultiple(
 		long timeoutMillis, Function<? super T, Awaitable> adapter, List<T> objects
 	) throws AwaitInterruptedException {
@@ -282,6 +323,9 @@ public interface Awaitable {
 
 
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static boolean awaitMultiple(
 		long timeout, TimeUnit unit, boolean continueOnInterrupt, Awaitable... operations
 	) throws AwaitInterruptedException {
@@ -297,18 +341,27 @@ public interface Awaitable {
 		);
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static boolean awaitMultiple(
 		long timeoutMillis, boolean continueOnInterrupt, Awaitable... operations
 	) throws AwaitInterruptedException {
 		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, continueOnInterrupt, operations);
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static boolean awaitMultiple(
 		long timeout, TimeUnit unit, boolean continueOnInterrupt, Awaitable.WithUnit... operations
 	) throws AwaitInterruptedException {
 		return awaitMultiple(timeout, unit, continueOnInterrupt, (Awaitable[]) operations);
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static boolean awaitMultiple(
 		long timeoutMillis, boolean continueOnInterrupt, Awaitable.WithUnit... operations
 	) throws AwaitInterruptedException {
@@ -317,21 +370,33 @@ public interface Awaitable {
 		);
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable... operations)
 			throws AwaitInterruptedException {
 		return awaitMultiple(timeout, unit, true, operations);
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static boolean awaitMultiple(long timeoutMillis, Awaitable... operations)
 			throws AwaitInterruptedException {
 		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, true, operations);
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable.WithUnit... operations)
 			throws AwaitInterruptedException {
 		return awaitMultiple(timeout, unit, true, (Awaitable[]) operations);
 	}
 
+	/**
+	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 */
 	static boolean awaitMultiple(long timeoutMillis, Awaitable.WithUnit... operations)
 			throws AwaitInterruptedException {
 		return awaitMultiple(timeoutMillis, TimeUnit.MILLISECONDS, true, (Awaitable[]) operations);
