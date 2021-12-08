@@ -3,6 +3,7 @@ package pl.morgwai.base.concurrent;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -138,43 +139,38 @@ public class AwaitableTest {
 		final long combinedTimeout = noTimeout ? 0l : 100l;
 		final AssertionError[] errorHolder = {null};
 		final boolean[] taskExecuted = {false, false, false, false};
-		final Awaitable[] tasks = {
-			(timeoutMillis) -> {
-				taskExecuted[0] = true;
-				assertEquals("task-0 should get the full timeout",
-						combinedTimeout, timeoutMillis);
-				return true;
-			},
-			(timeoutMillis) -> {
-				taskExecuted[1] = true;
-				Thread.sleep(100l);
-				fail("InterruptedException should be thrown");
-				return true;
-			},
-			(timeoutMillis) -> {
-				taskExecuted[2] = true;
-				assertEquals("after an interrupt tasks should get 1ms timeout",
-						1l, timeoutMillis);
-				return true;
-			},
-			(timeoutMillis) -> {
-				taskExecuted[3] = true;
-				assertEquals("after an interrupt tasks should get 1ms timeout",
-						1l, timeoutMillis);
-				return false;
-			}
-		};
-
 		final var awaitingThread = new Thread(
 			() -> {
 				try {
 					try {
 						Awaitable.awaitMultiple(
-								combinedTimeout,
-								TimeUnit.MILLISECONDS,
-								(i) -> tasks[i],
-								IntStream.range(0, tasks.length).boxed()
-										.collect(Collectors.toList()));
+							combinedTimeout,
+							TimeUnit.MILLISECONDS,
+							Map.entry(0, (timeoutMillis) -> {
+								taskExecuted[0] = true;
+								assertEquals("task-0 should get the full timeout",
+										combinedTimeout, timeoutMillis);
+								return true;
+							}),
+							Map.entry(1, (timeoutMillis) -> {
+								taskExecuted[1] = true;
+								Thread.sleep(100l);
+								fail("InterruptedException should be thrown");
+								return true;
+							}),
+							Map.entry(2, (timeoutMillis) -> {
+								taskExecuted[2] = true;
+								assertEquals("after an interrupt tasks should get 1ms timeout",
+										1l, timeoutMillis);
+								return true;
+							}),
+							Map.entry(3, (timeoutMillis) -> {
+								taskExecuted[3] = true;
+								assertEquals("after an interrupt tasks should get 1ms timeout",
+										1l, timeoutMillis);
+								return false;
+							})
+						);
 						fail("InterruptedException should be thrown");
 					} catch (AwaitInterruptedException e) {
 						final var failed = e.getFailed();
@@ -193,6 +189,7 @@ public class AwaitableTest {
 				}
 			}
 		);
+
 		awaitingThread.start();
 		Thread.sleep(5l);
 		awaitingThread.interrupt();
