@@ -5,8 +5,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -147,7 +145,7 @@ public interface Awaitable {
 		long timeout,
 		TimeUnit unit,
 		boolean continueOnInterrupt,
-		Iterator<Map.Entry<T, Awaitable>> operationEntries
+		Iterator<Entry<T>> operationEntries
 	) throws AwaitInterruptedException {
 		final var startTimestamp = System.nanoTime();
 		var remainingTime =  unit.toNanos(timeout);
@@ -157,16 +155,16 @@ public interface Awaitable {
 		while (operationEntries.hasNext()) {
 			final var operationEntry = operationEntries.next();
 			try {
-				if ( ! operationEntry.getValue().toAwaitableWithUnit()
+				if ( ! operationEntry.operation.toAwaitableWithUnit()
 						.await(remainingTime, TimeUnit.NANOSECONDS)) {
-					failedTasks.add(operationEntry.getKey());
+					failedTasks.add(operationEntry.object);
 				}
 				if (timeout != 0l && ! interrupted) {
 					remainingTime -= System.nanoTime() - startTimestamp;
 					if (remainingTime < 1l) remainingTime = 1l;
 				}
 			} catch (InterruptedException e) {
-				interruptedTasks.add(operationEntry.getKey());
+				interruptedTasks.add(operationEntry.object);
 				if ( ! continueOnInterrupt) {
 					throw new AwaitInterruptedException(
 							failedTasks, interruptedTasks, operationEntries);
@@ -185,6 +183,30 @@ public interface Awaitable {
 
 
 	/**
+	 * Maps {@link #getObject() object} to {@link #getOperation() Awaitable operation} to perform on
+	 * it by {@link Awaitable#awaitMultiple(long, TimeUnit, boolean, Iterator)}.
+	 */
+	class Entry<T> {
+
+		final T object;
+		public T getObject() { return object; }
+
+		final Awaitable operation;
+		public Awaitable getOperation() { return operation; }
+
+		public Entry(T object, Awaitable operation) {
+			this.object = object;
+			this.operation = operation;
+		}
+	}
+
+	static <T> Entry<T> entry(T object, Awaitable operation) {
+		return new Entry<T>(object, operation);
+	}
+
+
+
+	/**
 	 * An {@link InterruptedException} that contains await state of operations passed to one of
 	 * {@link Awaitable#awaitMultiple(long, TimeUnit, boolean, Iterator) awaitMultipe(...)
 	 * functions}.
@@ -197,15 +219,15 @@ public interface Awaitable {
 		final List<?> interrupted;
 		public List<?> getInterrupted() { return interrupted; }
 
-		final Iterator<Map.Entry<?, Awaitable>> unexecuted;
-		public Iterator<Map.Entry<?, Awaitable>> getUnexecuted() { return unexecuted; }
+		final Iterator<Entry<?>> unexecuted;
+		public Iterator<Entry<?>> getUnexecuted() { return unexecuted; }
 
 		public <T> AwaitInterruptedException(
-				List<T> failed, List<T> interrupted, Iterator<Map.Entry<T, Awaitable>> unexecuted) {
+				List<T> failed, List<T> interrupted, Iterator<Entry<T>> unexecuted) {
 			this.failed = failed;
 			this.interrupted = interrupted;
-			@SuppressWarnings("unchecked") final Iterator<Map.Entry<?, Awaitable>> tmp =
-					(Iterator<Entry<?, Awaitable>>) (Iterator<?>) unexecuted;
+			@SuppressWarnings("unchecked") final Iterator<Entry<?>> tmp =
+					(Iterator<Entry<?>>) (Iterator<?>) unexecuted;
 			this.unexecuted = tmp;
 		}
 
@@ -219,10 +241,7 @@ public interface Awaitable {
 	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
-		long timeout,
-		TimeUnit unit,
-		boolean continueOnInterrupt,
-		Map.Entry<T, Awaitable>... operationEntries
+		long timeout, TimeUnit unit, boolean continueOnInterrupt, Entry<T>... operationEntries
 	) throws AwaitInterruptedException {
 		return awaitMultiple(
 				timeout, unit, continueOnInterrupt, Arrays.asList(operationEntries).iterator());
@@ -233,9 +252,7 @@ public interface Awaitable {
 	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
-		long timeoutMillis,
-		boolean continueOnInterrupt,
-		Map.Entry<T, Awaitable>... operationEntries
+		long timeoutMillis, boolean continueOnInterrupt, Entry<T>... operationEntries
 	) throws AwaitInterruptedException {
 		return awaitMultiple(
 				timeoutMillis,
@@ -248,9 +265,8 @@ public interface Awaitable {
 	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
 	 */
 	@SafeVarargs
-	static <T> List<T> awaitMultiple(
-		long timeout, TimeUnit unit, Map.Entry<T, Awaitable>... operationEntries
-	) throws AwaitInterruptedException {
+	static <T> List<T> awaitMultiple(long timeout, TimeUnit unit, Entry<T>... operationEntries)
+			throws AwaitInterruptedException {
 		return awaitMultiple(timeout, unit, true, Arrays.asList(operationEntries).iterator());
 	}
 
@@ -258,9 +274,8 @@ public interface Awaitable {
 	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
 	 */
 	@SafeVarargs
-	static <T> List<T> awaitMultiple(
-		long timeoutMillis, Map.Entry<T, Awaitable>... operationEntries
-	) throws AwaitInterruptedException {
+	static <T> List<T> awaitMultiple(long timeoutMillis, Entry<T>... operationEntries)
+			throws AwaitInterruptedException {
 		return awaitMultiple(
 				timeoutMillis,
 				TimeUnit.MILLISECONDS,
@@ -285,7 +300,7 @@ public interface Awaitable {
 				unit,
 				continueOnInterrupt,
 				objects.stream()
-					.map((object) -> Map.entry(object, adapter.apply(object)))
+					.map((object) -> entry(object, adapter.apply(object)))
 					.iterator());
 	}
 
@@ -335,7 +350,7 @@ public interface Awaitable {
 				unit,
 				continueOnInterrupt,
 				Arrays.stream(operations)
-					.map((operation) -> Map.entry(operation, operation))
+					.map((operation) -> entry(operation, operation))
 					.iterator()
 			).isEmpty()
 		);

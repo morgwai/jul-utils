@@ -15,6 +15,7 @@ import org.junit.Test;
 import pl.morgwai.base.concurrent.Awaitable.AwaitInterruptedException;
 
 import static org.junit.Assert.*;
+import static pl.morgwai.base.concurrent.Awaitable.entry;
 
 
 
@@ -146,25 +147,25 @@ public class AwaitableTest {
 						Awaitable.awaitMultiple(
 							combinedTimeout,
 							TimeUnit.MILLISECONDS,
-							Map.entry(0, (timeoutMillis) -> {
+							entry(0, (timeoutMillis) -> {
 								taskExecuted[0] = true;
 								assertEquals("task-0 should get the full timeout",
 										combinedTimeout, timeoutMillis);
 								return true;
 							}),
-							Map.entry(1, (timeoutMillis) -> {
+							entry(1, (timeoutMillis) -> {
 								taskExecuted[1] = true;
 								Thread.sleep(100l);
 								fail("InterruptedException should be thrown");
 								return true;
 							}),
-							Map.entry(2, (timeoutMillis) -> {
+							entry(2, (timeoutMillis) -> {
 								taskExecuted[2] = true;
 								assertEquals("after an interrupt tasks should get 1ms timeout",
 										1l, timeoutMillis);
 								return true;
 							}),
-							Map.entry(3, (timeoutMillis) -> {
+							entry(3, (timeoutMillis) -> {
 								taskExecuted[3] = true;
 								assertEquals("after an interrupt tasks should get 1ms timeout",
 										1l, timeoutMillis);
@@ -254,7 +255,7 @@ public class AwaitableTest {
 						assertTrue("not all tasks should be exexcuted",
 								e.getUnexecuted().hasNext());
 						assertEquals("task-2 should not be exeucted", 2,
-								unexecuted.next().getKey());
+								unexecuted.next().getObject());
 						assertFalse("only 1 task should not be exexcuted",
 								e.getUnexecuted().hasNext());
 
