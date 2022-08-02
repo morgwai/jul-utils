@@ -61,7 +61,7 @@ public class JulConfig {
 		}
 
 		if (props.size() == 0) return;
-		var outputBytes = new ByteArrayOutputStream(characterCount * 2);// 2 is in case of utf chars
+		final var outputBytes = new ByteArrayOutputStream(characterCount * 2);  // *2 for utf chars
 		try {
 			props.store(outputBytes, null);
 			var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray());
