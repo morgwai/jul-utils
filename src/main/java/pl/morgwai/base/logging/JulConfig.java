@@ -13,9 +13,9 @@ import java.util.logging.LogManager;
 /**
  * Utility to override {@code java.util.logging} properties with values from system properties.
  * <p>
- * Note: overriding can be applied to an existing java app at startup: just add java-utils jar to
- * the class-path and define system properties as described in {@link #JulConfig()} and
- * {@link #overrideLogLevels(String...)}.</p>
+ * Note: overriding can be applied to an existing java app at startup: just add
+ * {@code java-utils jar} to the class-path and define system properties as described in
+ * {@link #JulConfig()} and {@link #overrideLogLevels(String...)}.</p>
  */
 public class JulConfig {
 
@@ -26,9 +26,9 @@ public class JulConfig {
 	 * {@link java.util.logging.Logger Logger}s and {@link java.util.logging.Handler Handler}s with
 	 * values obtained from system properties.
 	 * <p>
-	 * Fully qualified names of <code>Logger</code>s and <code>Handler</code>s whose {@link Level}s
-	 * should be overridden by this method are provided as arguments to this method and/or comma
-	 * separated on {@value #OVERRIDE_LEVEL_PROPERTY} system property.<br/>
+	 * Fully qualified loggerNames of <code>Logger</code>s and <code>Handler</code>s whose
+	 * {@link Level}s should be overridden by this method are provided as arguments to this method
+	 * and/or comma separated on {@value #OVERRIDE_LEVEL_PROPERTY} system property.<br/>
 	 * Name of the system property containing the new {@link Level} for a given
 	 * <code>Logger/Handler</code> is constructed by appending {@value #LEVEL_SUFFIX} to its
 	 * fully-qualified-name.
@@ -49,28 +49,31 @@ public class JulConfig {
 	 *      -Djava.util.logging.ConsoleHandler.level=FINE \
 	 *      com.example.someproject.MainClass</pre>
 	 */
-	public static void overrideLogLevels(String... names) {
-		final var props = new Properties();
+	public static void overrideLogLevels(String... loggerNames) {
+		final var newLogLevels = new Properties();  // loggerName.level -> newLevel
+
+		// store into newLogLevels levels from system properties for loggers & handlers enlisted
+		// on loggerNames param or on the system property
 		int characterCount = 30;  // 30 is date comment character length
-
-		if (names.length > 0) characterCount += readLogLevels(props, names);
-
-		final var loggersProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
-		if (loggersProperty != null) {
-			characterCount += readLogLevels(props, loggersProperty.split(","));
+		if (loggerNames.length > 0) characterCount += readLogLevels(newLogLevels, loggerNames);
+		final var loggerNamesFromProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
+		if (loggerNamesFromProperty != null) {
+			characterCount += readLogLevels(newLogLevels, loggerNamesFromProperty.split(","));
 		}
+		if (newLogLevels.size() == 0) return;
 
-		if (props.size() == 0) return;
+		// write newLogLevels into a ByteArrayInputStream and pass it to
+		// LogManager.updateConfiguration()
 		final var outputBytes = new ByteArrayOutputStream(characterCount * 2);  // *2 for utf chars
 		try {
-			props.store(outputBytes, null);
-			var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray());
+			newLogLevels.store(outputBytes, null);
+			final var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray());
 			outputBytes.close();
 			LogManager.getLogManager().updateConfiguration(
 					inputBytes,
 					(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal);
 			inputBytes.close();
-		} catch (IOException e) {  // this is probably impossible to happen...
+		} catch (IOException e) {  // this is probably impossible to happen for byte array streams
 			throw new RuntimeException(e);
 		}
 	}
@@ -84,17 +87,17 @@ public class JulConfig {
 
 	/**
 	 * Reads system properties containing overridden levels for {@code loggerNames} and puts them
-	 * into {@code props}.
-	 * @return number of characters put into {@code props}.
+	 * into {@code newLogLevels}.
+	 * @return number of characters put into {@code newLogLevels}.
 	 */
-	private static int readLogLevels(Properties props, String[] loggerNames) {
+	private static int readLogLevels(Properties newLogLevels, String[] loggerNames) {
 		int characterCount = 0;
 		for (var loggerName: loggerNames) {
 			final var loggerLevelPropertyName = loggerName + LEVEL_SUFFIX;
 			final var level = System.getProperty(loggerLevelPropertyName);
 			if (level == null) continue;
 			Level.parse(level);
-			props.put(loggerLevelPropertyName, level);
+			newLogLevels.put(loggerLevelPropertyName, level);
 			characterCount += loggerLevelPropertyName.length();
 			characterCount += level.length();
 			characterCount += 2;  // '=' and '\n'
