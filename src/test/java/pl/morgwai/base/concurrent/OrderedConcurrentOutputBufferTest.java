@@ -4,6 +4,7 @@ package pl.morgwai.base.concurrent;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,7 +29,7 @@ public class OrderedConcurrentOutputBufferTest {
 
 	OutputStream<Message> outputStream;
 	List<Message> outputData;  // outputStream.write(message) will add message to this list
-	volatile int closeCount;  // outputStream.close() will increase this counter
+	AtomicInteger closeCount;  // outputStream.close() will increase this counter
 
 
 
@@ -81,7 +82,7 @@ public class OrderedConcurrentOutputBufferTest {
 		assertEquals("all messages should be written", sumUpMessageCount(), outputData.size());
 		assertTrue("messages should be written in order",
 				Comparators.isInStrictOrder(outputData, messageComparator));
-		assertEquals("stream should be closed 1 time", 1, closeCount);
+		assertEquals("stream should be closed 1 time", 1, closeCount.get());
 	}
 
 
@@ -118,7 +119,7 @@ public class OrderedConcurrentOutputBufferTest {
 		assertEquals("all messages should be written", expectedMessageCount, outputData.size());
 		assertTrue("messages should be written in order",
 				Comparators.isInStrictOrder(outputData, messageComparator));
-		assertEquals("stream should be closed 1 time", 1, closeCount);
+		assertEquals("stream should be closed 1 time", 1, closeCount.get());
 	}
 
 	int bucketCount;
@@ -135,7 +136,7 @@ public class OrderedConcurrentOutputBufferTest {
 			if (bucketNumber % 17 == 0) {
 				// make some threads a bit slower to start
 				try {
-					Thread.sleep(100);
+					Thread.sleep(100L);
 				} catch (InterruptedException ignored) {}
 			}
 			for (int i = 0; i < numberOfMessages; i++) {
@@ -161,7 +162,7 @@ public class OrderedConcurrentOutputBufferTest {
 			t1.join();
 			t2.join();
 
-			assertEquals("stream should be closed 1 time", 1, closeCount);
+			assertEquals("stream should be closed 1 time", 1, closeCount.get());
 		}
 	}
 
@@ -192,7 +193,7 @@ public class OrderedConcurrentOutputBufferTest {
 			assertEquals("all messages should be written", 2, outputData.size());
 			assertTrue("messages should be written in order",
 					Comparators.isInStrictOrder(outputData, messageComparator));
-			assertEquals("stream should be closed 1 time", 1, closeCount);
+			assertEquals("stream should be closed 1 time", 1, closeCount.get());
 		}
 	}
 
@@ -212,7 +213,7 @@ public class OrderedConcurrentOutputBufferTest {
 				try {
 					var bucket2 = buffer.addBucket();
 					buffer.signalNoMoreBuckets();
-					Thread.sleep(3);
+					Thread.sleep(3L);
 					bucket2.write(new Message(2, 1));
 					bucket2.close();
 				} catch (Exception e) {
@@ -228,7 +229,7 @@ public class OrderedConcurrentOutputBufferTest {
 			assertEquals("all messages should be written", 2, outputData.size());
 			assertTrue("messages should be written in order",
 					Comparators.isInStrictOrder(outputData, messageComparator));
-			assertEquals("stream should be closed 1 time", 1, closeCount);
+			assertEquals("stream should be closed 1 time", 1, closeCount.get());
 		}
 	}
 
@@ -250,7 +251,7 @@ public class OrderedConcurrentOutputBufferTest {
 				try {
 					var bucket3 = buffer.addBucket();
 					buffer.signalNoMoreBuckets();
-					Thread.sleep(3);
+					Thread.sleep(3L);
 					bucket3.write(new Message(3, 1));
 					bucket3.close();
 				} catch (Exception e) {
@@ -266,7 +267,7 @@ public class OrderedConcurrentOutputBufferTest {
 			assertEquals("all messages should be written", 2, outputData.size());
 			assertTrue("messages should be written in order",
 					Comparators.isInStrictOrder(outputData, messageComparator));
-			assertEquals("stream should be closed 1 time", 1, closeCount);
+			assertEquals("stream should be closed 1 time", 1, closeCount.get());
 		}
 	}
 
@@ -323,19 +324,19 @@ public class OrderedConcurrentOutputBufferTest {
 	@Before
 	public void setup() {
 		outputData = new LinkedList<>();
-		closeCount = 0;
+		closeCount = new AtomicInteger(0);
 		outputStream = new OutputStream<>() {
 
 			@Override
 			public void write(Message message) {
-				if (closeCount > 0) throw new IllegalStateException("output already closed");
+				if (closeCount.get() > 0) throw new IllegalStateException("output already closed");
 				outputData.add(message);
 				if (log.isLoggable(Level.FINEST)) log.finest(message.toString());
 			}
 
 			@Override
 			public void close() {
-				closeCount++;
+				closeCount.incrementAndGet();
 				if (log.isLoggable(Level.FINER)) log.finer("closing output stream");
 			}
 		};

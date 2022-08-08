@@ -1,17 +1,13 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.concurrent;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.Comparators;
 import org.junit.Test;
-
 import pl.morgwai.base.concurrent.Awaitable.AwaitInterruptedException;
 
 import static org.junit.Assert.*;
@@ -32,7 +28,7 @@ public class AwaitableTest {
 			threads[i] = new Thread(
 				() -> {
 					try {
-						Thread.sleep(10l);
+						Thread.sleep(10L);
 					} catch (InterruptedException ignored) {}
 				}
 			);
@@ -40,9 +36,9 @@ public class AwaitableTest {
 		}
 
 		final var failed = Awaitable.awaitMultiple(
-				100_495l,
+				100_495L,
 				TimeUnit.MICROSECONDS,
-				(thread) -> Awaitable.ofJoin(thread),
+				Awaitable::ofJoin,
 				Arrays.asList(threads));
 		assertTrue("all tasks should be marked as completed", failed.isEmpty());
 	}
@@ -59,12 +55,10 @@ public class AwaitableTest {
 		assertTrue("test data integrity check", tasksToFail.last() < NUMBER_OF_TASKS);
 
 		final List<Integer> failed = Awaitable.awaitMultiple(
-				5l,
+				5L,
 				TimeUnit.DAYS,
-				(taskNumber) -> (Awaitable.WithUnit) (timeout, unit) -> {
-					if (tasksToFail.contains(taskNumber)) return false;
-					return true;
-				},
+				(taskNumber) -> (Awaitable.WithUnit)
+						(timeout, unit) -> !tasksToFail.contains(taskNumber),
 				IntStream.range(0, 20).boxed().collect(Collectors.toList()));
 		assertEquals("number of failed tasks should match",
 				tasksToFail.size(), failed.size());
@@ -80,9 +74,9 @@ public class AwaitableTest {
 
 	@Test
 	public void testRemainingTimeoutAdjusting() throws InterruptedException {
-		final long FIRST_DURATION = 10l;
-		final long COMBINED_TIMEOUT = FIRST_DURATION + 30l;
-		final long MAX_INACCURACY = 5l;  // 1ms is enough in 99.9% cases. See message below.
+		final long FIRST_DURATION = 10L;
+		final long COMBINED_TIMEOUT = FIRST_DURATION + 30L;
+		final long MAX_INACCURACY = 5L;  // 1ms is enough in 99.9% cases. See message below.
 
 		final var allCompleted = Awaitable.awaitMultiple(
 			COMBINED_TIMEOUT,
@@ -105,7 +99,7 @@ public class AwaitableTest {
 			},
 			(timeout, unit) -> {
 				assertEquals("after timeout has been exceeded subsequent task should get 1ns",
-						1l, TimeUnit.NANOSECONDS.convert(timeout, unit));
+						1L, TimeUnit.NANOSECONDS.convert(timeout, unit));
 				return true;
 			}
 		);
@@ -117,17 +111,17 @@ public class AwaitableTest {
 	@Test
 	public void testNoTimeout() throws InterruptedException {
 		final var allCompleted = Awaitable.awaitMultiple(
-			0l,
+			0L,
 			(timeout) -> {
-				assertEquals("there should be no timeout", 0l, timeout);
+				assertEquals("there should be no timeout", 0L, timeout);
 				return true;
 			},
 			(timeout) -> {
-				assertEquals("there should be no timeout", 0l, timeout);
+				assertEquals("there should be no timeout", 0L, timeout);
 				return true;
 			},
 			(timeout) -> {
-				assertEquals("there should be no timeout", 0l, timeout);
+				assertEquals("there should be no timeout", 0L, timeout);
 				return true;
 			}
 		);
@@ -137,7 +131,7 @@ public class AwaitableTest {
 
 
 	public void testInterruptAndContinue(boolean noTimeout) throws InterruptedException {
-		final long combinedTimeout = noTimeout ? 0l : 100l;
+		final long combinedTimeout = noTimeout ? 0L : 100L;
 		final AssertionError[] errorHolder = {null};
 		final boolean[] taskExecuted = {false, false, false, false};
 		final var awaitingThread = new Thread(
@@ -155,20 +149,20 @@ public class AwaitableTest {
 							}),
 							entry(1, (timeoutMillis) -> {
 								taskExecuted[1] = true;
-								Thread.sleep(100l);
+								Thread.sleep(100L);
 								fail("InterruptedException should be thrown");
 								return true;
 							}),
 							entry(2, (timeoutMillis) -> {
 								taskExecuted[2] = true;
 								assertEquals("after an interrupt tasks should get 1ms timeout",
-										1l, timeoutMillis);
+										1L, timeoutMillis);
 								return true;
 							}),
 							entry(3, (timeoutMillis) -> {
 								taskExecuted[3] = true;
 								assertEquals("after an interrupt tasks should get 1ms timeout",
-										1l, timeoutMillis);
+										1L, timeoutMillis);
 								return false;
 							})
 						);
@@ -178,7 +172,7 @@ public class AwaitableTest {
 						final var interrupted = e.getInterrupted();
 						assertEquals("1 task should fail", 1, failed.size());
 						assertEquals("1 task should be interrupted", 1, interrupted.size());
-						assertFalse("all tasks should be exexcuted", e.getUnexecuted().hasNext());
+						assertFalse("all tasks should be executed", e.getUnexecuted().hasNext());
 						assertEquals("task-1 should be interrupted", 1, interrupted.get(0));
 						assertEquals("task-3 should fail", 3, failed.get(0));
 					}
@@ -192,9 +186,9 @@ public class AwaitableTest {
 		);
 
 		awaitingThread.start();
-		Thread.sleep(5l);
+		Thread.sleep(5L);
 		awaitingThread.interrupt();
-		awaitingThread.join(100l);
+		awaitingThread.join(100L);
 		if (awaitingThread.isAlive()) fail("awaitingThread should terminate");
 		if (errorHolder[0] != null)  throw errorHolder[0];
 	}
@@ -213,7 +207,7 @@ public class AwaitableTest {
 
 	@Test
 	public void testInterruptAndAbort() throws InterruptedException {
-		final long TIMEOUT = 100l;
+		final long TIMEOUT = 100L;
 		final AssertionError[] errorHolder = {null};
 		final boolean[] taskExecuted = {false, false, false};
 		final Awaitable.WithUnit[] tasks = {
@@ -252,11 +246,11 @@ public class AwaitableTest {
 						assertTrue("no task should fail", e.getFailed().isEmpty());
 						assertEquals("1 task should be interrupted", 1, interrupted.size());
 						assertEquals("task-1 should be interrupted", 1, interrupted.get(0));
-						assertTrue("not all tasks should be exexcuted",
+						assertTrue("not all tasks should be executed",
 								e.getUnexecuted().hasNext());
-						assertEquals("task-2 should not be exeucted", 2,
+						assertEquals("task-2 should not be executed", 2,
 								unexecuted.next().getObject());
-						assertFalse("only 1 task should not be exexcuted",
+						assertFalse("only 1 task should not be executed",
 								e.getUnexecuted().hasNext());
 
 						for (int i = 0; i < taskExecuted.length - 1; i++) {
@@ -272,9 +266,9 @@ public class AwaitableTest {
 		);
 
 		awaitingThread.start();
-		Thread.sleep(5l);
+		Thread.sleep(5L);
 		awaitingThread.interrupt();
-		awaitingThread.join(100l);
+		awaitingThread.join(100L);
 		if (awaitingThread.isAlive()) fail("awaitingThread should terminate");
 		if (errorHolder[0] != null)  throw errorHolder[0];
 	}
