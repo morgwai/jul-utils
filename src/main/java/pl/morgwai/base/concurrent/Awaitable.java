@@ -98,10 +98,29 @@ public interface Awaitable {
 
 	/**
 	 * Creates {@link Awaitable.WithUnit} of
-	 * {@link ExecutorService#awaitTermination(long, TimeUnit) termination of an executor}.
+	 * {@link ExecutorService#awaitTermination(long, TimeUnit) termination} of {@code executor}.
 	 */
 	static Awaitable.WithUnit ofTermination(ExecutorService executor) {
-		return (timeout, unit) -> executor.awaitTermination(timeout, unit);
+		executor.shutdown();
+		return executor::awaitTermination;
+	}
+
+
+
+	/**
+	 * Creates {@link Awaitable.WithUnit} of
+	 * {@link ExecutorService#awaitTermination(long, TimeUnit) termination} of {@code executor}.
+	 * If {@code executor} fails to terminate, {@link ExecutorService#shutdownNow()} is called.
+	 */
+	static Awaitable.WithUnit ofEnforcedTermination(ExecutorService executor) {
+		return (timeout, unit) -> {
+			try {
+				executor.shutdown();
+				return executor.awaitTermination(timeout, unit);
+			} finally {
+				if ( !executor.isTerminated()) executor.shutdownNow();
+			}
+		};
 	}
 
 
@@ -201,7 +220,7 @@ public interface Awaitable {
 	}
 
 	static <T> Entry<T> entry(T object, Awaitable operation) {
-		return new Entry<T>(object, operation);
+		return new Entry<>(object, operation);
 	}
 
 
