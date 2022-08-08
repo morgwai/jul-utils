@@ -28,7 +28,7 @@ public class JulFormatter extends Formatter {
 
 	/**
 	 * Name of the logging or system property containing the format for stack frames of logged
-	 * throwables.
+	 * {@link Throwable}s.
 	 * @see #format(LogRecord)
 	 */
 	public static final String STACKFRAME_FORMAT_PROPERTY =
@@ -41,7 +41,7 @@ public class JulFormatter extends Formatter {
 	 * Creates a new formatter configured using supplied params.
 	 * @param format the main format for log records.
 	 *     If it's {@code null} then {@value #DEFAULT_FORMAT} is used.
-	 * @param stackFrameFormat format for stack trace elements of logged throwables.
+	 * @param stackFrameFormat format for stack trace elements of logged {@link Throwable}s.
 	 *
 	 * @see #format(LogRecord)
 	 */

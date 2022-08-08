@@ -38,8 +38,7 @@ public interface Awaitable {
 	 * non-zero, in which case it will be rounded up to 1ms.</p>
 	 */
 	default Awaitable.WithUnit toAwaitableWithUnit() {
-		return (timeout, unit) -> await(
-				timeout == 0l ? 0l : Math.max(1l, unit.toMillis(timeout)));
+		return (timeout, unit) -> await(timeout == 0L ? 0L : Math.max(1L, unit.toMillis(timeout)));
 	}
 
 
@@ -85,10 +84,10 @@ public interface Awaitable {
 	static Awaitable.WithUnit ofJoin(Thread thread) {
 		return (timeout, unit) -> {
 			final var timeoutMillis = unit.toMillis(timeout);
-			if (timeout == 0l || unit.ordinal() >= TimeUnit.MILLISECONDS.ordinal()) {
+			if (timeout == 0L || unit.ordinal() >= TimeUnit.MILLISECONDS.ordinal()) {
 				thread.join(timeoutMillis);
 			} else {
-				thread.join(timeoutMillis, (int) (unit.toNanos(timeout) % 1000l));
+				thread.join(timeoutMillis, (int) (unit.toNanos(timeout) % 1000L));
 			}
 			return ! thread.isAlive();
 		};
@@ -178,9 +177,9 @@ public interface Awaitable {
 						.await(remainingTime, TimeUnit.NANOSECONDS)) {
 					failedTasks.add(operationEntry.object);
 				}
-				if (timeout != 0l && ! interrupted) {
+				if (timeout != 0L && ! interrupted) {
 					remainingTime -= System.nanoTime() - startTimestamp;
-					if (remainingTime < 1l) remainingTime = 1l;
+					if (remainingTime < 1L) remainingTime = 1L;
 				}
 			} catch (InterruptedException e) {
 				interruptedTasks.add(operationEntry.object);
@@ -188,7 +187,7 @@ public interface Awaitable {
 					throw new AwaitInterruptedException(
 							failedTasks, interruptedTasks, operationEntries);
 				}
-				remainingTime = 1l;
+				remainingTime = 1L;
 				interrupted = true;
 			}
 		}
