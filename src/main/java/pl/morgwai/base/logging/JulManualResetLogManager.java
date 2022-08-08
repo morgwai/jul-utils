@@ -10,7 +10,7 @@ import java.util.logging.LogManager;
  * shutdown hooks are important.
  * <p>
  * To use this class, define system property named
- * {@value #JUL_LOG_MANAGER_PROPERTY} with fully qualified name of this class as a value:</p>
+ * {@value #JUL_LOG_MANAGER_PROPERTY} with fully qualified name of this class as the value:</p>
  * <pre>
  * java -Djava.util.logging.manager=pl.morgwai.base.logging.JulManualResetLogManager \
  *     -cp ${CLASSPATH} MyMainClass</pre>

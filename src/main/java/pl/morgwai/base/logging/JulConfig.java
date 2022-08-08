@@ -117,7 +117,6 @@ public class JulConfig {
 	 * For use with {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is
 	 * set to the fully qualified name of this class, then {@link LogManager} will call this
 	 * constructor instead of reading the configuration the normal way.
-	 *
 	 * @see LogManager
 	 */
 	public JulConfig() throws Exception {

@@ -15,7 +15,8 @@ import java.util.function.Function;
  * An object performing {@link #await(long) timed blocking operation}, such as
  * {@link Thread#join(long)}, {@link Object#wait(long)},
  * {@link ExecutorService#awaitTermination(long, TimeUnit)} etc.
- * @see #awaitMultiple(long, TimeUnit, boolean, Iterator))
+ * Useful for awaiting for multiple such operations: see
+ * {@link #awaitMultiple(long, TimeUnit, boolean, Iterator) awaitMultiple(...) method family}.
  */
 @FunctionalInterface
 public interface Awaitable {
@@ -25,6 +26,8 @@ public interface Awaitable {
 	/**
 	 * A timed blocking operation}, such as {@link Thread#join(long)}, {@link Object#wait(long)},
 	 * {@link ExecutorService#awaitTermination(long, TimeUnit)} etc.
+	 * @return {@code true} if operation succeeds before {@code timeoutMillis} passes, {@code false}
+	 *     otherwise.
 	 */
 	boolean await(long timeoutMillis) throws InterruptedException;
 
@@ -50,8 +53,7 @@ public interface Awaitable {
 	interface WithUnit extends Awaitable {
 
 		/**
-		 * A version of {@link #await(long)} method that additionally accepts {@link TimeUnit}
-		 * param.
+		 * A version of {@link #await(long)} method with additional {@link TimeUnit} param.
 		 */
 		boolean await(long timeout, TimeUnit unit) throws InterruptedException;
 
@@ -80,6 +82,7 @@ public interface Awaitable {
 
 	/**
 	 * Creates {@link Awaitable.WithUnit} of {@link Thread#join(long, int) joining a thread}.
+	 * Result is based on {@link Thread#isAlive()}.
 	 */
 	static Awaitable.WithUnit ofJoin(Thread thread) {
 		return (timeout, unit) -> {
@@ -125,37 +128,47 @@ public interface Awaitable {
 
 
 	/**
-	 * Awaits for multiple timed blocking operations} specified by {@code operationEntries}.
-	 * Each entry maps an object on which the awaiting operation should be performed (for example a
-	 * {@link Thread} to be {@link Thread#join(long) joined} or an {@link ExecutorService executor}
-	 * to be {@link ExecutorService#awaitTermination(long, TimeUnit) terminated}) to
-	 * a {@link Awaitable closure performing the given operation}.
+	 * Awaits for multiple timed blocking operations ({@link Awaitable}) specified by
+	 * {@code operationEntries}. Each {@link Entry Entry} maps an {@link Entry#getObject() object}
+	 * on which an operation should be performed (for example a {@link Thread}
+	 * to be {@link Thread#join(long) joined} or an {@link ExecutorService executor} to be
+	 * {@link ExecutorService#awaitTermination(long, TimeUnit) terminated})
+	 * to a {@link Entry#getOperation() closure performing this operation}.
 	 * <p>
-	 * If {@code timeout} passes before all operations are completed, continues to perform remaining
-	 * ones with timeout of 1 nanosecond.<br/>
+	 * If {@code timeout} passes before all operations are completed, continues to perform the
+	 * remaining ones with {@code 1} nanosecond timeout.<br/>
 	 * If {@code continueOnInterrupt} is {@code true}, does so also in case
-	 * {@link InterruptedException} is thrown by any of the operations.</p>
+	 * {@link InterruptedException} is thrown by any of the operations.<br/>
+	 * If {@code timeout} argument is {@code 0} then all operations will receive {@code 0} timeout.
+	 * Note that different methods may interpret it in different ways: <i>"return false if cannot
+	 * complete operation immediately"</i> like
+	 * {@link ExecutorService#awaitTermination(long, TimeUnit)} or <i>"block without a timeout until
+	 * operation is completed"</i> like {@link Thread#join(long)}.</p>
 	 * <p>
 	 * Note: internally all time measurements are done in nanoseconds, hence this function is not
 	 * suitable for timeouts spanning several decades (not that it would make much sense, but I'm
 	 * just sayin...&nbsp;;-)&nbsp;&nbsp;).</p>
 	 * <p>
 	 * Note: this is a "low-level" core version: there are several "frontend" functions defined in
-	 * this class with more convenient API divided into 3 families:<ul>
-	 *   <li>a family that accepts varargs of {@code operationEntries}
-	 *     ({@code Map.Entry<T, Awaitable>}). This family returns a list of entry keys for which
-	 *     their respective {@link Awaitable operations} failed (returned {@code false})</li>
-	 *   <li>a family that accepts a {@link List} of objects and an {@code adapter} {@link Function}
-	 *     that returns an {@link Awaitable operation} for a given object. Similarly to the
-	 *     previous family, this one returns a list of objects for which their respective
-	 *     {@link Awaitable operations} failed (returned {@code false})</li>
-	 *   <li>a family that accepts varargs of {@link Awaitable operations}. This family returns
-	 *     {@code true} if all {@code operations} succeeded, {@code false} otherwise.</li>
+	 * this class with more convenient API divided into 3 families:</p>
+	 * <ul>
+	 *   <li>a family that accepts varargs of {@link Entry operationEntries} that map objects to
+	 *     {@link Awaitable Awaitable operations} to be performed. This family returns a
+	 *     {@link List} of objects for which their respective {@link Awaitable operations} failed
+	 *     (returned {@code false}).</li>
+	 *   <li>a family that accepts a {@link List} of objects and an {@link Function adapter
+	 *     Function} that returns {@link Awaitable Awaitable operations} for supplied objects.
+	 *     Similarly to the previous family, this one returns a {@link List} of objects for which
+	 *     their respective {@link Awaitable operations} failed.</li>
+	 *   <li>a family that accepts varargs of {@link Awaitable Awaitable operations}. This family
+	 *     returns {@code true} if all {@code operations} succeeded, {@code false} otherwise.</li>
 	 * </ul>
+	 * <p>
 	 * Within each family there are variants that either accept {@code (long timeout, TimeUnit
-	 * unit)} params or a single {@code long timeoutMillis} param and either accept
+	 * unit)} params or a single {@code long timeoutMillis} param and variants that either accept
 	 * {@code boolean continueOnInterrupt} param or always pass {@code true}.</p>
-	 * @return an empty list if all tasks completed, list of uncompleted tasks otherwise.
+	 * @return an empty {@link List} if all {@link Awaitable operations} completed, otherwise a
+	 * {@link List} of object whose operations failed.
 	 * @throws AwaitInterruptedException if any of the operations throws
 	 *     {@link InterruptedException}.
 	 */
@@ -201,8 +214,9 @@ public interface Awaitable {
 
 
 	/**
-	 * Maps {@link #getObject() object} to {@link #getOperation() Awaitable operation} to perform on
-	 * it by {@link Awaitable#awaitMultiple(long, TimeUnit, boolean, Iterator)}.
+	 * Maps {@link #getObject() object} to an {@link #getOperation() Awaitable operation} that one
+	 * of {@link Awaitable#awaitMultiple(long, TimeUnit, boolean, Iterator) awaitMultiple(...)}
+	 * functions will perform.
 	 */
 	class Entry<T> {
 
@@ -225,9 +239,10 @@ public interface Awaitable {
 
 
 	/**
-	 * An {@link InterruptedException} that contains await state of operations passed to one of
+	 * An {@link InterruptedException} that contains results of
+	 * {@link Awaitable Awaitable operations} passed to one of
 	 * {@link Awaitable#awaitMultiple(long, TimeUnit, boolean, Iterator) awaitMultipe(...)
-	 * functions}.
+	 * functions} that was interrupted.
 	 */
 	class AwaitInterruptedException extends InterruptedException {
 

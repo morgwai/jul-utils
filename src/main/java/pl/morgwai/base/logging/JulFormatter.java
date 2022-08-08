@@ -13,7 +13,9 @@ import java.util.logging.LogRecord;
 
 /**
  * A text log formatter similar to {@link java.util.logging.SimpleFormatter} that additionally
- * allows to format stack trace elements and to add log sequence id and thread id to log entries.
+ * allows to format stack trace elements and to add
+ * {@link LogRecord#getSequenceNumber() log sequence id} and
+ * {@link LogRecord#getThreadID() thread id} to log entries.
  */
 public class JulFormatter extends Formatter {
 
@@ -42,7 +44,6 @@ public class JulFormatter extends Formatter {
 	 * @param format the main format for log records.
 	 *     If it's {@code null} then {@value #DEFAULT_FORMAT} is used.
 	 * @param stackFrameFormat format for stack trace elements of logged {@link Throwable}s.
-	 *
 	 * @see #format(LogRecord)
 	 */
 	public JulFormatter (String format, String stackFrameFormat) {
