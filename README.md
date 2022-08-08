@@ -2,8 +2,8 @@
 
 Some utility classes.<br/>
 <br/>
-**latest release: [1.9](https://search.maven.org/artifact/pl.morgwai.base/java-utils/1.9/jar)**
-([javadoc](https://javadoc.io/doc/pl.morgwai.base/java-utils/1.9))
+**latest release: [1.10](https://search.maven.org/artifact/pl.morgwai.base/java-utils/1.10/jar)**
+([javadoc](https://javadoc.io/doc/pl.morgwai.base/java-utils/1.10))
 
 
 ## MAIN USER CLASSES
