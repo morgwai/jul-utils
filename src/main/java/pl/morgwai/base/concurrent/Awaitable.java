@@ -270,7 +270,7 @@ public interface Awaitable {
 
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
@@ -281,7 +281,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(
@@ -295,7 +295,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(long timeout, TimeUnit unit, Entry<T>... operationEntries)
@@ -304,7 +304,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	@SafeVarargs
 	static <T> List<T> awaitMultiple(long timeoutMillis, Entry<T>... operationEntries)
@@ -319,7 +319,7 @@ public interface Awaitable {
 
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static <T> List<T> awaitMultiple(
 		long timeout,
@@ -338,7 +338,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static <T> List<T> awaitMultiple(
 		long timeoutMillis,
@@ -351,7 +351,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static <T> List<T> awaitMultiple(
 		long timeout, TimeUnit unit, Function<? super T, Awaitable> adapter, List<T> objects
@@ -360,7 +360,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static <T> List<T> awaitMultiple(
 		long timeoutMillis, Function<? super T, Awaitable> adapter, List<T> objects
@@ -372,7 +372,7 @@ public interface Awaitable {
 
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static boolean awaitMultiple(
 		long timeout, TimeUnit unit, boolean continueOnInterrupt, Awaitable... operations
@@ -390,7 +390,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static boolean awaitMultiple(
 		long timeoutMillis, boolean continueOnInterrupt, Awaitable... operations
@@ -399,7 +399,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static boolean awaitMultiple(
 		long timeout, TimeUnit unit, boolean continueOnInterrupt, Awaitable.WithUnit... operations
@@ -408,7 +408,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static boolean awaitMultiple(
 		long timeoutMillis, boolean continueOnInterrupt, Awaitable.WithUnit... operations
@@ -419,7 +419,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable... operations)
 			throws AwaitInterruptedException {
@@ -427,7 +427,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static boolean awaitMultiple(long timeoutMillis, Awaitable... operations)
 			throws AwaitInterruptedException {
@@ -435,7 +435,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static boolean awaitMultiple(long timeout, TimeUnit unit, Awaitable.WithUnit... operations)
 			throws AwaitInterruptedException {
@@ -443,7 +443,7 @@ public interface Awaitable {
 	}
 
 	/**
-	 * @see #awaitMultiple(long, TimeUnit, boolean, Iterator)
+	 * See {@link #awaitMultiple(long, TimeUnit, boolean, Iterator)}.
 	 */
 	static boolean awaitMultiple(long timeoutMillis, Awaitable.WithUnit... operations)
 			throws AwaitInterruptedException {
