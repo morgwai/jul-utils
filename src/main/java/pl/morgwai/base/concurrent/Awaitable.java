@@ -82,7 +82,7 @@ public interface Awaitable {
 
 	/**
 	 * Creates {@link Awaitable.WithUnit} of {@link Thread#join(long, int) joining a thread}.
-	 * Result is based on {@link Thread#isAlive()}.
+	 * The result is based on {@link Thread#isAlive()}.
 	 */
 	static Awaitable.WithUnit ofJoin(Thread thread) {
 		return (timeout, unit) -> {
