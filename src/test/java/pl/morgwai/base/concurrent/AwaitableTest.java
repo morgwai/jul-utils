@@ -2,12 +2,12 @@
 package pl.morgwai.base.concurrent;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.Comparators;
-import org.junit.Test;
+import org.junit.*;
 import pl.morgwai.base.concurrent.Awaitable.AwaitInterruptedException;
 
 import static org.junit.Assert.*;
@@ -271,5 +271,84 @@ public class AwaitableTest {
 		awaitingThread.join(100L);
 		if (awaitingThread.isAlive()) fail("awaitingThread should terminate");
 		if (errorHolder[0] != null)  throw errorHolder[0];
+	}
+
+
+
+	@Test
+	public void testAwaitableOfExecutorTermination() throws InterruptedException {
+		final var executor = new ThreadPoolExecutor(
+				2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
+		final var latch = new CountDownLatch(1);
+		executor.execute(
+			() -> {
+				try {
+					latch.await();
+				} catch (InterruptedException ignored) {}
+			}
+		);
+		final var termination = Awaitable.ofTermination(executor);
+		assertFalse("executor should not be shutdown until termination is being awaited",
+				executor.isShutdown());
+		assertFalse("termination should fail before latch is lowered", termination.await(20L));
+		assertTrue("executor should be shutdown", executor.isShutdown());
+		assertFalse("termination should fail before latch is lowered", executor.isTerminated());
+		latch.countDown();
+		assertTrue("termination should succeed after latch is lowered", termination.await(20L));
+		assertTrue("termination should succeed after latch is lowered", executor.isTerminated());
+	}
+
+
+
+	@Test
+	public void testAwaitableOfExecutorEnforcedTermination() throws InterruptedException {
+		final var executor = new ThreadPoolExecutor(
+				2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
+		final var latch = new CountDownLatch(1);
+		executor.execute(
+			() -> {
+				try {
+					Thread.sleep(100_000L);
+				} catch (InterruptedException e) {
+					try {
+						latch.await();
+					} catch (InterruptedException ignored) {}
+				}
+			}
+		);
+		final var enforcedTermination = Awaitable.ofEnforcedTermination(executor);
+		assertFalse("executor should not be shutdown until termination is being awaited",
+				executor.isShutdown());
+		assertFalse("termination should fail", enforcedTermination.await(20L));
+		assertFalse("termination should fail", executor.isTerminated());
+		assertTrue("executor should be shutdown", executor.isShutdown());
+		latch.countDown();
+		assertTrue("finally executor should terminate successfully",
+				executor.awaitTermination(50L, TimeUnit.MILLISECONDS));
+	}
+
+
+
+	@Test
+	public void testAwaitableOfThreadJoin() throws InterruptedException {
+		final var latch = new CountDownLatch(1);
+		final var thread = new Thread(
+			() -> {
+				try {
+					latch.await();
+				} catch (InterruptedException ignore) {}
+			}
+		);
+		thread.start();
+		final var joining = Awaitable.ofJoin(thread);
+		assertTrue("thread should be alive before latch is lowered", thread.isAlive());
+		assertFalse("thread should not be interrupted", thread.isInterrupted());
+		assertFalse("joining should fail before latch is lowered", joining.await(20L));
+		assertTrue("attempt to join should not interrupt thread", thread.isAlive());
+		assertFalse("attempt to join should not interrupt thread", thread.isInterrupted());
+		latch.countDown();
+		assertTrue("joining should succeed after lowering latch",
+				joining.await(990L, TimeUnit.NANOSECONDS));
+		assertFalse("thread should terminate after lowering latch", thread.isAlive());
 	}
 }

@@ -103,8 +103,10 @@ public interface Awaitable {
 	 * {@link ExecutorService#awaitTermination(long, TimeUnit) termination} of {@code executor}.
 	 */
 	static Awaitable.WithUnit ofTermination(ExecutorService executor) {
-		executor.shutdown();
-		return executor::awaitTermination;
+		return (timeout, unit) -> {
+			executor.shutdown();
+			return executor.awaitTermination(timeout, unit);
+		};
 	}
 
 
