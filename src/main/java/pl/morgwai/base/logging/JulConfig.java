@@ -71,13 +71,12 @@ public class JulConfig {
 		// LogManager.updateConfiguration(...)
 		final var outputBytes = new ByteArrayOutputStream(characterCount * 2);  // *2 for utf chars
 		try {
-			newLogLevels.store(outputBytes, null);
-			final var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray());
-			outputBytes.close();
-			LogManager.getLogManager().updateConfiguration(
-					inputBytes,
-					(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal);
-			inputBytes.close();
+			try (outputBytes) { newLogLevels.store(outputBytes, null); }
+			try (var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
+				LogManager.getLogManager().updateConfiguration(
+						inputBytes,
+						(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal);
+			}
 		} catch (IOException e) {  // this is probably impossible to happen for byte array streams
 			throw new RuntimeException(e);
 		}
