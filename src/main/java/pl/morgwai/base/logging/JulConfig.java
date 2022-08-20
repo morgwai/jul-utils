@@ -22,18 +22,18 @@ public class JulConfig {
 
 
 	/**
-	 * Overrides {@link Level}s of <code>java.util.logging</code>
-	 * {@link java.util.logging.Logger Logger}s and {@link java.util.logging.Handler Handler}s with
-	 * values obtained from system properties.
-	 * <p>
-	 * Fully qualified loggerNames of <code>Logger</code>s and <code>Handler</code>s whose
-	 * {@link Level}s should be overridden by this method are provided as arguments to this method
-	 * and/or comma separated on {@value #OVERRIDE_LEVEL_PROPERTY} system property.<br/>
-	 * Name of the system property containing the new {@link Level} for a given
-	 * <code>Logger/Handler</code> is constructed by appending {@value #LEVEL_SUFFIX} to its
+	 * Overrides {@link Level}s of {@code java.util.logging} {@link java.util.logging.Logger}s and
+	 * {@link java.util.logging.Handler}s with values obtained from system properties.
+	 * Fully qualified names of {@link java.util.logging.Logger Logger}s and
+	 * {@link java.util.logging.Handler Handler}s whose {@link Level}s will be overridden by this
+	 * method can be provided as {@code loggerNames} arguments and/or comma separated on
+	 * {@value #OVERRIDE_LEVEL_PROPERTY} system property.<br/>
+	 * Name of the system property containing a new {@link Level} for a given
+	 * {@code Logger/Handler} is constructed by appending {@value #LEVEL_SUFFIX} to the given
+	 * {@link java.util.logging.Logger}'s&nbsp;/&nbsp;{@link java.util.logging.Handler}'s
 	 * fully-qualified-name.
 	 * If a system property with a new {@link Level} is missing, it is ignored. If it is present,
-	 * its validity is verified using {@link Level#parse(String)} method.</p>
+	 * its validity is verified using {@link Level#parse(String)} method.
 	 * <p>
 	 * <b>Example:</b><br/>
 	 * Output all entries from <code>com.example</code> name-space with level <code>FINE</code> or
@@ -48,6 +48,11 @@ public class JulConfig {
 	 *      -Dcom.example.level=FINE \
 	 *      -Djava.util.logging.ConsoleHandler.level=FINE \
 	 *      com.example.someproject.MainClass</pre>
+	 * <p>
+	 * (Name of the root logger is an empty string, hence the value of
+	 * {@value #OVERRIDE_LEVEL_PROPERTY} starts with a comma (so that the first element of the list
+	 * is an empty string), while {@code -D.level} provides the new {@link Level} for the root
+	 * {@link java.util.logging.Logger}).</p>
 	 */
 	public static void overrideLogLevels(String... loggerNames) {
 		final var newLogLevels = new Properties();  // loggerName.level -> newLevel
@@ -63,7 +68,7 @@ public class JulConfig {
 		if (newLogLevels.size() == 0) return;
 
 		// write newLogLevels into a ByteArrayInputStream and pass it to
-		// LogManager.updateConfiguration()
+		// LogManager.updateConfiguration(...)
 		final var outputBytes = new ByteArrayOutputStream(characterCount * 2);  // *2 for utf chars
 		try {
 			newLogLevels.store(outputBytes, null);
