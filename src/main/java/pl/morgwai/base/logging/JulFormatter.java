@@ -1,8 +1,7 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.logging;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.logging.Formatter;
@@ -56,7 +55,8 @@ public class JulFormatter extends Formatter {
 	}
 
 	/**
-	 * {@value #DEFAULT_FORMAT}
+	 * {@value #DEFAULT_FORMAT}.<br/>
+	 * "{sequenceId} {threadId} {level} {timestamp} {loggerName} {message} {thrown}".
 	 */
 	public static final String DEFAULT_FORMAT =
 			"%7$5d %8$3d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
@@ -107,7 +107,7 @@ public class JulFormatter extends Formatter {
 			"java.util.logging.SimpleFormatter.format";
 
 	static String getStackFrameFormatFromProperties() {
-		var stackFrameFormat = System.getProperty(STACKFRAME_FORMAT_PROPERTY);
+		final var stackFrameFormat = System.getProperty(STACKFRAME_FORMAT_PROPERTY);
 		if (stackFrameFormat != null) return stackFrameFormat;
 		return LogManager.getLogManager().getProperty(STACKFRAME_FORMAT_PROPERTY);
 	}
@@ -149,7 +149,8 @@ public class JulFormatter extends Formatter {
 			source = record.getLoggerName();
 		}
 
-		return String.format(format,
+		return String.format(
+				format,
 				timestamp,
 				source,
 				record.getLoggerName(),
@@ -161,21 +162,24 @@ public class JulFormatter extends Formatter {
 	}
 
 	String getFormattedThrown(LogRecord record) {
-		Throwable thrown = record.getThrown();
+		final var thrown = record.getThrown();
 		if (thrown == null) return "";
 
 		if (stackFrameFormat == null) {
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			pw.println();
-			thrown.printStackTrace(pw);
-			pw.close();
-			return sw.toString();
+			try (
+				var sw = new StringWriter();
+				var pw = new PrintWriter(sw);
+			) {
+				pw.println();
+				thrown.printStackTrace(pw);
+				return sw.toString();
+			} catch (IOException ignored) {}  // StringWriter.close() is no-op
 		}
 
-		StringBuilder throwableStringBuilder = new StringBuilder(thrown.toString());
+		final var throwableStringBuilder = new StringBuilder(thrown.toString());
 		for (var stackFrame: thrown.getStackTrace()) {
-			throwableStringBuilder.append(String.format(stackFrameFormat,
+			throwableStringBuilder.append(String.format(
+					stackFrameFormat,
 					record.getSequenceNumber(),
 					record.getThreadID(),
 					stackFrame.getClassName(),
