@@ -19,29 +19,14 @@ public class AwaitableTest {
 
 
 
-	@Test
-	public void testAwaitableOfJoinThread() throws InterruptedException {
-		final var threads = new Thread[3];
-		for (int i = 0; i < 3; i++) {
-			// it would be cool to create anonymous subclass of Thread that verifies params of
-			// join(...), unfortunately join(...) is final...
-			threads[i] = new Thread(
-				() -> {
-					try {
-						Thread.sleep(10L);
-					} catch (InterruptedException ignored) {}
-				}
-			);
-			threads[i].start();
-		}
-
-		final var failed = Awaitable.awaitMultiple(
-				100_495L,
-				TimeUnit.MICROSECONDS,
-				Awaitable::ofJoin,
-				Arrays.asList(threads));
-		assertTrue("all tasks should be marked as completed", failed.isEmpty());
-	}
+	/**
+	 * Maximum tolerable inaccuracy when verifying time adjustments. Inaccuracy is a result of
+	 * processing delay and is below 1ms in 99% of cases, however if another process was using
+	 * much CPU or the VM was warming up, then on rare occasions it may get higher. If tests fail
+	 * because of this, rerunning right away is usually sufficient. If not, then this probably
+	 * indicates some bug.
+	 */
+	final long MAX_INACCURACY_MILLIS = 2L;
 
 
 
@@ -74,27 +59,28 @@ public class AwaitableTest {
 
 	@Test
 	public void testRemainingTimeoutAdjusting() throws InterruptedException {
-		final long FIRST_DURATION = 10L;
-		final long COMBINED_TIMEOUT = FIRST_DURATION + 30L;
-		final long MAX_INACCURACY = 5L;  // 1ms is enough in 99.9% cases. See message below.
+		final long FIRST_TASK_DURATION_MILLIS = 10L;
+		final long TOTAL_TIMEOUT_MILLIS = FIRST_TASK_DURATION_MILLIS + 30L;
 
-		final var allCompleted = Awaitable.awaitMultiple(
-			COMBINED_TIMEOUT,
+		assertTrue("all tasks should be marked as completed", Awaitable.awaitMultiple(
+			TOTAL_TIMEOUT_MILLIS,
 			TimeUnit.MILLISECONDS,
 			(timeout, unit) -> {
 				assertEquals("1st task should get the full timeout",
-						COMBINED_TIMEOUT, TimeUnit.MILLISECONDS.convert(timeout, unit));
-				Thread.sleep(FIRST_DURATION);
+						TOTAL_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS.convert(timeout, unit));
+				Thread.sleep(FIRST_TASK_DURATION_MILLIS);
 				return true;
 			},
 			(timeout, unit) -> {
-				final var timeoutMillis = TimeUnit.MILLISECONDS.convert(timeout, unit);
+				final var adjustedTimeoutMillis = TimeUnit.MILLISECONDS.convert(timeout, unit);
 				assertTrue("timeouts of subsequent tasks should be correctly adjusted",
-						COMBINED_TIMEOUT - FIRST_DURATION >= timeoutMillis);
-				assertTrue("timeout adjustment accuracy should be within range (this may fail if "
-						+ "another process was using much CPU or VM was warming up, so try again)",
-						COMBINED_TIMEOUT - FIRST_DURATION - timeoutMillis <= MAX_INACCURACY);
-				Thread.sleep(TimeUnit.MILLISECONDS.convert(timeout, unit) + MAX_INACCURACY);
+						TOTAL_TIMEOUT_MILLIS - FIRST_TASK_DURATION_MILLIS >= adjustedTimeoutMillis);
+				assertTrue("timeout adjustment accuracy should be below " + MAX_INACCURACY_MILLIS
+						+ "ms (this may fail if another process was using much CPU or if the VM was"
+						+ " warming up, so try again)",
+						TOTAL_TIMEOUT_MILLIS - FIRST_TASK_DURATION_MILLIS - adjustedTimeoutMillis
+						<= MAX_INACCURACY_MILLIS);
+				Thread.sleep(TimeUnit.MILLISECONDS.convert(timeout, unit) + MAX_INACCURACY_MILLIS);
 				return true;
 			},
 			(timeout, unit) -> {
@@ -102,14 +88,13 @@ public class AwaitableTest {
 						1L, TimeUnit.NANOSECONDS.convert(timeout, unit));
 				return true;
 			}
-		);
-		assertTrue("all tasks should be marked as completed", allCompleted);
+		));
 	}
 
 
 
 	@Test
-	public void testNoTimeout() throws InterruptedException {
+	public void testZeroTimeout() throws InterruptedException {
 		final var allCompleted = Awaitable.awaitMultiple(
 			0L,
 			(timeout) -> {
@@ -130,8 +115,8 @@ public class AwaitableTest {
 
 
 
-	public void testInterruptAndContinue(boolean noTimeout) throws InterruptedException {
-		final long combinedTimeout = noTimeout ? 0L : 100L;
+	public void testInterruptAndContinue(boolean zeroTimeout) throws InterruptedException {
+		final long combinedTimeout = zeroTimeout ? 0L : 100L;
 		final AssertionError[] errorHolder = {null};
 		final boolean[] taskExecuted = {false, false, false, false};
 		final var awaitingThread = new Thread(
@@ -207,14 +192,14 @@ public class AwaitableTest {
 
 	@Test
 	public void testInterruptAndAbort() throws InterruptedException {
-		final long TIMEOUT = 100L;
+		final long TOTAL_TIMEOUT_MILLIS = 100L;
 		final AssertionError[] errorHolder = {null};
 		final boolean[] taskExecuted = {false, false, false};
 		final Awaitable.WithUnit[] tasks = {
 			(timeout, unit) -> {
 				taskExecuted[0] = true;
 				assertEquals("task-0 should get the full timeout",
-						TIMEOUT, unit.toMillis(timeout));
+						TOTAL_TIMEOUT_MILLIS, unit.toMillis(timeout));
 				return true;
 			},
 			(timeout, unit) -> {
@@ -234,7 +219,7 @@ public class AwaitableTest {
 				try {
 					try {
 						Awaitable.awaitMultiple(
-								TIMEOUT,
+								TOTAL_TIMEOUT_MILLIS,
 								false,
 								(i) -> tasks[i],
 								IntStream.range(0, tasks.length).boxed()
@@ -343,12 +328,43 @@ public class AwaitableTest {
 		final var joining = Awaitable.ofJoin(thread);
 		assertTrue("thread should be alive before latch is lowered", thread.isAlive());
 		assertFalse("thread should not be interrupted", thread.isInterrupted());
-		assertFalse("joining should fail before latch is lowered", joining.await(20L));
+		final long timeoutMicros = 20_999_999L;
+		final long startMillis = System.currentTimeMillis();
+		assertFalse("joining should fail before latch is lowered",
+				joining.await(timeoutMicros, TimeUnit.NANOSECONDS));
+		assertTrue("timeout should be correctly converted",
+				System.currentTimeMillis() - startMillis > timeoutMicros / 1_000_000L);
 		assertTrue("attempt to join should not interrupt thread", thread.isAlive());
 		assertFalse("attempt to join should not interrupt thread", thread.isInterrupted());
 		latch.countDown();
 		assertTrue("joining should succeed after lowering latch",
 				joining.await(990L, TimeUnit.NANOSECONDS));
 		assertFalse("thread should terminate after lowering latch", thread.isAlive());
+	}
+
+
+
+	@Test
+	public void testAwaitMultipleThreadJoin() throws InterruptedException {
+		final int NUMBER_OF_THREADS = 5;
+		final var threads = new Thread[NUMBER_OF_THREADS];
+		for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+			// it would be cool to create anonymous subclass of Thread that verifies params of
+			// join(...), unfortunately join(...) is final...
+			threads[i] = new Thread(
+				() -> {
+					try {
+						Thread.sleep(10L);
+					} catch (InterruptedException ignored) {}
+				}
+			);
+			threads[i].start();
+		}
+
+		final var failed = Awaitable.awaitMultiple(
+			100,  // on rare occasions threads take long to start
+			Awaitable::ofJoin,
+			Arrays.asList(threads));
+		assertTrue("all tasks should be marked as completed", failed.isEmpty());
 	}
 }

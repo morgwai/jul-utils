@@ -180,35 +180,34 @@ public interface Awaitable {
 		boolean continueOnInterrupt,
 		Iterator<Entry<T>> operationEntries
 	) throws AwaitInterruptedException {
-		final var startTimestamp = System.nanoTime();
-		var remainingTime =  unit.toNanos(timeout);
+		final var startNanos = System.nanoTime();
+		var remainingNanos =  unit.toNanos(timeout);
 		final var failedTasks = new LinkedList<T>();
 		final var interruptedTasks = new LinkedList<T>();
 		boolean interrupted = false;
 		while (operationEntries.hasNext()) {
 			final var operationEntry = operationEntries.next();
 			try {
-				if ( ! operationEntry.operation.toAwaitableWithUnit()
-						.await(remainingTime, TimeUnit.NANOSECONDS)) {
+				if ( !operationEntry.operation.toAwaitableWithUnit()
+						.await(remainingNanos, TimeUnit.NANOSECONDS)) {
 					failedTasks.add(operationEntry.object);
 				}
-				if (timeout != 0L && ! interrupted) {
-					remainingTime -= System.nanoTime() - startTimestamp;
-					if (remainingTime < 1L) remainingTime = 1L;
+				if (remainingNanos > 1L) {
+					remainingNanos -= System.nanoTime() - startNanos;
+					if (remainingNanos < 1L) remainingNanos = 1L;
 				}
 			} catch (InterruptedException e) {
 				interruptedTasks.add(operationEntry.object);
-				if ( ! continueOnInterrupt) {
+				if ( !continueOnInterrupt) {
 					throw new AwaitInterruptedException(
 							failedTasks, interruptedTasks, operationEntries);
 				}
-				remainingTime = 1L;
+				remainingNanos = 1L;
 				interrupted = true;
 			}
 		}
 		if (interrupted) {
-			throw new AwaitInterruptedException(
-					failedTasks, interruptedTasks, operationEntries);
+			throw new AwaitInterruptedException(failedTasks, interruptedTasks, operationEntries);
 		}
 		return failedTasks;
 	}
