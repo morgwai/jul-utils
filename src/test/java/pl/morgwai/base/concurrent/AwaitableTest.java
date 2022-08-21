@@ -362,7 +362,7 @@ public class AwaitableTest {
 		}
 
 		final var failed = Awaitable.awaitMultiple(
-			100,  // on rare occasions threads take long to start
+			100L,  // on rare occasions threads take long to start
 			Awaitable::ofJoin,
 			Arrays.asList(threads));
 		assertTrue("all tasks should be marked as completed", failed.isEmpty());

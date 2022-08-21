@@ -299,8 +299,8 @@ public class OrderedConcurrentOutputBufferTest {
 
 	static class Message {
 
-		int bucket;
-		int number;
+		final int bucket;
+		final int number;
 
 		public Message(int bucket, int number) {
 			this.bucket = bucket;
@@ -315,7 +315,7 @@ public class OrderedConcurrentOutputBufferTest {
 
 
 
-	static Comparator<Message> messageComparator =
+	static final Comparator<Message> messageComparator =
 			Comparator.comparingInt((Message msg) -> msg.bucket)
 					.thenComparingInt(msg -> msg.number);
 
