@@ -90,7 +90,7 @@ public interface Awaitable {
 			if (timeout == 0L || unit.ordinal() >= TimeUnit.MILLISECONDS.ordinal()) {
 				thread.join(timeoutMillis);
 			} else {
-				thread.join(timeoutMillis, (int) (unit.toNanos(timeout) % 1000L));
+				thread.join(timeoutMillis, (int) (unit.toNanos(timeout) % 1_000_000L));
 			}
 			return ! thread.isAlive();
 		};
