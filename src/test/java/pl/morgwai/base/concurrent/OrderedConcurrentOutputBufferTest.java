@@ -1,20 +1,12 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.concurrent;
 
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import java.util.logging.*;
 
 import com.google.common.collect.Comparators;
-
+import org.junit.*;
 import pl.morgwai.base.concurrent.OrderedConcurrentOutputBuffer.OutputStream;
 
 import static org.junit.Assert.*;

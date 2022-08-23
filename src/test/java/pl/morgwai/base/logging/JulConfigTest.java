@@ -4,16 +4,11 @@ package pl.morgwai.base.logging;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static pl.morgwai.base.logging.JulConfig.LEVEL_SUFFIX;
 
 
