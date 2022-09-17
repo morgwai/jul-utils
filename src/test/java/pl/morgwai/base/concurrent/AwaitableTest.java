@@ -75,11 +75,12 @@ public class AwaitableTest {
 				final var adjustedTimeoutMillis = TimeUnit.MILLISECONDS.convert(timeout, unit);
 				assertTrue("timeouts of subsequent tasks should be correctly adjusted",
 						TOTAL_TIMEOUT_MILLIS - FIRST_TASK_DURATION_MILLIS >= adjustedTimeoutMillis);
-				assertTrue("timeout adjustment accuracy should be below " + MAX_INACCURACY_MILLIS
-						+ "ms (this may fail if another process was using much CPU or if the VM was"
-						+ " warming up, so try again)",
+				assertTrue(
+						"timeout adjustment accuracy should be below " + MAX_INACCURACY_MILLIS
+								+ "ms (this may fail if another process was using much CPU or if"
+								+ " the VM was warming up, so try again)",
 						TOTAL_TIMEOUT_MILLIS - FIRST_TASK_DURATION_MILLIS - adjustedTimeoutMillis
-						<= MAX_INACCURACY_MILLIS);
+								<= MAX_INACCURACY_MILLIS);
 				Thread.sleep(TimeUnit.MILLISECONDS.convert(timeout, unit) + MAX_INACCURACY_MILLIS);
 				return true;
 			},
@@ -328,17 +329,18 @@ public class AwaitableTest {
 		final var joining = Awaitable.ofJoin(thread);
 		assertTrue("thread should be alive before latch is lowered", thread.isAlive());
 		assertFalse("thread should not be interrupted", thread.isInterrupted());
-		final long timeoutMicros = 20_999_999L;
+		final long timeoutNanos = 20_999_999L;  // almost 21ms
 		final long startMillis = System.currentTimeMillis();
 		assertFalse("joining should fail before latch is lowered",
-				joining.await(timeoutMicros, TimeUnit.NANOSECONDS));
+				joining.await(timeoutNanos, TimeUnit.NANOSECONDS));
 		assertTrue("timeout should be correctly converted",
-				System.currentTimeMillis() - startMillis > timeoutMicros / 1_000_000L);
+				System.currentTimeMillis() - startMillis > timeoutNanos / 1_000_000L);
+				// hopefully this will fail if 999_999 nanos are not passed correctly to join(...)
 		assertTrue("attempt to join should not interrupt thread", thread.isAlive());
 		assertFalse("attempt to join should not interrupt thread", thread.isInterrupted());
 		latch.countDown();
 		assertTrue("joining should succeed after lowering latch",
-				joining.await(990L, TimeUnit.NANOSECONDS));
+				joining.await(timeoutNanos, TimeUnit.NANOSECONDS));
 		assertFalse("thread should terminate after lowering latch", thread.isAlive());
 	}
 
