@@ -138,6 +138,14 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!-- TODO: ideally this should be set only for JulManualResetLogManagerTest -->
+					<argLine>-Djava.util.logging.manager=pl.morgwai.base.logging.JulManualResetLogManager</argLine>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 </project>

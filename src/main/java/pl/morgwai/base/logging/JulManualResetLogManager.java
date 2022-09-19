@@ -1,6 +1,8 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.logging;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.logging.LogManager;
 
 
@@ -32,10 +34,36 @@ public class JulManualResetLogManager extends LogManager {
 
 
 
+	final Object lock = new Object();
+	boolean readingConfiguration = false;
+
+
+
 	/**
 	 * Has no effect. Use {@link #manualReset()} instead.
 	 */
-	@Override public void reset() throws SecurityException {}
+	@Override
+	public void reset() throws SecurityException {
+		synchronized (lock) {
+			if (readingConfiguration) super.reset();
+		}
+	}
+
+
+
+	@Override
+	public void readConfiguration(InputStream ins) throws IOException, SecurityException {
+		synchronized (lock) {
+			readingConfiguration = true;
+			try {
+				super.readConfiguration(ins);
+			} finally {
+				readingConfiguration = false;
+			}
+		}
+	}
+
+
 
 	/**
 	 * Calls {@link LogManager#reset() super.reset()}.

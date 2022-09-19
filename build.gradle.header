@@ -9,6 +9,10 @@ java {
 	targetCompatibility = JavaVersion.VERSION_11
 }
 
+test {
+	systemProperty "java.util.logging.manager", "pl.morgwai.base.logging.JulManualResetLogManager"
+}
+
 repositories {
 	mavenLocal()
 	mavenCentral()
