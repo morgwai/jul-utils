@@ -89,7 +89,7 @@ public interface Awaitable {
 			} else {
 				thread.join(timeoutMillis, (int) (unit.toNanos(timeout) % 1_000_000L));
 			}
-			return ! thread.isAlive();
+			return !thread.isAlive();
 		};
 	}
 

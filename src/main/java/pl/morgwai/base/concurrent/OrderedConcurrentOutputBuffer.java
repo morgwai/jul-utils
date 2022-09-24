@@ -117,7 +117,7 @@ public class OrderedConcurrentOutputBuffer<MessageT> {
 		List<MessageT> buffer = new LinkedList<>();// null <=> flushed <=> all previous also flushed
 		boolean closed = false;
 		Bucket next;  // null <=> this is the tailGuard
-		// (buffer == null && ! closed) <=> this is the current head bucket (first unclosed one)
+		// (buffer == null && !closed) <=> this is the current head bucket (first unclosed one)
 
 
 
