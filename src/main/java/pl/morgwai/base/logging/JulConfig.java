@@ -1,10 +1,10 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.logging;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Properties;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
@@ -59,24 +59,18 @@ public class JulConfig {
 
 		// store into newLogLevels levels from system properties for loggers & handlers enlisted
 		// on loggerNames param or on the system property
-		int characterCount = 30;  // 30 is date comment character length
-		if (loggerNames.length > 0) characterCount += readLogLevels(newLogLevels, loggerNames);
+		if (loggerNames.length > 0) readLogLevels(newLogLevels, loggerNames);
 		final var loggerNamesFromProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
 		if (loggerNamesFromProperty != null) {
-			characterCount += readLogLevels(newLogLevels, loggerNamesFromProperty.split(","));
+			readLogLevels(newLogLevels, loggerNamesFromProperty.split(","));
 		}
-		if (newLogLevels.size() == 0) return;
+		if (newLogLevels.isEmpty()) return;
 
-		// write newLogLevels into a ByteArrayInputStream and pass it to
-		// LogManager.updateConfiguration(...)
-		final var outputBytes = new ByteArrayOutputStream(characterCount * 2);  // *2 for utf chars
 		try {
-			try (outputBytes) { newLogLevels.store(outputBytes, null); }
-			try (var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
-				LogManager.getLogManager().updateConfiguration(
-						inputBytes,
-						(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal);
-			}
+			updateLogManagerConfiguration(
+				newLogLevels,
+				(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal
+			);
 		} catch (IOException e) {  // this is probably impossible to happen for byte array streams
 			throw new RuntimeException(e);
 		}
@@ -133,4 +127,35 @@ public class JulConfig {
 	 * {@value #JUL_CONFIG_CLASS_PROPERTY}
 	 */
 	public static final String JUL_CONFIG_CLASS_PROPERTY = "java.util.logging.config.class";
+
+
+
+	/**
+	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
+	 * takes a {@link Properties} argument instead of an {@link InputStream}.
+	 * @param logManager {@link LogManager} instance to update.
+	 * @param logConfigUpdates logging config properties.
+	 */
+	public static void updateConfiguration(
+		LogManager logManager,
+		Properties logConfigUpdates,
+		Function<String, BiFunction<String,String,String>> mapper
+	) throws IOException {
+		final var outputBytes = new ByteArrayOutputStream(200);  // seems like a safe estimate
+		try (outputBytes) { logConfigUpdates.store(outputBytes, null); }
+		try (var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
+			logManager.updateConfiguration(inputBytes, mapper);
+		}
+	}
+
+	/**
+	 * Calls {@link #updateConfiguration(LogManager, Properties, Function)
+	 * updateConfiguration(LogManager.getLogManager(), logConfigUpdates, mapper)}.
+	 */
+	public static void updateLogManagerConfiguration(
+		Properties logConfigUpdates,
+		Function<String, BiFunction<String,String,String>> mapper
+	) throws IOException {
+		updateConfiguration(LogManager.getLogManager(), logConfigUpdates, mapper);
+	}
 }
