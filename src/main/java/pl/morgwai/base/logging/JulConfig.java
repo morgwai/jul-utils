@@ -136,32 +136,32 @@ public class JulConfig {
 	/**
 	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
 	 * takes a {@link Properties} argument instead of an {@link InputStream}.
-	 * @param estimatedLogConfigUpdatesByteSize estimated size of logConfigUpdates in bytes. It will
-	 *     be passed as an argument to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
+	 * @param estimatedLogConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes. It
+	 *    will be passed as an argument to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
 	 */
 	public static void updateConfiguration(
 		LogManager logManager,
-		Properties logConfigUpdates,
+		Properties loggingConfigUpdates,
 		int estimatedLogConfigUpdatesByteSize,
 		Function<String, BiFunction<String,String,String>> mapper
 	) throws IOException {
 		final var outputBytes = new ByteArrayOutputStream(estimatedLogConfigUpdatesByteSize);
-		try (outputBytes) { logConfigUpdates.store(outputBytes, null); }
+		try (outputBytes) { loggingConfigUpdates.store(outputBytes, null); }
 		try (var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
 			logManager.updateConfiguration(inputBytes, mapper);
 		}
 	}
 
 	/**
-	 * Each property from {@code logConfigUpdates} is added to logging config properties if it
+	 * Each property from {@code loggingConfigUpdates} is added to logging config properties if it
 	 * wasn't present before, otherwise the value is replaced with the one from
-	 * {@code logConfigUpdates}.
+	 * {@code loggingConfigUpdates}.
 	 */
-	public static void updateLogManagerConfiguration(Properties logConfigUpdates)
+	public static void updateLoggingConfig(Properties loggingConfigUpdates)
 			throws IOException {
 		updateConfiguration(
 			LogManager.getLogManager(),
-			logConfigUpdates,
+			loggingConfigUpdates,
 			200,  // probably more efficient than calculating manually in most cases
 			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal
 		);
