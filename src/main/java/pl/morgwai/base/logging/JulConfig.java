@@ -72,7 +72,7 @@ public class JulConfig {
 				LogManager.getLogManager(),
 				newLogLevels,
 				characterCount * 2,  // *2 is for UTF characters
-				(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal
+				addOrReplaceMapper
 			);
 		} catch (IOException e) {  // this is probably impossible to happen for byte array streams
 			throw new RuntimeException(e);
@@ -85,6 +85,9 @@ public class JulConfig {
 	 * {@link java.util.logging.Level}s will be overridden by {@link #overrideLogLevels(String...)}.
 	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
+
+	private static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
+			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
 
 	/**
 	 * Reads system properties containing overridden levels for {@code loggerNames} and puts them
@@ -163,7 +166,7 @@ public class JulConfig {
 			LogManager.getLogManager(),
 			loggingConfigUpdates,
 			200,  // probably more efficient than calculating manually in most cases
-			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal
+			addOrReplaceMapper
 		);
 	}
 }
