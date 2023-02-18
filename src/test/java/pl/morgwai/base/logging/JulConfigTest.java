@@ -95,8 +95,10 @@ public class JulConfigTest {
 	public void testUpdateConfigurationCallsLogManagerEvenWithEmptyUpdates() throws IOException {
 		boolean[] mapperCalledHolder = {false};
 
-		JulConfig.updateLogManagerConfiguration(
+		JulConfig.updateConfiguration(
+			LogManager.getLogManager(),
 			new Properties(),
+			40,
 			(key) -> (oldVal, newVal) -> {
 				mapperCalledHolder[0] = true;
 				assertNull("there should be no config updates", newVal);
@@ -117,10 +119,7 @@ public class JulConfigTest {
 		logConfigUpdates.put(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
 		logConfigUpdates.put(LEVEL_SUFFIX, Level.SEVERE.toString());
 
-		JulConfig.updateLogManagerConfiguration(
-			logConfigUpdates,
-			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal
-		);
+		JulConfig.updateLogManagerConfiguration(logConfigUpdates);
 
 		assertEquals(
 				"ConsoleHandler should have level as in the property",

@@ -153,15 +153,17 @@ public class JulConfig {
 	}
 
 	/**
-	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
-	 * takes a {@link Properties} argument instead of an {@link InputStream}.
-	 * Calls {@link #updateConfiguration(LogManager, Properties, int, Function)
-	 * updateConfiguration(LogManager.getLogManager(), logConfigUpdates, 200, mapper)}.
+	 * Each property from {@code logConfigUpdates} is added to logging config properties if it
+	 * wasn't present before, otherwise the value is replaced with the one from
+	 * {@code logConfigUpdates}.
 	 */
-	public static void updateLogManagerConfiguration(
-		Properties logConfigUpdates,
-		Function<String, BiFunction<String,String,String>> mapper
-	) throws IOException {
-		updateConfiguration(LogManager.getLogManager(), logConfigUpdates, 200, mapper);
+	public static void updateLogManagerConfiguration(Properties logConfigUpdates)
+			throws IOException {
+		updateConfiguration(
+			LogManager.getLogManager(),
+			logConfigUpdates,
+			200,  // probably more efficient than calculating manually in most cases
+			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal
+		);
 	}
 }
