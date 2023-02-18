@@ -112,7 +112,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testUpdateLogManagerConfiguration() throws IOException {
+	public void testUpdateLoggingConfig() throws IOException {
 		var logConfigUpdates = new Properties();
 		logConfigUpdates.put(
 				ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
