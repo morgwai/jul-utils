@@ -59,16 +59,19 @@ public class JulConfig {
 
 		// store into newLogLevels levels from system properties for loggers & handlers enlisted
 		// on loggerNames param or on the system property
-		if (loggerNames.length > 0) readLogLevels(newLogLevels, loggerNames);
+		int characterCount = 30;  // 30 is date comment character length
+		if (loggerNames.length > 0) characterCount += readLogLevels(newLogLevels, loggerNames);
 		final var loggerNamesFromProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
 		if (loggerNamesFromProperty != null) {
-			readLogLevels(newLogLevels, loggerNamesFromProperty.split(","));
+			characterCount += readLogLevels(newLogLevels, loggerNamesFromProperty.split(","));
 		}
 		if (newLogLevels.isEmpty()) return;
 
 		try {
-			updateLogManagerConfiguration(
+			updateConfiguration(
+				LogManager.getLogManager(),
 				newLogLevels,
+				characterCount * 2,  // *2 is for UTF characters
 				(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal
 			);
 		} catch (IOException e) {  // this is probably impossible to happen for byte array streams
@@ -133,15 +136,16 @@ public class JulConfig {
 	/**
 	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
 	 * takes a {@link Properties} argument instead of an {@link InputStream}.
-	 * @param logManager {@link LogManager} instance to update.
-	 * @param logConfigUpdates logging config properties.
+	 * @param estimatedLogConfigUpdatesByteSize estimated size of logConfigUpdates in bytes. It will
+	 *     be passed as an argument to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
 	 */
 	public static void updateConfiguration(
 		LogManager logManager,
 		Properties logConfigUpdates,
+		int estimatedLogConfigUpdatesByteSize,
 		Function<String, BiFunction<String,String,String>> mapper
 	) throws IOException {
-		final var outputBytes = new ByteArrayOutputStream(200);  // seems like a safe estimate
+		final var outputBytes = new ByteArrayOutputStream(estimatedLogConfigUpdatesByteSize);
 		try (outputBytes) { logConfigUpdates.store(outputBytes, null); }
 		try (var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
 			logManager.updateConfiguration(inputBytes, mapper);
@@ -149,13 +153,15 @@ public class JulConfig {
 	}
 
 	/**
-	 * Calls {@link #updateConfiguration(LogManager, Properties, Function)
-	 * updateConfiguration(LogManager.getLogManager(), logConfigUpdates, mapper)}.
+	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
+	 * takes a {@link Properties} argument instead of an {@link InputStream}.
+	 * Calls {@link #updateConfiguration(LogManager, Properties, int, Function)
+	 * updateConfiguration(LogManager.getLogManager(), logConfigUpdates, 200, mapper)}.
 	 */
 	public static void updateLogManagerConfiguration(
 		Properties logConfigUpdates,
 		Function<String, BiFunction<String,String,String>> mapper
 	) throws IOException {
-		updateConfiguration(LogManager.getLogManager(), logConfigUpdates, mapper);
+		updateConfiguration(LogManager.getLogManager(), logConfigUpdates, 200, mapper);
 	}
 }

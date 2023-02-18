@@ -2,18 +2,21 @@
 package pl.morgwai.base.logging;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.*;
 
 import org.junit.*;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static pl.morgwai.base.logging.JulConfig.LEVEL_SUFFIX;
 
 
 
 public class JulConfigTest {
+
+
+
+	static final String EXAMPLE_DOMAIN = "com.example";
 
 
 
@@ -88,7 +91,50 @@ public class JulConfigTest {
 
 
 
-	static final String EXAMPLE_DOMAIN = "hksxuq.bzvd";  // hopefully not in use
+	@Test
+	public void testUpdateConfigurationCallsLogManagerEvenWithEmptyUpdates() throws IOException {
+		boolean[] mapperCalledHolder = {false};
+
+		JulConfig.updateLogManagerConfiguration(
+			new Properties(),
+			(key) -> (oldVal, newVal) -> {
+				mapperCalledHolder[0] = true;
+				assertNull("there should be no config updates", newVal);
+				return oldVal;
+			}
+		);
+
+		assertTrue("mapper should be called at least once", mapperCalledHolder[0]);
+	}
+
+
+
+	@Test
+	public void testUpdateLogManagerConfiguration() throws IOException {
+		var logConfigUpdates = new Properties();
+		logConfigUpdates.put(
+				ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
+		logConfigUpdates.put(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
+		logConfigUpdates.put(LEVEL_SUFFIX, Level.SEVERE.toString());
+
+		JulConfig.updateLogManagerConfiguration(
+			logConfigUpdates,
+			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal
+		);
+
+		assertEquals(
+				"ConsoleHandler should have level as in the property",
+				logConfigUpdates.get(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
+				new ConsoleHandler().getLevel().toString());
+		assertEquals(
+				EXAMPLE_DOMAIN + " logger should have level as in the property",
+				logConfigUpdates.get(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
+				Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString());
+		assertEquals(
+				"root logger should have level as in the property",
+				logConfigUpdates.get(LEVEL_SUFFIX),
+				Logger.getLogger("").getLevel().toString());
+	}
 
 
 
