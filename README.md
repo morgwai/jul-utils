@@ -18,7 +18,7 @@ Utilities to await for multiple timed blocking operations, such as `Thread.join(
 A text log formatter similar to `SimpleFormatter` that additionally allows to format stack trace elements and to add log sequence id and thread id to log entries.
 
 ### [JulConfig](src/main/java/pl/morgwai/base/logging/JulConfig.java)
-Utilities to manipulate `java.util.logging` config, among others allows to override log levels of `Logger`s `Handler`s with values from system properties at startup in existing java apps without rebuilding: just add java-utils.jar to command-line class-path and define desired system properties.
+Utilities to manipulate `java.util.logging` config, among others allows to override log levels of `Logger`s and `Handler`s with values from system properties at startup in existing java apps without rebuilding: just add java-utils.jar to command-line class-path and define desired system properties.
 
 ### [JulManualResetLogManager](src/main/java/pl/morgwai/base/logging/JulManualResetLogManager.java)
 A LogManager that does not get reset automatically at JVM shutdown. Useful if logs from user shutdown hooks are important. See a usage example [here](https://github.com/morgwai/grpc-scopes/blob/v9.0/sample/src/main/java/pl/morgwai/samples/grpc/scopes/grpc/RecordStorageServer.java#L90).
