@@ -120,7 +120,7 @@ public class JulConfigTest {
 		logConfigUpdates.put(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
 		logConfigUpdates.put(LEVEL_SUFFIX, Level.SEVERE.toString());
 
-		JulConfig.updateLoggingConfig(logConfigUpdates);
+		JulConfig.addOrReplaceLoggingConfigProperties(logConfigUpdates);
 
 		assertEquals(
 				"ConsoleHandler should have level as in the property",

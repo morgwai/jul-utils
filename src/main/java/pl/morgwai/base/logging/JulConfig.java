@@ -153,8 +153,8 @@ public class JulConfig {
 	/**
 	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
 	 * takes a {@link Properties} argument instead of an {@link InputStream}.
-	 * This is a bit low-level method: in most situations {@link #updateLoggingConfig(Properties)}
-	 * will be more convenient.
+	 * This is a bit low-level method: in most situations
+	 * {@link #addOrReplaceLoggingConfigProperties(Properties)} will be more convenient.
 	 * @param estimatedLogConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes. It
 	 *    will be passed as an argument to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
 	 */
@@ -174,11 +174,11 @@ public class JulConfig {
 	}
 
 	/**
-	 * Adds properties from {@code loggingConfigUpdates} to logging config properties, replaces
-	 * values of properties already present in logging config properties with corresponding values
-	 * from {@code loggingConfigUpdates}.
+	 * Adds to logging config properties those properties from {@code loggingConfigUpdates} that
+	 * were not present before, replaces values of those already present with corresponding ones
+	 * from {@code loggingConfigUpdates} if present there.
 	 */
-	public static void updateLoggingConfig(Properties loggingConfigUpdates) {
+	public static void addOrReplaceLoggingConfigProperties(Properties loggingConfigUpdates) {
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			loggingConfigUpdates,
