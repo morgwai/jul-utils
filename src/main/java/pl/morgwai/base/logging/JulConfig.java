@@ -15,7 +15,7 @@ import java.util.logging.LogManager;
  * <p>
  * Note: overriding can be applied to an existing java app at startup: just add
  * {@code java-utils jar} to the class-path and define system properties as described in
- * {@link #JulConfig()} and {@link #overrideLogLevels(String...)}.</p>
+ * {@link #JulConfig()} and {@link #overrideLogLevelsWithSystemProperties(String...)}.</p>
  */
 public class JulConfig {
 
@@ -26,7 +26,7 @@ public class JulConfig {
 	 * {@link java.util.logging.Handler}s with values obtained from system properties.
 	 * Fully qualified names of {@link java.util.logging.Logger Logger}s and
 	 * {@link java.util.logging.Handler Handler}s whose {@link Level}s will be overridden by this
-	 * method can be provided as {@code loggerNames} arguments and/or comma separated on
+	 * method can be provided as {@code loggerAndHandlerNames} arguments and/or comma separated on
 	 * {@value #OVERRIDE_LEVEL_PROPERTY} system property.<br/>
 	 * Name of the system property containing a new {@link Level} for a given
 	 * {@code Logger/Handler} is constructed by appending {@value #LEVEL_SUFFIX} to the given
@@ -54,13 +54,15 @@ public class JulConfig {
 	 * is an empty string), while {@code -D.level} provides the new {@link Level} for the root
 	 * {@link java.util.logging.Logger}).</p>
 	 */
-	public static void overrideLogLevels(String... loggerNames) {
+	public static void overrideLogLevelsWithSystemProperties(String... loggerAndHandlerNames) {
 		final var newLogLevels = new Properties();  // loggerName.level -> newLevel
 
 		// store into newLogLevels levels from system properties for loggers & handlers enlisted
-		// on loggerNames param or on the system property
+		// on loggerAndHandlerNames param or on the system property
 		int characterCount = 30;  // 30 is date comment character length
-		if (loggerNames.length > 0) characterCount += readLogLevels(newLogLevels, loggerNames);
+		if (loggerAndHandlerNames.length > 0) {
+			characterCount += readLogLevels(newLogLevels, loggerAndHandlerNames);
+		}
 		final var loggerNamesFromProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
 		if (loggerNamesFromProperty != null) {
 			characterCount += readLogLevels(newLogLevels, loggerNamesFromProperty.split(","));
@@ -82,9 +84,18 @@ public class JulConfig {
 	/**
 	 * Name of the system property that can contain comma separated, fully qualified names of
 	 * {@link java.util.logging.Logger}s and {@link java.util.logging.Handler}s whose
-	 * {@link java.util.logging.Level}s will be overridden by {@link #overrideLogLevels(String...)}.
+	 * {@link java.util.logging.Level}s will be overridden by
+	 * {@link #overrideLogLevelsWithSystemProperties(String...)}.
 	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
+
+	/**
+	 * @deprecated use {@link #overrideLogLevelsWithSystemProperties(String...)} instead.
+	 */
+	@Deprecated(forRemoval = true)
+	public static void overrideLogLevels(String... loggerAndHandlerNames) {
+		overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
+	}
 
 	private static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
 			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
@@ -117,16 +128,17 @@ public class JulConfig {
 
 
 	/**
-	 * Reads logging config normally and then calls {@link #overrideLogLevels(String...)}.
-	 * For use with {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is
-	 * set to the fully qualified name of this class, then {@link LogManager} will call this
-	 * constructor instead of reading the configuration the normal way.
+	 * Reads logging config normally and then calls
+	 * {@link #overrideLogLevelsWithSystemProperties(String...)}. For use with
+	 * {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is set to the fully
+	 * qualified name of this class, then {@link LogManager} will call this constructor instead of
+	 * reading the configuration the normal way.
 	 * @see LogManager
 	 */
 	public JulConfig() throws Exception {
 		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY);
 		LogManager.getLogManager().readConfiguration();
-		overrideLogLevels();
+		overrideLogLevelsWithSystemProperties();
 	}
 
 	/**
@@ -156,9 +168,9 @@ public class JulConfig {
 	}
 
 	/**
-	 * Each property from {@code loggingConfigUpdates} is added to logging config properties if it
-	 * wasn't present before, otherwise the value is replaced with the one from
-	 * {@code loggingConfigUpdates}.
+	 * Adds properties from {@code loggingConfigUpdates} to logging config properties, replaces
+	 * values of properties already present in logging config properties with corresponding values
+	 * from {@code loggingConfigUpdates}.
 	 */
 	public static void updateLoggingConfig(Properties loggingConfigUpdates)
 			throws IOException {

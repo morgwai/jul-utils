@@ -53,7 +53,8 @@ public class JulConfigTest {
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(LEVEL_SUFFIX, Level.SEVERE.toString());
 
-		JulConfig.overrideLogLevels(ConsoleHandler.class.getName(), EXAMPLE_DOMAIN, "");
+		JulConfig.overrideLogLevelsWithSystemProperties(
+				ConsoleHandler.class.getName(), EXAMPLE_DOMAIN, "");
 
 		assertEquals(
 				"ConsoleHandler should have level as in the property",
@@ -77,7 +78,7 @@ public class JulConfigTest {
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
 
-		JulConfig.overrideLogLevels(EXAMPLE_DOMAIN);
+		JulConfig.overrideLogLevelsWithSystemProperties(EXAMPLE_DOMAIN);
 
 		assertEquals(
 				"ConsoleHandler should have level as in the property",
