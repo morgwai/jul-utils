@@ -96,7 +96,7 @@ public class JulConfigTest {
 	public void testUpdateConfigurationCallsLogManagerEvenWithEmptyUpdates() throws IOException {
 		boolean[] mapperCalledHolder = {false};
 
-		JulConfig.updateConfiguration(
+		JulConfig.logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			new Properties(),
 			40,

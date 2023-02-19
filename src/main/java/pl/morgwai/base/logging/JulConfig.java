@@ -70,7 +70,7 @@ public class JulConfig {
 		if (newLogLevels.isEmpty()) return;
 
 		try {
-			updateConfiguration(
+			logManagerUpdateConfiguration(
 				LogManager.getLogManager(),
 				newLogLevels,
 				characterCount * 2,  // *2 is for UTF characters
@@ -151,10 +151,12 @@ public class JulConfig {
 	/**
 	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
 	 * takes a {@link Properties} argument instead of an {@link InputStream}.
+	 * This is a bit low-level method: in most situations {@link #updateLoggingConfig(Properties)}
+	 * will be more convenient.
 	 * @param estimatedLogConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes. It
 	 *    will be passed as an argument to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
 	 */
-	public static void updateConfiguration(
+	public static void logManagerUpdateConfiguration(
 		LogManager logManager,
 		Properties loggingConfigUpdates,
 		int estimatedLogConfigUpdatesByteSize,
@@ -174,7 +176,7 @@ public class JulConfig {
 	 */
 	public static void updateLoggingConfig(Properties loggingConfigUpdates)
 			throws IOException {
-		updateConfiguration(
+		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			loggingConfigUpdates,
 			200,  // probably more efficient than calculating manually in most cases
