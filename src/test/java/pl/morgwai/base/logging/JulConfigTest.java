@@ -114,25 +114,25 @@ public class JulConfigTest {
 
 	@Test
 	public void testAddOrReplaceLoggingConfigProperties() {
-		var logConfigUpdates = new Properties();
-		logConfigUpdates.put(
+		var loggingConfigUpdates = new Properties();
+		loggingConfigUpdates.put(
 				ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
-		logConfigUpdates.put(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
-		logConfigUpdates.put(LEVEL_SUFFIX, Level.SEVERE.toString());
+		loggingConfigUpdates.put(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
+		loggingConfigUpdates.put(LEVEL_SUFFIX, Level.SEVERE.toString());
 
-		JulConfig.addOrReplaceLoggingConfigProperties(logConfigUpdates);
+		JulConfig.addOrReplaceLoggingConfigProperties(loggingConfigUpdates);
 
 		assertEquals(
 				"ConsoleHandler should have level as in the property",
-				logConfigUpdates.get(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
+				loggingConfigUpdates.get(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
 				new ConsoleHandler().getLevel().toString());
 		assertEquals(
 				EXAMPLE_DOMAIN + " logger should have level as in the property",
-				logConfigUpdates.get(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
+				loggingConfigUpdates.get(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
 				Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString());
 		assertEquals(
 				"root logger should have level as in the property",
-				logConfigUpdates.get(LEVEL_SUFFIX),
+				loggingConfigUpdates.get(LEVEL_SUFFIX),
 				Logger.getLogger("").getLevel().toString());
 	}
 

@@ -155,17 +155,19 @@ public class JulConfig {
 	 * takes a {@link Properties} argument instead of an {@link InputStream}.
 	 * This is a bit low-level method: in most situations
 	 * {@link #addOrReplaceLoggingConfigProperties(Properties)} will be more convenient.
-	 * @param estimatedLogConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes. It
-	 *    will be passed as an argument to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
+	 * @param estimatedLoggingConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes.
+	 *     It will be passed as an argument to
+	 *     {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
 	 */
 	public static void logManagerUpdateConfiguration(
 		LogManager logManager,
 		Properties loggingConfigUpdates,
-		int estimatedLogConfigUpdatesByteSize,
+		int estimatedLoggingConfigUpdatesByteSize,
 		Function<String, BiFunction<String,String,String>> mapper
 	) {
 		try {
-			final var outputBytes = new ByteArrayOutputStream(estimatedLogConfigUpdatesByteSize);
+			final var outputBytes =
+					new ByteArrayOutputStream(estimatedLoggingConfigUpdatesByteSize);
 			try (outputBytes) { loggingConfigUpdates.store(outputBytes, null); }
 			try (var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
 				logManager.updateConfiguration(inputBytes, mapper);
