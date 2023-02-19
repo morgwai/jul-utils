@@ -93,7 +93,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testUpdateConfigurationCallsLogManagerEvenWithEmptyUpdates() {
+	public void testLogManagerUpdateConfigurationCallsLogManagerEvenWithEmptyUpdates() {
 		boolean[] mapperCalledHolder = {false};
 
 		JulConfig.logManagerUpdateConfiguration(
@@ -113,7 +113,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testUpdateLoggingConfig() {
+	public void testAddOrReplaceLoggingConfigProperties() {
 		var logConfigUpdates = new Properties();
 		logConfigUpdates.put(
 				ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
