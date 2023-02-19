@@ -53,8 +53,11 @@ public class JulConfig {
 	 * {@value #OVERRIDE_LEVEL_PROPERTY} starts with a comma (so that the first element of the list
 	 * is an empty string), while {@code -D.level} provides the new {@link Level} for the root
 	 * {@link java.util.logging.Logger}).</p>
+	 *
+	 * @throws IOException this probably never happens as byte array streams are used.
 	 */
-	public static void overrideLogLevelsWithSystemProperties(String... loggerAndHandlerNames) {
+	public static void overrideLogLevelsWithSystemProperties(String... loggerAndHandlerNames)
+			throws IOException {
 		final var newLogLevels = new Properties();  // loggerName.level -> newLevel
 
 		// store into newLogLevels levels from system properties for loggers & handlers enlisted
@@ -69,16 +72,12 @@ public class JulConfig {
 		}
 		if (newLogLevels.isEmpty()) return;
 
-		try {
-			logManagerUpdateConfiguration(
-				LogManager.getLogManager(),
-				newLogLevels,
-				characterCount * 2,  // *2 is for UTF characters
-				addOrReplaceMapper
-			);
-		} catch (IOException e) {  // this is probably impossible to happen for byte array streams
-			throw new RuntimeException(e);
-		}
+		logManagerUpdateConfiguration(
+			LogManager.getLogManager(),
+			newLogLevels,
+			characterCount * 2,  // *2 is for UTF characters
+			addOrReplaceMapper
+		);
 	}
 
 	/**
@@ -94,7 +93,11 @@ public class JulConfig {
 	 */
 	@Deprecated(forRemoval = true)
 	public static void overrideLogLevels(String... loggerAndHandlerNames) {
-		overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
+		try {
+			overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
@@ -135,7 +138,7 @@ public class JulConfig {
 	 * reading the configuration the normal way.
 	 * @see LogManager
 	 */
-	public JulConfig() throws Exception {
+	public JulConfig() throws IOException {
 		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY);
 		LogManager.getLogManager().readConfiguration();
 		overrideLogLevelsWithSystemProperties();
@@ -155,6 +158,7 @@ public class JulConfig {
 	 * will be more convenient.
 	 * @param estimatedLogConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes. It
 	 *    will be passed as an argument to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
+	 * @throws IOException this probably never happens as byte array streams are used.
 	 */
 	public static void logManagerUpdateConfiguration(
 		LogManager logManager,
@@ -173,9 +177,9 @@ public class JulConfig {
 	 * Adds properties from {@code loggingConfigUpdates} to logging config properties, replaces
 	 * values of properties already present in logging config properties with corresponding values
 	 * from {@code loggingConfigUpdates}.
+	 * @throws IOException this probably never happens as byte array streams are used.
 	 */
-	public static void updateLoggingConfig(Properties loggingConfigUpdates)
-			throws IOException {
+	public static void updateLoggingConfig(Properties loggingConfigUpdates) throws IOException {
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			loggingConfigUpdates,

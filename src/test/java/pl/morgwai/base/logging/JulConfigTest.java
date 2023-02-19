@@ -48,7 +48,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testNamesFromParams() {
+	public void testNamesFromParams() throws IOException {
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(LEVEL_SUFFIX, Level.SEVERE.toString());
@@ -73,7 +73,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testNamesFromBothPropertyAndParams() {
+	public void testNamesFromBothPropertyAndParams() throws IOException {
 		System.setProperty(JulConfig.OVERRIDE_LEVEL_PROPERTY, ConsoleHandler.class.getName());
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
