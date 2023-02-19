@@ -21,7 +21,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testNamesFromProperty() throws Exception {
+	public void testNamesFromProperty() throws IOException {
 		System.setProperty(JulConfig.OVERRIDE_LEVEL_PROPERTY,
 				"," + ConsoleHandler.class.getName() + "," + EXAMPLE_DOMAIN);
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
@@ -48,7 +48,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testNamesFromParams() throws IOException {
+	public void testNamesFromParams() {
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(LEVEL_SUFFIX, Level.SEVERE.toString());
@@ -73,7 +73,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testNamesFromBothPropertyAndParams() throws IOException {
+	public void testNamesFromBothPropertyAndParams() {
 		System.setProperty(JulConfig.OVERRIDE_LEVEL_PROPERTY, ConsoleHandler.class.getName());
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
@@ -93,7 +93,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testUpdateConfigurationCallsLogManagerEvenWithEmptyUpdates() throws IOException {
+	public void testUpdateConfigurationCallsLogManagerEvenWithEmptyUpdates() {
 		boolean[] mapperCalledHolder = {false};
 
 		JulConfig.logManagerUpdateConfiguration(
@@ -113,7 +113,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testUpdateLoggingConfig() throws IOException {
+	public void testUpdateLoggingConfig() {
 		var logConfigUpdates = new Properties();
 		logConfigUpdates.put(
 				ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());

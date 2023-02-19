@@ -55,11 +55,8 @@ public class JulConfig {
 	 * Note: overriding can be applied to existing java apps at startup without rebuilding: just add
 	 * {@code java-utils.jar} to command-line class-path and define
 	 * {@value #JUL_CONFIG_CLASS_PROPERTY} as in the example above.</p>
-	 *
-	 * @throws IOException this probably never happens as byte array streams are used.
 	 */
-	public static void overrideLogLevelsWithSystemProperties(String... loggerAndHandlerNames)
-			throws IOException {
+	public static void overrideLogLevelsWithSystemProperties(String... loggerAndHandlerNames) {
 		final var newLogLevels = new Properties();  // loggerName.level -> newLevel
 
 		// store into newLogLevels levels from system properties for loggers & handlers enlisted
@@ -95,11 +92,7 @@ public class JulConfig {
 	 */
 	@Deprecated(forRemoval = true)
 	public static void overrideLogLevels(String... loggerAndHandlerNames) {
-		try {
-			overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
 	}
 
 	private static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
@@ -164,28 +157,28 @@ public class JulConfig {
 	 * will be more convenient.
 	 * @param estimatedLogConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes. It
 	 *    will be passed as an argument to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
-	 * @throws IOException this probably never happens as byte array streams are used.
 	 */
 	public static void logManagerUpdateConfiguration(
 		LogManager logManager,
 		Properties loggingConfigUpdates,
 		int estimatedLogConfigUpdatesByteSize,
 		Function<String, BiFunction<String,String,String>> mapper
-	) throws IOException {
-		final var outputBytes = new ByteArrayOutputStream(estimatedLogConfigUpdatesByteSize);
-		try (outputBytes) { loggingConfigUpdates.store(outputBytes, null); }
-		try (var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
-			logManager.updateConfiguration(inputBytes, mapper);
-		}
+	) {
+		try {
+			final var outputBytes = new ByteArrayOutputStream(estimatedLogConfigUpdatesByteSize);
+			try (outputBytes) { loggingConfigUpdates.store(outputBytes, null); }
+			try (var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
+				logManager.updateConfiguration(inputBytes, mapper);
+			}
+		} catch (IOException ignored) {}  // this will never happen as byte array streams are used
 	}
 
 	/**
 	 * Adds properties from {@code loggingConfigUpdates} to logging config properties, replaces
 	 * values of properties already present in logging config properties with corresponding values
 	 * from {@code loggingConfigUpdates}.
-	 * @throws IOException this probably never happens as byte array streams are used.
 	 */
-	public static void updateLoggingConfig(Properties loggingConfigUpdates) throws IOException {
+	public static void updateLoggingConfig(Properties loggingConfigUpdates) {
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			loggingConfigUpdates,
