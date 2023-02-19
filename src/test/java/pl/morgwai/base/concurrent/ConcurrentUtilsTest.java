@@ -19,23 +19,23 @@ public class ConcurrentUtilsTest {
 		final Throwable[] caughtHolder = new Throwable[1];
 		final var completionLatch = new CountDownLatch(1);
 
-		ConcurrentUtils.completableFutureSupplyAsync(
-			() -> { throw thrown; }
-		).handle(
+		final var completableFuture = ConcurrentUtils.completableFutureSupplyAsync(
+			() -> { throw thrown; },
+			Executors.newSingleThreadExecutor()
+		).whenComplete(
 			(result, caught) -> {
 				if (result == null) caughtHolder[0] = caught;
 				completionLatch.countDown();
-				return result;
 			}
 		);
 
-		assertTrue("task should complete", completionLatch.await(50L, TimeUnit.MILLISECONDS));
 		assertTrue(
-				"CompletionException should be caught",
-				caughtHolder[0] instanceof CompletionException);
+				"the Callable task should complete",
+				completionLatch.await(50L, TimeUnit.MILLISECONDS));
+		assertTrue("completableFuture should be marked as done", completableFuture.isDone());
 		assertSame(
-				"cause should be the exception thrown by task",
+				"caught exception should be the same as thrown by the Callable task",
 				thrown,
-				caughtHolder[0].getCause());
+				caughtHolder[0]);
 	}
 }
