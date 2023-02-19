@@ -105,7 +105,7 @@ public class JulConfig {
 	 */
 	private static int readLogLevels(Properties newLogLevels, String[] loggerNames) {
 		int characterCount = 0;
-		for (var loggerName: loggerNames) {
+		for (final var loggerName: loggerNames) {
 			final var loggerLevelPropertyName = loggerName + LEVEL_SUFFIX;
 			final var level = System.getProperty(loggerLevelPropertyName);
 			if (level == null) continue;
@@ -169,7 +169,7 @@ public class JulConfig {
 			final var outputBytes =
 					new ByteArrayOutputStream(estimatedLoggingConfigUpdatesByteSize);
 			try (outputBytes) { loggingConfigUpdates.store(outputBytes, null); }
-			try (var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
+			try (final var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
 				logManager.updateConfiguration(inputBytes, mapper);
 			}
 		} catch (IOException ignored) {}  // this will never happen as byte array streams are used

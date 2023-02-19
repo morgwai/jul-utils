@@ -114,7 +114,7 @@ public class JulConfigTest {
 
 	@Test
 	public void testAddOrReplaceLoggingConfigProperties() {
-		var loggingConfigUpdates = new Properties();
+		final var loggingConfigUpdates = new Properties();
 		loggingConfigUpdates.put(
 				ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
 		loggingConfigUpdates.put(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
