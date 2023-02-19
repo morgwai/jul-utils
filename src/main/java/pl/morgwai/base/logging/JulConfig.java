@@ -11,11 +11,9 @@ import java.util.logging.LogManager;
 
 
 /**
- * Utility to override {@code java.util.logging} properties with values from system properties.
- * <p>
- * Note: overriding can be applied to an existing java app at startup: just add
- * {@code java-utils jar} to the class-path and define system properties as described in
- * {@link #JulConfig()} and {@link #overrideLogLevelsWithSystemProperties(String...)}.</p>
+ * Utilities to manipulate {@code java.util.logging} config, among others allows to override log
+ * levels with values from system properties at startup in existing java apps without rebuilding:
+ * see {@link #overrideLogLevelsWithSystemProperties(String...)} and {@link #JulConfig()}.
  */
 public class JulConfig {
 
@@ -53,6 +51,10 @@ public class JulConfig {
 	 * {@value #OVERRIDE_LEVEL_PROPERTY} starts with a comma (so that the first element of the list
 	 * is an empty string), while {@code -D.level} provides the new {@link Level} for the root
 	 * {@link java.util.logging.Logger}).</p>
+	 * <p>
+	 * Note: overriding can be applied to existing java apps at startup without rebuilding: just add
+	 * {@code java-utils.jar} to command-line class-path and define
+	 * {@value #JUL_CONFIG_CLASS_PROPERTY} as in the example above.</p>
 	 *
 	 * @throws IOException this probably never happens as byte array streams are used.
 	 */
@@ -136,6 +138,10 @@ public class JulConfig {
 	 * {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is set to the fully
 	 * qualified name of this class, then {@link LogManager} will call this constructor instead of
 	 * reading the configuration the normal way.
+	 * <p>
+	 * Note: overriding can be applied to existing java apps at startup without rebuilding: just add
+	 * {@code java-utils.jar} to command-line class-path. See the example in
+	 * {@link #overrideLogLevelsWithSystemProperties(String...)} documentation.</p>
 	 * @see LogManager
 	 */
 	public JulConfig() throws IOException {
