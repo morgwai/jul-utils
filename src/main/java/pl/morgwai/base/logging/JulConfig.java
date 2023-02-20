@@ -25,13 +25,15 @@ public class JulConfig {
 	 * Fully qualified names of {@link java.util.logging.Logger Logger}s and
 	 * {@link java.util.logging.Handler Handler}s whose {@link Level}s will be overridden by this
 	 * method can be provided as {@code loggerAndHandlerNames} arguments and/or comma separated on
-	 * {@value #OVERRIDE_LEVEL_PROPERTY} system property.<br/>
+	 * {@value #OVERRIDE_LEVEL_PROPERTY} system property.
+	 * <p>
 	 * Name of the system property containing a new {@link Level} for a given
-	 * {@code Logger/Handler} is constructed by appending {@value #LEVEL_SUFFIX} to the given
+	 * {@link java.util.logging.Logger}/{@link java.util.logging.Handler} is constructed by
+	 * appending {@value #LEVEL_SUFFIX} to the given
 	 * {@link java.util.logging.Logger}'s&nbsp;/&nbsp;{@link java.util.logging.Handler}'s
-	 * fully-qualified-name.
+	 * fully-qualified-name.<br/>
 	 * If a system property with a new {@link Level} is missing, it is ignored. If it is present,
-	 * its validity is verified using {@link Level#parse(String)} method.
+	 * its validity is verified using {@link Level#parse(String)} method.</p>
 	 * <p>
 	 * <b>Example:</b><br/>
 	 * Output all entries from <code>com.example</code> name-space with level <code>FINE</code> or
