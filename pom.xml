@@ -6,7 +6,7 @@
 
 	<groupId>pl.morgwai.base</groupId>
 	<artifactId>java-utils</artifactId>
-	<version>1.15</version>
+	<version>1.16-SNAPSHOT</version>
 
 	<name>Java utils</name>
 	<description>Some utility classes</description>
