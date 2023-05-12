@@ -65,11 +65,11 @@ public class JulConfig {
 		// on loggerAndHandlerNames param or on the system property
 		int characterCount = 30;  // 30 is date comment character length
 		if (loggerAndHandlerNames.length > 0) {
-			characterCount += readLogLevels(newLogLevels, loggerAndHandlerNames);
+			characterCount += readNewLogLevels(newLogLevels, loggerAndHandlerNames);
 		}
 		final var loggerNamesFromProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
 		if (loggerNamesFromProperty != null) {
-			characterCount += readLogLevels(newLogLevels, loggerNamesFromProperty.split(","));
+			characterCount += readNewLogLevels(newLogLevels, loggerNamesFromProperty.split(","));
 		}
 		if (newLogLevels.isEmpty()) return;
 
@@ -94,7 +94,7 @@ public class JulConfig {
 	 * into {@code newLogLevels}.
 	 * @return number of characters put into {@code newLogLevels}.
 	 */
-	private static int readLogLevels(Properties newLogLevels, String[] loggerNames) {
+	private static int readNewLogLevels(Properties newLogLevels, String[] loggerNames) {
 		int characterCount = 0;
 		for (final var loggerName: loggerNames) {
 			final var loggerLevelPropertyName = loggerName + LEVEL_SUFFIX;
