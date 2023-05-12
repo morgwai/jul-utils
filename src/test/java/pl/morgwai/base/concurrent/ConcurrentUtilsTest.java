@@ -22,7 +22,8 @@ public class ConcurrentUtilsTest {
 		final var completableFuture = ConcurrentUtils.completableFutureSupplyAsync(
 			() -> { throw thrown; },
 			Executors.newSingleThreadExecutor()
-		).whenComplete(
+		);
+		completableFuture.whenComplete(
 			(result, caught) -> {
 				if (result == null) caughtHolder[0] = caught;
 				completionLatch.countDown();
