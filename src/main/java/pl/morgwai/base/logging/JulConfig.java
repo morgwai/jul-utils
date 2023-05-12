@@ -90,17 +90,6 @@ public class JulConfig {
 	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
 
 	/**
-	 * @deprecated use {@link #overrideLogLevelsWithSystemProperties(String...)} instead.
-	 */
-	@Deprecated(forRemoval = true)
-	public static void overrideLogLevels(String... loggerAndHandlerNames) {
-		overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
-	}
-
-	private static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
-			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
-
-	/**
 	 * Reads system properties containing overridden levels for {@code loggerNames} and puts them
 	 * into {@code newLogLevels}.
 	 * @return number of characters put into {@code newLogLevels}.
@@ -124,6 +113,34 @@ public class JulConfig {
 	 * {@value #LEVEL_SUFFIX}
 	 */
 	public static final String LEVEL_SUFFIX = ".level";
+
+	/**
+	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
+	 * takes a {@link Properties} argument instead of an {@link InputStream}.
+	 * This is a bit low-level method: in most situations
+	 * {@link #addOrReplaceLoggingConfigProperties(Properties)} will be more convenient.
+	 * @param estimatedLoggingConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes.
+	 *     It will be passed as an argument to
+	 *     {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
+	 */
+	public static void logManagerUpdateConfiguration(
+		LogManager logManager,
+		Properties loggingConfigUpdates,
+		int estimatedLoggingConfigUpdatesByteSize,
+		Function<String, BiFunction<String,String,String>> mapper
+	) {
+		try {
+			final var outputBytes =
+					new ByteArrayOutputStream(estimatedLoggingConfigUpdatesByteSize);
+			try (outputBytes) { loggingConfigUpdates.store(outputBytes, null); }
+			try (final var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
+				logManager.updateConfiguration(inputBytes, mapper);
+			}
+		} catch (IOException ignored) {}  // this will never happen as byte array streams are used
+	}
+
+	private static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
+			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
 
 
 
@@ -153,31 +170,6 @@ public class JulConfig {
 
 
 	/**
-	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
-	 * takes a {@link Properties} argument instead of an {@link InputStream}.
-	 * This is a bit low-level method: in most situations
-	 * {@link #addOrReplaceLoggingConfigProperties(Properties)} will be more convenient.
-	 * @param estimatedLoggingConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes.
-	 *     It will be passed as an argument to
-	 *     {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
-	 */
-	public static void logManagerUpdateConfiguration(
-		LogManager logManager,
-		Properties loggingConfigUpdates,
-		int estimatedLoggingConfigUpdatesByteSize,
-		Function<String, BiFunction<String,String,String>> mapper
-	) {
-		try {
-			final var outputBytes =
-					new ByteArrayOutputStream(estimatedLoggingConfigUpdatesByteSize);
-			try (outputBytes) { loggingConfigUpdates.store(outputBytes, null); }
-			try (final var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
-				logManager.updateConfiguration(inputBytes, mapper);
-			}
-		} catch (IOException ignored) {}  // this will never happen as byte array streams are used
-	}
-
-	/**
 	 * Adds to logging config properties those properties from {@code loggingConfigUpdates} that
 	 * were not present before, replaces values of those already present with corresponding ones
 	 * from {@code loggingConfigUpdates} if present there.
@@ -189,5 +181,15 @@ public class JulConfig {
 			200,  // probably more efficient than calculating manually in most cases
 			addOrReplaceMapper
 		);
+	}
+
+
+
+	/**
+	 * @deprecated use {@link #overrideLogLevelsWithSystemProperties(String...)} instead.
+	 */
+	@Deprecated(forRemoval = true)
+	public static void overrideLogLevels(String... loggerAndHandlerNames) {
+		overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
 	}
 }
