@@ -30,13 +30,10 @@ public class ConcurrentUtilsTest {
 			}
 		);
 
-		assertTrue(
-				"the Callable task should complete",
+		assertTrue("the Callable task should complete",
 				completionLatch.await(50L, TimeUnit.MILLISECONDS));
 		assertTrue("completableFuture should be marked as done", completableFuture.isDone());
-		assertSame(
-				"caught exception should be the same as thrown by the Callable task",
-				thrown,
-				caughtHolder[0]);
+		assertSame("caught exception should be the same as thrown by the Callable task",
+				thrown, caughtHolder[0]);
 	}
 }

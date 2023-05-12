@@ -51,8 +51,8 @@ public class AwaitableTest {
 			assertTrue("failed task should be one of those expected to fail ",
 					tasksToFail.contains(task));
 		}
-		assertTrue("uncompleted tasks should be in order", Comparators.isInStrictOrder(
-				failed, Integer::compare));
+		assertTrue("uncompleted tasks should be in order",
+				Comparators.isInStrictOrder(failed, Integer::compare));
 	}
 
 
