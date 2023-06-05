@@ -83,7 +83,7 @@ public class JulConfigTest {
 
 
 	@Test
-	public void testLogManagerUpdateConfigurationCallsLogManagerEvenWithEmptyUpdates() {
+	public void testLogManagerUpdateConfigurationCallsLogMapperEvenWithEmptyUpdates() {
 		boolean[] mapperCalledHolder = {false};
 
 		JulConfig.logManagerUpdateConfiguration(
