@@ -8,6 +8,8 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
+import pl.morgwai.base.util.NoCopyByteArrayOutputStream;
+
 
 
 /**
@@ -131,9 +133,12 @@ public class JulConfig {
 	) {
 		try {
 			final var outputBytes =
-					new ByteArrayOutputStream(estimatedLoggingConfigUpdatesByteSize);
+					new NoCopyByteArrayOutputStream(estimatedLoggingConfigUpdatesByteSize);
 			try (outputBytes) { loggingConfigUpdates.store(outputBytes, null); }
-			try (final var inputBytes = new ByteArrayInputStream(outputBytes.toByteArray())) {
+			try (
+				final var inputBytes =
+						new ByteArrayInputStream(outputBytes.getBuffer(), 0, outputBytes.size())
+			) {
 				logManager.updateConfiguration(inputBytes, mapper);
 			}
 		} catch (IOException ignored) {}  // this will never happen as byte array streams are used
