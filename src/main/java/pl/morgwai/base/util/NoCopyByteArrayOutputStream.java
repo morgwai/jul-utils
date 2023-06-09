@@ -41,6 +41,7 @@ public class NoCopyByteArrayOutputStream extends ByteArrayOutputStream {
 
 	/**
 	 * Ensures {@link #close()} hasn't been called yet and calls {@code super}.
+	 * @throws IllegalStateException if this stream has already been closed.
 	 */
 	public void write(int b) {
 		if (closed) throw new IllegalStateException(STREAM_CLOSED_MESSAGE);
@@ -51,6 +52,7 @@ public class NoCopyByteArrayOutputStream extends ByteArrayOutputStream {
 
 	/**
 	 * Ensures {@link #close()} hasn't been called yet and calls {@code super}.
+	 * @throws IllegalStateException if this stream has already been closed.
 	 */
 	public void write(byte[] b, int off, int len) {
 		if (closed) throw new IllegalStateException(STREAM_CLOSED_MESSAGE);
@@ -61,6 +63,7 @@ public class NoCopyByteArrayOutputStream extends ByteArrayOutputStream {
 
 	/**
 	 * Ensures {@link #close()} hasn't been called yet and calls {@code super}.
+	 * @throws IllegalStateException if this stream has already been closed.
 	 */
 	public void reset() {
 		if (closed) throw new IllegalStateException(STREAM_CLOSED_MESSAGE);
