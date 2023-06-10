@@ -13,14 +13,24 @@ public class NoCopyByteArrayOutputStream extends ByteArrayOutputStream {
 
 
 
-	boolean closed = false;
+	public NoCopyByteArrayOutputStream() {}
+
+	public NoCopyByteArrayOutputStream(int initialBufferSize) {
+		super(initialBufferSize);
+	}
 
 
 
+	/**
+	 * Marks this stream as closed. After this method is called no further writes are allowed and
+	 * access to {@link #getBuffer() the underlying buffer} is granted.
+	 */
 	@Override
 	public void close() {
 		closed = true;
 	}
+
+	boolean closed = false;
 
 
 
@@ -48,8 +58,6 @@ public class NoCopyByteArrayOutputStream extends ByteArrayOutputStream {
 		super.write(b);
 	}
 
-
-
 	/**
 	 * Ensures {@link #close()} hasn't been called yet and calls {@code super}.
 	 * @throws IllegalStateException if this stream has already been closed.
@@ -59,8 +67,6 @@ public class NoCopyByteArrayOutputStream extends ByteArrayOutputStream {
 		super.write(b, off, len);
 	}
 
-
-
 	/**
 	 * Ensures {@link #close()} hasn't been called yet and calls {@code super}.
 	 * @throws IllegalStateException if this stream has already been closed.
@@ -68,14 +74,6 @@ public class NoCopyByteArrayOutputStream extends ByteArrayOutputStream {
 	public void reset() {
 		if (closed) throw new IllegalStateException(STREAM_CLOSED_MESSAGE);
 		super.reset();
-	}
-
-
-
-	public NoCopyByteArrayOutputStream() {}
-
-	public NoCopyByteArrayOutputStream(int size) {
-		super(size);
 	}
 
 	static final String STREAM_CLOSED_MESSAGE = "stream already closed";
