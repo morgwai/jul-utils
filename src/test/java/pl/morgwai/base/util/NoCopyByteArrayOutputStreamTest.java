@@ -13,9 +13,16 @@ public class NoCopyByteArrayOutputStreamTest {
 
 
 
-	static final int INITIAL_BUFFER_LEN = 32;
+	static class VerifyingStream extends NoCopyByteArrayOutputStream {
 
-	NoCopyByteArrayOutputStream stream = new NoCopyByteArrayOutputStream(INITIAL_BUFFER_LEN);
+		VerifyingStream() {}
+
+		boolean getBufferReturnsUnderlyingBufferReferance() {
+			return buf == getBuffer();
+		}
+	}
+
+	final VerifyingStream stream = new VerifyingStream();
 
 
 
@@ -30,11 +37,10 @@ public class NoCopyByteArrayOutputStreamTest {
 
 
 	@Test
-	public void testGetBufferDoesNotSeemToCopyTheBuffer() {
-		stream.write(32);
+	public void testGetBufferReturnsUnderlyingBufferReferance() {
 		stream.close();
-		assertEquals("returned buffer should retain its initial length",
-				INITIAL_BUFFER_LEN, stream.getBuffer().length);
+		assertTrue("getBuffer() should return reference to the underlying buffer",
+				stream.getBufferReturnsUnderlyingBufferReferance());
 	}
 
 
@@ -66,6 +72,17 @@ public class NoCopyByteArrayOutputStreamTest {
 		stream.close();
 		try {
 			stream.write(new byte[5], 1, 1);
+			fail("IllegalStateException expected");
+		} catch (IllegalStateException expected) {}
+	}
+
+
+
+	@Test
+	public void testWriteBytesThrowsIfStreamClosed() {
+		stream.close();
+		try {
+			stream.writeBytes(new byte[5]);
 			fail("IllegalStateException expected");
 		} catch (IllegalStateException expected) {}
 	}
