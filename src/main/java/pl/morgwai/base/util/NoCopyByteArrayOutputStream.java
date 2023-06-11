@@ -62,9 +62,9 @@ public class NoCopyByteArrayOutputStream extends ByteArrayOutputStream {
 	 * Ensures {@link #close()} hasn't been called yet and calls {@code super}.
 	 * @throws IllegalStateException if this stream has already been closed.
 	 */
-	public void write(byte[] b, int off, int len) {
+	public void write(byte[] bytes, int offset, int len) {
 		if (closed) throw new IllegalStateException(STREAM_CLOSED_MESSAGE);
-		super.write(b, off, len);
+		super.write(bytes, offset, len);
 	}
 
 	/**
