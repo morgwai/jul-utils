@@ -7,11 +7,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.Comparators;
-import org.junit.*;
+import org.junit.Test;
 import pl.morgwai.base.concurrent.Awaitable.AwaitInterruptedException;
 
 import static org.junit.Assert.*;
-import static pl.morgwai.base.concurrent.Awaitable.newEntry;
 
 
 
@@ -127,25 +126,25 @@ public class AwaitableTest {
 						Awaitable.awaitMultiple(
 							combinedTimeout,
 							TimeUnit.MILLISECONDS,
-							newEntry(0, (timeoutMillis) -> {
+							Awaitable.newEntry(0, (timeoutMillis) -> {
 								taskExecuted[0] = true;
 								assertEquals("task-0 should get the full timeout",
 										combinedTimeout, timeoutMillis);
 								return true;
 							}),
-							newEntry(1, (timeoutMillis) -> {
+							Awaitable.newEntry(1, (timeoutMillis) -> {
 								taskExecuted[1] = true;
 								Thread.sleep(100L);
 								fail("InterruptedException should be thrown");
 								return true;
 							}),
-							newEntry(2, (timeoutMillis) -> {
+							Awaitable.newEntry(2, (timeoutMillis) -> {
 								taskExecuted[2] = true;
 								assertEquals("after an interrupt tasks should get 1ms timeout",
 										1L, timeoutMillis);
 								return true;
 							}),
-							newEntry(3, (timeoutMillis) -> {
+							Awaitable.newEntry(3, (timeoutMillis) -> {
 								taskExecuted[3] = true;
 								assertEquals("after an interrupt tasks should get 1ms timeout",
 										1L, timeoutMillis);
