@@ -230,6 +230,14 @@ public interface Awaitable {
 		}
 	}
 
+	static <T> Entry<T> newEntry(T object, Awaitable operation) {
+		return new Entry<>(object, operation);
+	}
+
+	/**
+	 * @deprecated use {@link #newEntry(Object, Awaitable)} instead.
+	 */
+	@Deprecated(forRemoval = true)
 	static <T> Entry<T> entry(T object, Awaitable operation) {
 		return new Entry<>(object, operation);
 	}
@@ -331,7 +339,7 @@ public interface Awaitable {
 				unit,
 				continueOnInterrupt,
 				objects.stream()
-					.map((object) -> entry(object, adapter.apply(object)))
+					.map((object) -> newEntry(object, adapter.apply(object)))
 					.iterator());
 	}
 
@@ -381,7 +389,7 @@ public interface Awaitable {
 				unit,
 				continueOnInterrupt,
 				Arrays.stream(operations)
-					.map((operation) -> entry(operation, operation))
+					.map((operation) -> newEntry(operation, operation))
 					.iterator()
 			).isEmpty()
 		);
