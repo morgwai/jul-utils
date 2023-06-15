@@ -104,11 +104,11 @@ public class JulConfigTest {
 
 	@Test
 	public void testAddOrReplaceLoggingConfigProperties() {
-		final var loggingConfigUpdates = new Properties();
-		loggingConfigUpdates.put(
-				ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
-		loggingConfigUpdates.put(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
-		loggingConfigUpdates.put(LEVEL_SUFFIX, Level.SEVERE.toString());
+		final var loggingConfigUpdates = Map.of(
+			ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString(),
+			EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString(),
+			LEVEL_SUFFIX, Level.SEVERE.toString()
+		);
 
 		JulConfig.addOrReplaceLoggingConfigProperties(loggingConfigUpdates);
 

@@ -2,6 +2,7 @@
 package pl.morgwai.base.logging;
 
 import java.io.*;
+import java.util.Map;
 import java.util.Properties;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -186,6 +187,18 @@ public class JulConfig {
 			200,  // probably more efficient than calculating manually in most cases
 			addOrReplaceMapper
 		);
+	}
+
+	/**
+	 * Convenient version of {@link #addOrReplaceLoggingConfigProperties(Properties)} that takes a
+	 * {@link Map} as an argument. This allows to use {@link Map#of(Object, Object)} function family
+	 * inline: {@code addOrReplaceLoggingConfigProperties(Map.of(".level", "FINE"))}
+	 */
+	public static void addOrReplaceLoggingConfigProperties(Map<String, String> loggingConfigUpdates)
+	{
+		final var loggingConfigUpdateProperites = new Properties(loggingConfigUpdates.size());
+		loggingConfigUpdateProperites.putAll(loggingConfigUpdates);
+		addOrReplaceLoggingConfigProperties(loggingConfigUpdateProperites);
 	}
 
 
