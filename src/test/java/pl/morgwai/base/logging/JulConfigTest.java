@@ -124,9 +124,7 @@ public class JulConfigTest {
 
 
 
-	void backupSystemProperty(String name) {
-		systemPropertiesBackup.put(name, System.getProperty(name));
-	}
+	Map<String, String> systemPropertiesBackup;
 
 	@Before
 	public void backupSystemProperties() {
@@ -136,6 +134,10 @@ public class JulConfigTest {
 		backupSystemProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX);
 		backupSystemProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX);
 		backupSystemProperty(LEVEL_SUFFIX);
+	}
+
+	void backupSystemProperty(String name) {
+		systemPropertiesBackup.put(name, System.getProperty(name));
 	}
 
 	@After
@@ -150,17 +152,14 @@ public class JulConfigTest {
 		}
 	}
 
-	Map<String, String> systemPropertiesBackup;
-
 
 
 	@Before
 	public void prepareJulConfig() throws IOException {
 		LogManager.getLogManager().updateConfiguration(
-				(key) -> (oldVal, newVal) -> {
-					if (key.equals(LEVEL_SUFFIX)) return Level.INFO.toString();
-					return newVal;
-				});
+			(key) -> (oldVal, newVal) ->
+					key.equals(LEVEL_SUFFIX) ? Level.INFO.toString() : newVal
+		);
 	}
 
 	@After
