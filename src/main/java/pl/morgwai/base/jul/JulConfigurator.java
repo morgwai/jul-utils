@@ -16,9 +16,9 @@ import pl.morgwai.base.util.io.NoCopyByteArrayOutputStream;
 /**
  * Utilities to manipulate {@code java.util.logging} config, among others allows to override log
  * levels with values from system properties at startup in existing java apps without rebuilding:
- * see {@link #overrideLogLevelsWithSystemProperties(String...)} and {@link #JulConfig()}.
+ * see {@link #overrideLogLevelsWithSystemProperties(String...)} and {@link #JulConfigurator()}.
  */
-public class JulConfig {
+public class JulConfigurator {
 
 
 
@@ -45,7 +45,7 @@ public class JulConfig {
 	 * <code>logging.properties</code> file) :</p>
 	 * <pre>
 	 * java -cp ${CLASSPATH}:/path/to/pl/morgwai/base/java-utils.jar \
-	 *      -Djava.util.logging.config.class=pl.morgwai.base.logging.JulConfig \
+	 *      -Djava.util.logging.config.class=pl.morgwai.base.logging.JulConfigurator \
 	 *      -Djava.util.logging.overrideLevel=,com.example,java.util.logging.ConsoleHandler \
 	 *      -D.level=WARNING \
 	 *      -Dcom.example.level=FINE \
@@ -162,7 +162,7 @@ public class JulConfig {
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)} documentation.</p>
 	 * @see LogManager
 	 */
-	public JulConfig() throws IOException {
+	public JulConfigurator() throws IOException {
 		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY);
 		LogManager.getLogManager().readConfiguration();
 		overrideLogLevelsWithSystemProperties();
