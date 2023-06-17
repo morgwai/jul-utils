@@ -1,5 +1,5 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
-package pl.morgwai.base.logging;
+package pl.morgwai.base.jul;
 
 import java.io.IOException;
 import java.util.logging.*;

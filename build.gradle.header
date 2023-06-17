@@ -10,7 +10,7 @@ java {
 }
 
 test {
-	systemProperty "java.util.logging.manager", "pl.morgwai.base.logging.JulManualResetLogManager"
+	systemProperty "java.util.logging.manager", "pl.morgwai.base.jul.JulManualResetLogManager"
 }
 
 repositories {

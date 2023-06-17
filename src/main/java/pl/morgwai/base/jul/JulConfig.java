@@ -1,5 +1,5 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
-package pl.morgwai.base.logging;
+package pl.morgwai.base.jul;
 
 import java.io.*;
 import java.util.Map;
@@ -9,7 +9,7 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
-import pl.morgwai.base.util.NoCopyByteArrayOutputStream;
+import pl.morgwai.base.util.io.NoCopyByteArrayOutputStream;
 
 
 
@@ -196,9 +196,9 @@ public class JulConfig {
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Map<String, String> loggingConfigUpdates)
 	{
-		final var loggingConfigUpdateProperites = new Properties(loggingConfigUpdates.size());
-		loggingConfigUpdateProperites.putAll(loggingConfigUpdates);
-		addOrReplaceLoggingConfigProperties(loggingConfigUpdateProperites);
+		final var loggingConfigUpdateProperties = new Properties(loggingConfigUpdates.size());
+		loggingConfigUpdateProperties.putAll(loggingConfigUpdates);
+		addOrReplaceLoggingConfigProperties(loggingConfigUpdateProperties);
 	}
 
 

@@ -5,12 +5,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>pl.morgwai.base</groupId>
-	<artifactId>java-utils</artifactId>
-	<version>1.17-SNAPSHOT</version>
+	<artifactId>jul-utils</artifactId>
+	<version>2.0-SNAPSHOT</version>
 
-	<name>Java utils</name>
-	<description>Some utility classes</description>
-	<url>https://github.com/morgwai/java-utils</url>
+	<name>jul utils</name>
+	<description>java.util.logging utilities</description>
+	<url>https://github.com/morgwai/jul-utils</url>
 
 	<licenses>
 		<license>
@@ -20,9 +20,9 @@
 		</license>
 	</licenses>
 	<scm>
-		<url>https://github.com/morgwai/java-utils.git</url>
-		<connection>scm:git:https://github.com/morgwai/java-utils.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/morgwai/java-utils.git</developerConnection>
+		<url>https://github.com/morgwai/jul-utils.git</url>
+		<connection>scm:git:https://github.com/morgwai/jul-utils.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/morgwai/jul-utils.git</developerConnection>
 	</scm>
 	<developers>
 		<developer>
@@ -41,6 +41,12 @@
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>pl.morgwai.base</groupId>
+			<artifactId>java-utils</artifactId>
+			<version>2.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
@@ -85,7 +91,6 @@
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<configuration>
 					<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
-					<overview>${basedir}/src/main/java/overview.html</overview>
 				</configuration>
 				<executions>
 					<execution>
@@ -143,7 +148,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<!-- TODO: ideally this should be set only for JulManualResetLogManagerTest -->
-					<argLine>-Djava.util.logging.manager=pl.morgwai.base.logging.JulManualResetLogManager</argLine>
+					<argLine>-Djava.util.logging.manager=pl.morgwai.base.jul.JulManualResetLogManager</argLine>
 				</configuration>
 			</plugin>
 		</plugins>

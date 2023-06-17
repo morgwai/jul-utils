@@ -1,5 +1,5 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
-package pl.morgwai.base.logging;
+package pl.morgwai.base.jul;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -11,7 +11,7 @@ import java.util.logging.*;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static pl.morgwai.base.logging.JulFormatter.*;
+import static pl.morgwai.base.jul.JulFormatter.*;
 
 
 
