@@ -1,0 +1,15 @@
+local
+
+# build
+target
+build
+.gradle
+build.gradle
+settings.gradle
+
+# ide
+.idea
+local.properties
+.project
+.classpath
+.settings

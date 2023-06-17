@@ -1,0 +1,27 @@
+// Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
+plugins {
+	id 'java-library'
+	id 'maven-publish'
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_11
+	targetCompatibility = JavaVersion.VERSION_11
+}
+
+test {
+	systemProperty "java.util.logging.manager", "pl.morgwai.base.jul.JulManualResetLogManager"
+}
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+publishing {
+	publications {
+		maven(MavenPublication) {
+			from components.java
+		}
+	}
+}
