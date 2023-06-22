@@ -9,8 +9,6 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
-import pl.morgwai.base.util.io.NoCopyByteArrayOutputStream;
-
 
 
 /**
@@ -143,6 +141,11 @@ public class JulConfigurator {
 				logManager.updateConfiguration(inputBytes, mapper);
 			}
 		} catch (IOException ignored) {}  // this will never happen as byte array streams are used
+	}
+
+	static class NoCopyByteArrayOutputStream extends ByteArrayOutputStream {
+		public byte[] getBuffer() { return buf; }
+		public NoCopyByteArrayOutputStream(int initialSize) { super(initialSize); }
 	}
 
 	private static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
