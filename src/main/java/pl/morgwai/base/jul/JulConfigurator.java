@@ -184,7 +184,7 @@ public class JulConfigurator {
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			loggingConfigUpdates,
-			200,  // probably more efficient than calculating manually in most cases
+			80 * loggingConfigUpdates.size(),  // in most cases more efficient than calculating
 			addOrReplaceMapper
 		);
 	}
