@@ -95,7 +95,7 @@ public class JulConfigurator {
 	 * into {@code newLogLevels}.
 	 * @return number of characters put into {@code newLogLevels}.
 	 */
-	private static int readNewLogLevels(Properties newLogLevels, String[] loggerNames) {
+	static int readNewLogLevels(Properties newLogLevels, String[] loggerNames) {
 		int characterCount = 0;
 		for (final var loggerName: loggerNames) {
 			final var loggerLevelPropertyName = loggerName + LEVEL_SUFFIX;
@@ -148,7 +148,7 @@ public class JulConfigurator {
 		public NoCopyByteArrayOutputStream(int initialSize) { super(initialSize); }
 	}
 
-	private static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
+	static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
 			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
 
 
@@ -202,15 +202,5 @@ public class JulConfigurator {
 		final var loggingConfigUpdateProperties = new Properties(loggingConfigUpdates.size());
 		loggingConfigUpdateProperties.putAll(loggingConfigUpdates);
 		addOrReplaceLoggingConfigProperties(loggingConfigUpdateProperties);
-	}
-
-
-
-	/**
-	 * @deprecated use {@link #overrideLogLevelsWithSystemProperties(String...)} instead.
-	 */
-	@Deprecated(forRemoval = true)
-	public static void overrideLogLevels(String... loggerAndHandlerNames) {
-		overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
 	}
 }
