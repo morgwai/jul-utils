@@ -167,13 +167,15 @@ public class JulFormatter extends Formatter {
 
 		if (stackFrameFormat == null) {
 			try (
-				var sw = new StringWriter();
-				var pw = new PrintWriter(sw);
+				final var stackTraceBuffer = new StringWriter();
+				final var stackTracePrinter = new PrintWriter(stackTraceBuffer);
 			) {
-				pw.println();
-				thrown.printStackTrace(pw);
-				return sw.toString();
-			} catch (IOException ignored) {}  // StringWriter.close() is no-op
+				stackTracePrinter.println();
+				thrown.printStackTrace(stackTracePrinter);
+				return stackTraceBuffer.toString();
+			} catch (IOException neverHappens) {  // StringWriter.close() is no-op
+				throw new RuntimeException(neverHappens);
+			}
 		}
 
 		final var throwableStringBuilder = new StringBuilder(thrown.toString());

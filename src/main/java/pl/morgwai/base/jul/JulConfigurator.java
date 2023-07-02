@@ -140,7 +140,9 @@ public class JulConfigurator {
 			) {
 				logManager.updateConfiguration(inputBytes, mapper);
 			}
-		} catch (IOException ignored) {}  // this will never happen as byte array streams are used
+		} catch (IOException neverHappens) {  // byte array streams don't throw
+			throw new RuntimeException(neverHappens);
+		}
 	}
 
 	static class NoCopyByteArrayOutputStream extends ByteArrayOutputStream {
