@@ -12,16 +12,34 @@ import java.util.logging.LogManager;
  * shutdown hooks are important.
  * <p>
  * To use this class, define system property named
- * {@value #JUL_LOG_MANAGER_PROPERTY} with fully qualified name of this class as the value:</p>
+ * {@value #JUL_LOG_MANAGER_PROPERTY} with fully qualified name of this class as the value on the
+ * command-line:</p>
  * <pre>
  * java -Djava.util.logging.manager=pl.morgwai.base.logging.JulManualResetLogManager \
  *     -cp ${CLASSPATH} MyMainClass</pre>
  * <p>
+ * ...<b>OR</b> in a static initializer of your main class:</p>
+ * <pre>
+ * public class MyMainClass {
+ *     static {
+ *         System.setProperty(
+ *                 JulManualResetLogManager.JUL_LOG_MANAGER_PROPERTY,
+ *                 JulManualResetLogManager.class.getName());
+ *     }
+ *     public static void main(String[] args) {
+ *         // ...
+ *     }
+ * }
+ * </pre>
+ * <p>
  * It is then user's responsibility to call {@link #manualReset()} at the end of his shutdown
  * hook:</p>
  * <pre>
- * ((pl.morgwai.base.logging.JulManualResetLogManager) LogManager.getLogManager()).manualReset();
- * </pre>
+ * Runtime.getRuntime().addShutdownHook(new Thread(() -&gt; {
+ *    // ...
+ *    log.info("this message won't be lost");
+ *    ((pl.morgwai.base.logging.JulManualResetLogManager) LogManager.getLogManager()).manualReset();
+ * }));</pre>
  */
 public class JulManualResetLogManager extends LogManager {
 
