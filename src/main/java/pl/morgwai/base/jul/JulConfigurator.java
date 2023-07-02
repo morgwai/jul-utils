@@ -42,8 +42,8 @@ public class JulConfigurator {
 	 * least level <code>WARNING</code> (unless configured otherwise in the default
 	 * <code>logging.properties</code> file) :</p>
 	 * <pre>
-	 * java -cp ${CLASSPATH}:/path/to/pl/morgwai/base/java-utils.jar \
-	 *      -Djava.util.logging.config.class=pl.morgwai.base.logging.JulConfigurator \
+	 * java -cp ${CLASSPATH}:/path/to/jul-utils.jar \
+	 *      -Djava.util.logging.config.class=pl.morgwai.base.jul.JulConfigurator \
 	 *      -Djava.util.logging.overrideLevel=,com.example,java.util.logging.ConsoleHandler \
 	 *      -D.level=WARNING \
 	 *      -Dcom.example.level=FINE \
