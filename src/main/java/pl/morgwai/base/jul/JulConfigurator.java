@@ -50,13 +50,13 @@ public class JulConfigurator {
 	 *      -Djava.util.logging.ConsoleHandler.level=FINE \
 	 *      com.example.someproject.MainClass</pre>
 	 * <p>
-	 * (Name of the root logger is an empty string, hence the value of
+	 * (Name of the root {@link java.util.logging.Logger} is an empty string, hence the value of
 	 * {@value #OVERRIDE_LEVEL_PROPERTY} starts with a comma (so that the first element of the list
 	 * is an empty string), while {@code -D.level} provides the new {@link Level} for the root
 	 * {@link java.util.logging.Logger}).</p>
 	 * <p>
 	 * Note: overriding can be applied to existing java apps at startup without rebuilding: just add
-	 * {@code java-utils.jar} to command-line class-path and define
+	 * {@code jul-utils.jar} to command-line class-path and define
 	 * {@value #JUL_CONFIG_CLASS_PROPERTY} as in the example above.</p>
 	 */
 	public static void overrideLogLevelsWithSystemProperties(String... loggerAndHandlerNames) {
@@ -118,7 +118,7 @@ public class JulConfigurator {
 	/**
 	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
 	 * takes a {@link Properties} argument instead of an {@link InputStream}.
-	 * This is a bit low-level method: in most situations
+	 * This is somewhat a low-level method: in most situations
 	 * {@link #addOrReplaceLoggingConfigProperties(Properties)} will be more convenient.
 	 * @param estimatedLoggingConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes.
 	 *     It will be passed as an argument to
@@ -161,7 +161,7 @@ public class JulConfigurator {
 	 * reading the configuration the normal way.
 	 * <p>
 	 * Note: overriding can be applied to existing java apps at startup without rebuilding: just add
-	 * {@code java-utils.jar} to command-line class-path. See the example in
+	 * {@code jul-utils.jar} to command-line class-path. See the example in
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)} documentation.</p>
 	 * @see LogManager
 	 */
@@ -194,8 +194,12 @@ public class JulConfigurator {
 
 	/**
 	 * Convenient version of {@link #addOrReplaceLoggingConfigProperties(Properties)} that takes a
-	 * {@link Map} as an argument. This allows to use {@link Map#of(Object, Object)} function family
-	 * inline: {@code addOrReplaceLoggingConfigProperties(Map.of(".level", "FINE"))}
+	 * {@link Map} as an argument. This allows to use {@link Map#of(Object, Object) Map.of(...)}
+	 * function family inline, for example:
+	 * <pre>
+	 * addOrReplaceLoggingConfigProperties(Map.of(
+	 *         ".level", "FINE",
+	 *         "java.util.logging.ConsoleHandler.level", "FINE"));</pre>
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Map<String, String> loggingConfigUpdates)
 	{
