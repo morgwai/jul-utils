@@ -9,7 +9,7 @@
 ## MAIN USER CLASSES
 
 ### [JulConfigurator](src/main/java/pl/morgwai/base/jul/JulConfigurator.java)
-Utilities to manipulate `java.util.logging` config, among others allows to override log levels of `Logger`s and `Handler`s with values from system properties at startup in existing java apps without rebuilding: just add jul-utils.jar to command-line class-path and define desired system properties.
+Utilities to manipulate `java.util.logging` config, among others allows to override log levels of `Logger`s and `Handler`s with values from system properties at startup in existing java apps without rebuilding: just add `jul-utils.jar` to command-line class-path and define desired system properties.
 
 ### [JulFormatter](src/main/java/pl/morgwai/base/jul/JulFormatter.java)
 A text log formatter similar to `SimpleFormatter` that additionally allows to format stack trace elements and to add log sequence id and thread id to log entries.
