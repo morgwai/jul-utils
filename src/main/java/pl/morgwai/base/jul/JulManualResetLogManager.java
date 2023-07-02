@@ -15,7 +15,7 @@ import java.util.logging.LogManager;
  * {@value #JUL_LOG_MANAGER_PROPERTY} with fully qualified name of this class as the value on the
  * command-line:</p>
  * <pre>
- * java -Djava.util.logging.manager=pl.morgwai.base.logging.JulManualResetLogManager \
+ * java -Djava.util.logging.manager=pl.morgwai.base.jul.JulManualResetLogManager \
  *     -cp ${CLASSPATH} MyMainClass</pre>
  * <p>
  * ...<b>OR</b> in a static initializer of your main class:</p>
@@ -36,9 +36,9 @@ import java.util.logging.LogManager;
  * hook:</p>
  * <pre>
  * Runtime.getRuntime().addShutdownHook(new Thread(() -&gt; {
- *    // ...
- *    log.info("this message won't be lost");
- *    ((pl.morgwai.base.logging.JulManualResetLogManager) LogManager.getLogManager()).manualReset();
+ *     // ...
+ *     log.info("this message won't be lost");
+ *     ((pl.morgwai.base.jul.JulManualResetLogManager) LogManager.getLogManager()).manualReset();
  * }));</pre>
  */
 public class JulManualResetLogManager extends LogManager {
