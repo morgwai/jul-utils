@@ -15,7 +15,7 @@ import static pl.morgwai.base.jul.JulFormatter.*;
 
 
 
-public class JulFormatterTest {
+public class JulFormatterTests {
 
 
 

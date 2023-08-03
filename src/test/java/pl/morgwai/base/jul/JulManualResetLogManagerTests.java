@@ -17,7 +17,7 @@ import static org.junit.Assert.assertTrue;
  * to be set to the fully qualified name of the {@link JulManualResetLogManager} class <b>before</b>
  * JUL is initialized. See maven surefire plugin config in pom.xml file.
  */
-public class JulManualResetLogManagerTest {
+public class JulManualResetLogManagerTests {
 
 
 
