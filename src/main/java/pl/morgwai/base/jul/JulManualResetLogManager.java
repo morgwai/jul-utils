@@ -14,12 +14,12 @@ import java.util.logging.LogManager;
  * To use this class, define system property named
  * {@value #JUL_LOG_MANAGER_PROPERTY} with fully qualified name of this class as the value on the
  * command-line:</p>
- * <pre>
+ * <pre>{@code
  * java -Djava.util.logging.manager=pl.morgwai.base.jul.JulManualResetLogManager \
- *     -cp ${CLASSPATH} MyMainClass</pre>
+ *     -cp ${CLASSPATH} MyMainClass}</pre>
  * <p>
  * ...<b>OR</b> in a static initializer of your main class:</p>
- * <pre>
+ * <pre>{@code
  * public class MyMainClass {
  *     static {
  *         System.setProperty(
@@ -30,24 +30,22 @@ import java.util.logging.LogManager;
  *         // ...
  *     }
  * }
- * </pre>
+ * }</pre>
  * <p>
  * It is then user's responsibility to call {@link #manualReset()} at the end of his shutdown
  * hook:</p>
- * <pre>
- * Runtime.getRuntime().addShutdownHook(new Thread(() -&gt; {
+ * <pre>{@code
+ * Runtime.getRuntime().addShutdownHook(new Thread(() -> {
  *     // ...
  *     log.info("this message won't be lost");
  *     ((pl.morgwai.base.jul.JulManualResetLogManager) LogManager.getLogManager()).manualReset();
- * }));</pre>
+ * }));}</pre>
  */
 public class JulManualResetLogManager extends LogManager {
 
 
 
-	/**
-	 * {@value #JUL_LOG_MANAGER_PROPERTY}
-	 */
+	/** {@value #JUL_LOG_MANAGER_PROPERTY} */
 	public static final String JUL_LOG_MANAGER_PROPERTY = "java.util.logging.manager";
 
 
@@ -57,9 +55,7 @@ public class JulManualResetLogManager extends LogManager {
 
 
 
-	/**
-	 * Has no effect. Use {@link #manualReset()} instead.
-	 */
+	/** Has no effect. Use {@link #manualReset()} instead. */
 	@Override
 	public void reset() throws SecurityException {
 		synchronized (lock) {
@@ -83,9 +79,7 @@ public class JulManualResetLogManager extends LogManager {
 
 
 
-	/**
-	 * Calls {@link LogManager#reset() super.reset()}.
-	 */
+	/** Calls {@link LogManager#reset() super.reset()}. */
 	public void manualReset() throws SecurityException {
 		super.reset();
 	}
