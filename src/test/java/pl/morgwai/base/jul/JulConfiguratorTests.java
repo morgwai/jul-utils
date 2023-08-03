@@ -12,7 +12,7 @@ import static pl.morgwai.base.jul.JulConfigurator.LEVEL_SUFFIX;
 
 
 
-public class JulConfiguratorTest {
+public class JulConfiguratorTests {
 
 
 
