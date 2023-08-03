@@ -55,8 +55,8 @@ public class JulFormatter extends Formatter {
 	}
 
 	/**
-	 * {@value #DEFAULT_FORMAT}.<br/>
-	 * "{sequenceId} {threadId} {level} {timestamp} {loggerName} {message} {thrown}".
+	 * {@value #DEFAULT_FORMAT}<br/>
+	 * "{sequenceId} {threadId} {level} {timestamp} {loggerName} {message} {thrown}"
 	 */
 	public static final String DEFAULT_FORMAT =
 			"%7$5d %8$3d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
@@ -100,9 +100,7 @@ public class JulFormatter extends Formatter {
 		return format;
 	}
 
-	/**
-	 * {@value #JUL_SIMPLE_FORMAT_PROPERTY_NAME}
-	 */
+	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY_NAME} */
 	public static final String JUL_SIMPLE_FORMAT_PROPERTY_NAME =
 			"java.util.logging.SimpleFormatter.format";
 

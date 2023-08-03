@@ -41,14 +41,14 @@ public class JulConfigurator {
 	 * higher to the console. Entries from other name-spaces will be logged only if they have at
 	 * least level <code>WARNING</code> (unless configured otherwise in the default
 	 * <code>logging.properties</code> file) :</p>
-	 * <pre>
+	 * <pre>{@code
 	 * java -cp ${CLASSPATH}:/path/to/jul-utils.jar \
 	 *      -Djava.util.logging.config.class=pl.morgwai.base.jul.JulConfigurator \
 	 *      -Djava.util.logging.overrideLevel=,com.example,java.util.logging.ConsoleHandler \
 	 *      -D.level=WARNING \
 	 *      -Dcom.example.level=FINE \
 	 *      -Djava.util.logging.ConsoleHandler.level=FINE \
-	 *      com.example.someproject.MainClass</pre>
+	 *      com.example.someproject.MainClass}</pre>
 	 * <p>
 	 * (Name of the root {@link java.util.logging.Logger} is an empty string, hence the value of
 	 * {@value #OVERRIDE_LEVEL_PROPERTY} starts with a comma (so that the first element of the list
@@ -110,9 +110,7 @@ public class JulConfigurator {
 		return characterCount;
 	}
 
-	/**
-	 * {@value #LEVEL_SUFFIX}
-	 */
+	/** {@value #LEVEL_SUFFIX} */
 	public static final String LEVEL_SUFFIX = ".level";
 
 	/**
@@ -173,9 +171,7 @@ public class JulConfigurator {
 		overrideLogLevelsWithSystemProperties();
 	}
 
-	/**
-	 * {@value #JUL_CONFIG_CLASS_PROPERTY}
-	 */
+	/** {@value #JUL_CONFIG_CLASS_PROPERTY} */
 	public static final String JUL_CONFIG_CLASS_PROPERTY = "java.util.logging.config.class";
 
 
@@ -198,10 +194,10 @@ public class JulConfigurator {
 	 * Convenient version of {@link #addOrReplaceLoggingConfigProperties(Properties)} that takes a
 	 * {@link Map} as an argument. This allows to use {@link Map#of(Object, Object) Map.of(...)}
 	 * function family inline, for example:
-	 * <pre>
+	 * <pre>{@code
 	 * addOrReplaceLoggingConfigProperties(Map.of(
 	 *         ".level", "FINE",
-	 *         "java.util.logging.ConsoleHandler.level", "FINE"));</pre>
+	 *         "java.util.logging.ConsoleHandler.level", "FINE"));}</pre>
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Map<String, String> loggingConfigUpdates)
 	{
