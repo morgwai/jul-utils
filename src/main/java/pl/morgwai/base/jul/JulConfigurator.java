@@ -13,8 +13,8 @@ import java.util.logging.LogManager;
 
 /**
  * Utilities to manipulate {@code java.util.logging} config, among others allows to override log
- * levels with values from system properties at startup in existing java apps without rebuilding:
- * see {@link #overrideLogLevelsWithSystemProperties(String...)} and {@link #JulConfigurator()}.
+ * levels with system properties in existing java apps without rebuilding: see
+ * {@link #overrideLogLevelsWithSystemProperties(String...)} and {@link #JulConfigurator()}.
  */
 public class JulConfigurator {
 
@@ -23,16 +23,16 @@ public class JulConfigurator {
 	/**
 	 * Overrides {@link Level}s of {@code java.util.logging} {@link java.util.logging.Logger}s and
 	 * {@link java.util.logging.Handler}s with values obtained from system properties.
-	 * Fully qualified names of {@link java.util.logging.Logger Logger}s and
-	 * {@link java.util.logging.Handler Handler}s whose {@link Level}s will be overridden by this
-	 * method can be provided as {@code loggerAndHandlerNames} arguments and/or comma separated on
+	 * Fully-qualified names of {@link java.util.logging.Logger Logger}s and
+	 * {@link java.util.logging.Handler Handler}s whose {@link Level}s should be overridden, can be
+	 * provided as {@code loggerAndHandlerNames} arguments and/or comma separated on
 	 * {@value #OVERRIDE_LEVEL_PROPERTY} system property.
 	 * <p>
 	 * Name of the system property containing a new {@link Level} for a given
 	 * {@link java.util.logging.Logger}/{@link java.util.logging.Handler} is constructed by
 	 * appending {@value #LEVEL_SUFFIX} to the given
 	 * {@link java.util.logging.Logger}'s&nbsp;/&nbsp;{@link java.util.logging.Handler}'s
-	 * fully-qualified-name.<br/>
+	 * fully-qualified name.<br/>
 	 * If a system property with a new {@link Level} is missing, it is ignored. If it is present,
 	 * its validity is verified using {@link Level#parse(String)} method.</p>
 	 * <p>
@@ -51,12 +51,12 @@ public class JulConfigurator {
 	 *      com.example.someproject.MainClass}</pre>
 	 * <p>
 	 * (Name of the root {@link java.util.logging.Logger} is an empty string, hence the value of
-	 * {@value #OVERRIDE_LEVEL_PROPERTY} starts with a comma (so that the first element of the list
-	 * is an empty string), while {@code -D.level} provides the new {@link Level} for the root
+	 * {@value #OVERRIDE_LEVEL_PROPERTY} starts with a comma, so that the first element of the list
+	 * is an empty string, while {@code -D.level} provides the new {@link Level} for the root
 	 * {@link java.util.logging.Logger}).</p>
 	 * <p>
 	 * Note: overriding can be applied to existing java apps at startup without rebuilding: just add
-	 * {@code jul-utils.jar} to command-line class-path and define
+	 * {@code jul-utils.jar} to the command-line class-path and define
 	 * {@value #JUL_CONFIG_CLASS_PROPERTY} as in the example above.</p>
 	 */
 	public static void overrideLogLevelsWithSystemProperties(String... loggerAndHandlerNames) {
@@ -83,7 +83,7 @@ public class JulConfigurator {
 	}
 
 	/**
-	 * Name of the system property that can contain comma separated, fully qualified names of
+	 * Name of the system property that can contain comma separated, fully-qualified names of
 	 * {@link java.util.logging.Logger}s and {@link java.util.logging.Handler}s whose
 	 * {@link java.util.logging.Level}s will be overridden by
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)}.
@@ -156,11 +156,11 @@ public class JulConfigurator {
 	/**
 	 * Reads logging config normally and then calls
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)}. For use with
-	 * {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is set to the fully
-	 * qualified name of this class, then {@link LogManager} will call this constructor instead of
-	 * reading the configuration the normal way.
+	 * {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is set to the
+	 * fully-qualified name of this class, then {@link LogManager} will call this constructor
+	 * instead of reading its configuration the normal way.
 	 * <p>
-	 * Note: overriding can be applied to existing java apps at startup without rebuilding: just add
+	 * Note: overriding can be applied to existing java apps without rebuilding: just add
 	 * {@code jul-utils.jar} to command-line class-path. See the example in
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)} documentation.</p>
 	 * @see LogManager
@@ -177,9 +177,7 @@ public class JulConfigurator {
 
 
 	/**
-	 * Adds to logging config properties those properties from {@code loggingConfigUpdates} that
-	 * were not present before, replaces values of those already present with corresponding ones
-	 * from {@code loggingConfigUpdates} if present there.
+	 * Adds to or replaces logging config properties with values from {@code loggingConfigUpdates}.
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Properties loggingConfigUpdates) {
 		logManagerUpdateConfiguration(
