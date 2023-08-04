@@ -21,7 +21,7 @@ public class JulFormatter extends Formatter {
 
 
 	/**
-	 * Name of the logging or system property containing the main format for each record.
+	 * Name of the logging or system property containing the main format for log records.
 	 * @see #format(LogRecord)
 	 */
 	public static final String FORMAT_PROPERTY = JulFormatter.class.getName() + ".format";

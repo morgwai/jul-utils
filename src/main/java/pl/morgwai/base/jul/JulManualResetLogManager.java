@@ -8,27 +8,33 @@ import java.util.logging.LogManager;
 
 
 /**
- * A LogManager that does not get reset automatically at JVM shutdown. Useful if logs from user
- * shutdown hooks are important.
+ * A {@link LogManager} that does not get reset automatically at JVM shutdown. Useful if logs from
+ * user shutdown hooks are important.
  * <p>
  * To use this class, define system property named
- * {@value #JUL_LOG_MANAGER_PROPERTY} with fully qualified name of this class as the value on the
+ * {@value #JUL_LOG_MANAGER_PROPERTY} to contain fully-qualified name of this class either on the
  * command-line:</p>
  * <pre>{@code
  * java -Djava.util.logging.manager=pl.morgwai.base.jul.JulManualResetLogManager \
  *     -cp ${CLASSPATH} MyMainClass}</pre>
  * <p>
- * ...<b>OR</b> in a static initializer of your main class:</p>
+ * ...<b>OR</b> in the static initializer of your main class:</p>
  * <pre>{@code
  * public class MyMainClass {
+ *
+ *     // at the top of the class to make sure it runs before any
+ *     // other stuff that may trigger LogManager initialization
  *     static {
  *         System.setProperty(
  *                 JulManualResetLogManager.JUL_LOG_MANAGER_PROPERTY,
  *                 JulManualResetLogManager.class.getName());
  *     }
+ *
  *     public static void main(String[] args) {
  *         // ...
  *     }
+ *
+ *     // ...
  * }
  * }</pre>
  * <p>
