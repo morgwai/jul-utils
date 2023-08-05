@@ -26,7 +26,6 @@ public class JulFormatterTests {
 			(key) -> (oldVal, newVal) -> key.equals(JUL_SIMPLE_FORMAT_PROPERTY_NAME) ? null : newVal
 		);
 		final JulFormatter formatter = new JulFormatter();
-
 		final var threadId = (int) Thread.currentThread().getId();
 		final var recordId = 69L;
 		final var timestampMillis = System.currentTimeMillis();
@@ -64,7 +63,6 @@ public class JulFormatterTests {
 		final JulFormatter formatter = new JulFormatter();
 		assertEquals(JUL_SIMPLE_FORMAT_PROPERTY_NAME + " property should be used",
 				"%7$5d %8$3d " + simpleFormatterFormat, formatter.format);
-
 		final var record = new LogRecord(Level.INFO, "");
 		final var thrown = new Exception("test exception");
 		record.setThrown(thrown);
@@ -86,7 +84,6 @@ public class JulFormatterTests {
 	public void testFormatThrownUsingCustomStackTraceFormat() {
 		final var stackFrameFormat = "%1$s;%2$s;%3$s;%4$s;%5$s;%6$s;%7$s;%8$s;%9$s";
 		final JulFormatter formatter = new JulFormatter(DEFAULT_FORMAT, stackFrameFormat);
-
 		final var threadId = (int) Thread.currentThread().getId();
 		final var recordId = 69L;
 		final var thrown = new Exception("test exception");
@@ -94,7 +91,6 @@ public class JulFormatterTests {
 		record.setSequenceNumber(recordId);
 		record.setThreadID(threadId);
 		record.setThrown(thrown);
-
 		final var throwableStringBuilder = new StringBuilder(thrown.toString());
 		for (var stackFrame: thrown.getStackTrace()) {
 			throwableStringBuilder.append(String.format(
