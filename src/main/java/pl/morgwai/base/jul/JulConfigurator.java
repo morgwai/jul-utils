@@ -68,9 +68,9 @@ public class JulConfigurator {
 		if (loggerAndHandlerNames.length > 0) {
 			characterCount += readNewLogLevels(newLogLevels, loggerAndHandlerNames);
 		}
-		final var loggerNamesFromProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
-		if (loggerNamesFromProperty != null) {
-			characterCount += readNewLogLevels(newLogLevels, loggerNamesFromProperty.split(","));
+		final var namesFromProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
+		if (namesFromProperty != null) {
+			characterCount += readNewLogLevels(newLogLevels, namesFromProperty.split(","));
 		}
 		if (newLogLevels.isEmpty()) return;
 
