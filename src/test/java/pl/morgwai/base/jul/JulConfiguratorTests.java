@@ -31,7 +31,6 @@ public class JulConfiguratorTests {
 				JulConfigurator.JUL_CONFIG_CLASS_PROPERTY, JulConfigurator.class.getName());
 
 		LogManager.getLogManager().readConfiguration();
-
 		assertEquals("ConsoleHandler should have level as in the property",
 				System.getProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
 				new ConsoleHandler().getLevel().toString());
@@ -52,7 +51,6 @@ public class JulConfiguratorTests {
 
 		JulConfigurator.overrideLogLevelsWithSystemProperties(
 				ConsoleHandler.class.getName(), EXAMPLE_DOMAIN, "");
-
 		assertEquals("ConsoleHandler should have level as in the property",
 				System.getProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
 				new ConsoleHandler().getLevel().toString());
@@ -72,7 +70,6 @@ public class JulConfiguratorTests {
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
 
 		JulConfigurator.overrideLogLevelsWithSystemProperties(EXAMPLE_DOMAIN);
-
 		assertEquals("ConsoleHandler should have level as in the property",
 				System.getProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
 				new ConsoleHandler().getLevel().toString());
@@ -97,7 +94,6 @@ public class JulConfiguratorTests {
 				return oldVal;
 			}
 		);
-
 		assertTrue("mapper should be called at least once", mapperCalledHolder[0]);
 	}
 
@@ -112,7 +108,6 @@ public class JulConfiguratorTests {
 		);
 
 		JulConfigurator.addOrReplaceLoggingConfigProperties(loggingConfigUpdates);
-
 		assertEquals("ConsoleHandler should have level as in the property",
 				loggingConfigUpdates.get(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
 				new ConsoleHandler().getLevel().toString());
