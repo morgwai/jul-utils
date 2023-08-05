@@ -2,8 +2,7 @@
 package pl.morgwai.base.jul;
 
 import java.io.*;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -60,17 +59,30 @@ public class JulConfigurator {
 	 * {@value #JUL_CONFIG_CLASS_PROPERTY} as in the example above.</p>
 	 */
 	public static void overrideLogLevelsWithSystemProperties(String... loggerAndHandlerNames) {
-		final var newLogLevels = new Properties();  // loggerName.level -> newLevel
-
-		// store into newLogLevels levels from system properties for loggers & handlers enlisted
-		// on loggerAndHandlerNames param or on the system property
-		int characterCount = 30;  // 30 is date comment character length
-		if (loggerAndHandlerNames.length > 0) {
-			characterCount += readNewLogLevels(newLogLevels, loggerAndHandlerNames);
-		}
+		final var loggerAndHandlerNamesSet = new HashSet<String>();
+		Collections.addAll(loggerAndHandlerNamesSet, loggerAndHandlerNames);
 		final var namesFromProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
 		if (namesFromProperty != null) {
-			characterCount += readNewLogLevels(newLogLevels, namesFromProperty.split(","));
+			Collections.addAll(loggerAndHandlerNamesSet, namesFromProperty.split(","));
+		}
+		if (loggerAndHandlerNamesSet.size() > 0) {
+			overrideLogLevelsWithSystemProperties(loggerAndHandlerNamesSet);
+		}
+	}
+
+	static void overrideLogLevelsWithSystemProperties(Set<String> loggerAndHandlerNames) {
+		final var newLogLevels = new Properties();  // loggerName.level -> newLevel
+		int characterCount = 30;  // first line date comment character length
+		for (final var loggerOrHandlerName: loggerAndHandlerNames) {
+			// read a system property with the new level and put it into newLogLevels
+			final var newLevelPropertyName = loggerOrHandlerName + LEVEL_SUFFIX;
+			final var newLevel = System.getProperty(newLevelPropertyName);
+			if (newLevel == null) continue;
+			Level.parse(newLevel);
+			newLogLevels.put(newLevelPropertyName, newLevel);
+			characterCount += newLevelPropertyName.length();
+			characterCount += newLevel.length();
+			characterCount += 2;  // '=' and '\n'
 		}
 		if (newLogLevels.isEmpty()) return;
 
@@ -89,26 +101,6 @@ public class JulConfigurator {
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)}.
 	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
-
-	/**
-	 * Reads system properties containing overridden levels for {@code loggerNames} and puts them
-	 * into {@code newLogLevels}.
-	 * @return number of characters put into {@code newLogLevels}.
-	 */
-	static int readNewLogLevels(Properties newLogLevels, String[] loggerNames) {
-		int characterCount = 0;
-		for (final var loggerName: loggerNames) {
-			final var loggerLevelPropertyName = loggerName + LEVEL_SUFFIX;
-			final var level = System.getProperty(loggerLevelPropertyName);
-			if (level == null) continue;
-			Level.parse(level);
-			newLogLevels.put(loggerLevelPropertyName, level);
-			characterCount += loggerLevelPropertyName.length();
-			characterCount += level.length();
-			characterCount += 2;  // '=' and '\n'
-		}
-		return characterCount;
-	}
 
 	/** {@value #LEVEL_SUFFIX} */
 	public static final String LEVEL_SUFFIX = ".level";
