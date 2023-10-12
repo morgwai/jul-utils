@@ -39,6 +39,9 @@ public class JulConfiguratorTests {
 				Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString());
 		assertEquals("root logger should have level as in the property",
 				System.getProperty(LEVEL_SUFFIX), Logger.getLogger("").getLevel().toString());
+		assertEquals("config class property should be preserved",
+				JulConfigurator.class.getName(),
+				System.getProperty(JulConfigurator.JUL_CONFIG_CLASS_PROPERTY));
 	}
 
 

@@ -158,9 +158,11 @@ public class JulConfigurator {
 	 * @see LogManager
 	 */
 	public JulConfigurator() throws IOException {
+		final var julConfigClassPropertyBackup = System.getProperty(JUL_CONFIG_CLASS_PROPERTY);
 		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY);
 		LogManager.getLogManager().readConfiguration();
 		overrideLogLevelsWithSystemProperties();
+		System.setProperty(JUL_CONFIG_CLASS_PROPERTY, julConfigClassPropertyBackup);
 	}
 
 	/** {@value #JUL_CONFIG_CLASS_PROPERTY} */
