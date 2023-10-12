@@ -138,10 +138,33 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<!-- TODO: ideally this should be set only for JulManualResetLogManagerTest -->
-					<argLine>-Djava.util.logging.manager=pl.morgwai.base.jul.JulManualResetLogManager</argLine>
-				</configuration>
+				<executions>
+					<execution>
+						<!-- exclude JulManualResetLogManagerTest from the default execution -->
+						<id>default-test</id>
+						<configuration>
+							<excludes>
+								<exclude>**/JulManualResetLogManagerTests.java</exclude>
+							</excludes>
+						</configuration>
+						<goals>
+							<goal>test</goal>
+						</goals>
+					</execution>
+					<execution>
+						<!-- additional execution that runs only JulManualResetLogManagerTest -->
+						<id>JulManualResetLogManagerTest</id>
+						<configuration>
+							<argLine>-Djava.util.logging.manager=pl.morgwai.base.jul.JulManualResetLogManager</argLine>
+							<includes>
+								<include>**/JulManualResetLogManagerTests.java</include>
+							</includes>
+						</configuration>
+						<goals>
+							<goal>test</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
