@@ -2,8 +2,8 @@
 
 `java.util.logging` utilities.<br/>
 <br/>
-**latest release: [2.1](https://search.maven.org/artifact/pl.morgwai.base/jul-utils/2.1/jar)**
-([javadoc](https://javadoc.io/doc/pl.morgwai.base/jul-utils/2.1))
+**latest release: [2.2](https://search.maven.org/artifact/pl.morgwai.base/jul-utils/2.2/jar)**
+([javadoc](https://javadoc.io/doc/pl.morgwai.base/jul-utils/2.2))
 
 
 ## MAIN USER CLASSES
