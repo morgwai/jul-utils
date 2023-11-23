@@ -28,6 +28,13 @@ public class JulFormatter extends Formatter {
 	final String format;
 
 	/**
+	 * {@value #DEFAULT_FORMAT}<br/>
+	 * "{sequenceId} {threadId} {level} {timestamp} {loggerName} {message} {thrown}"
+	 */
+	public static final String DEFAULT_FORMAT =
+			"%7$5d %8$3d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
+
+	/**
 	 * Name of the logging or system property containing the format for stack frames of logged
 	 * {@link Throwable}s.
 	 * @see #format(LogRecord)
@@ -53,13 +60,6 @@ public class JulFormatter extends Formatter {
 		}
 		this.stackFrameFormat = stackFrameFormat;
 	}
-
-	/**
-	 * {@value #DEFAULT_FORMAT}<br/>
-	 * "{sequenceId} {threadId} {level} {timestamp} {loggerName} {message} {thrown}"
-	 */
-	public static final String DEFAULT_FORMAT =
-			"%7$5d %8$3d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
 
 
 
@@ -100,15 +100,17 @@ public class JulFormatter extends Formatter {
 		return format;
 	}
 
-	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY_NAME} */
-	public static final String JUL_SIMPLE_FORMAT_PROPERTY_NAME =
-			"java.util.logging.SimpleFormatter.format";
-
 	static String getStackFrameFormatFromProperties() {
 		final var stackFrameFormat = System.getProperty(STACKFRAME_FORMAT_PROPERTY);
 		if (stackFrameFormat != null) return stackFrameFormat;
 		return LogManager.getLogManager().getProperty(STACKFRAME_FORMAT_PROPERTY);
 	}
+
+
+
+	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY_NAME} */
+	public static final String JUL_SIMPLE_FORMAT_PROPERTY_NAME =
+			"java.util.logging.SimpleFormatter.format";
 
 
 
