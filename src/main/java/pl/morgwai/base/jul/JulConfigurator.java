@@ -94,6 +94,30 @@ public class JulConfigurator {
 		);
 	}
 
+
+
+	/**
+	 * Reads logging config normally and then calls
+	 * {@link #overrideLogLevelsWithSystemProperties(String...)}. For use with
+	 * {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is set to the
+	 * fully-qualified name of this class, then {@link LogManager} will call this constructor
+	 * instead of reading its configuration the normal way.
+	 * <p>
+	 * Note: overriding can be applied to existing java apps without rebuilding: just add
+	 * {@code jul-utils.jar} to command-line class-path. See the example in
+	 * {@link #overrideLogLevelsWithSystemProperties(String...)} documentation.</p>
+	 * @see LogManager
+	 */
+	public JulConfigurator() throws IOException {
+		final var julConfigClassPropertyBackup = System.getProperty(JUL_CONFIG_CLASS_PROPERTY);
+		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY);
+		LogManager.getLogManager().readConfiguration();
+		overrideLogLevelsWithSystemProperties();
+		System.setProperty(JUL_CONFIG_CLASS_PROPERTY, julConfigClassPropertyBackup);
+	}
+
+
+
 	/**
 	 * Name of the system property that can contain comma separated, fully-qualified names of
 	 * {@link java.util.logging.Logger}s and {@link java.util.logging.Handler}s whose
@@ -101,15 +125,21 @@ public class JulConfigurator {
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)}.
 	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
-
 	/** {@value #LEVEL_SUFFIX} */
 	public static final String LEVEL_SUFFIX = ".level";
+	/** {@value #JUL_CONFIG_CLASS_PROPERTY} */
+	public static final String JUL_CONFIG_CLASS_PROPERTY = "java.util.logging.config.class";
+	static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
+			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
+
+
 
 	/**
 	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
 	 * takes a {@link Properties} argument instead of an {@link InputStream}.
 	 * This is somewhat a low-level method: in most situations
-	 * {@link #addOrReplaceLoggingConfigProperties(Properties)} will be more convenient.
+	 * {@link #addOrReplaceLoggingConfigProperties(Properties)} or
+	 * {@link #addOrReplaceLoggingConfigProperties(Map)} will be more convenient.
 	 * @param estimatedLoggingConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes.
 	 *     It will be passed as an argument to
 	 *     {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
@@ -140,34 +170,6 @@ public class JulConfigurator {
 		public NoCopyByteArrayOutputStream(int initialSize) { super(initialSize); }
 	}
 
-	static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
-			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
-
-
-
-	/**
-	 * Reads logging config normally and then calls
-	 * {@link #overrideLogLevelsWithSystemProperties(String...)}. For use with
-	 * {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is set to the
-	 * fully-qualified name of this class, then {@link LogManager} will call this constructor
-	 * instead of reading its configuration the normal way.
-	 * <p>
-	 * Note: overriding can be applied to existing java apps without rebuilding: just add
-	 * {@code jul-utils.jar} to command-line class-path. See the example in
-	 * {@link #overrideLogLevelsWithSystemProperties(String...)} documentation.</p>
-	 * @see LogManager
-	 */
-	public JulConfigurator() throws IOException {
-		final var julConfigClassPropertyBackup = System.getProperty(JUL_CONFIG_CLASS_PROPERTY);
-		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY);
-		LogManager.getLogManager().readConfiguration();
-		overrideLogLevelsWithSystemProperties();
-		System.setProperty(JUL_CONFIG_CLASS_PROPERTY, julConfigClassPropertyBackup);
-	}
-
-	/** {@value #JUL_CONFIG_CLASS_PROPERTY} */
-	public static final String JUL_CONFIG_CLASS_PROPERTY = "java.util.logging.config.class";
-
 
 
 	/**
@@ -181,6 +183,8 @@ public class JulConfigurator {
 			addOrReplaceMapper
 		);
 	}
+
+
 
 	/**
 	 * Convenient version of {@link #addOrReplaceLoggingConfigProperties(Properties)} that takes a

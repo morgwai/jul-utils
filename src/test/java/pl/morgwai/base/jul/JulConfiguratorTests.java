@@ -125,6 +125,8 @@ public class JulConfiguratorTests {
 
 	Map<String, String> systemPropertiesBackup;
 
+
+
 	@Before
 	public void backupSystemProperties() {
 		systemPropertiesBackup = new HashMap<>();
@@ -138,6 +140,8 @@ public class JulConfiguratorTests {
 	void backupSystemProperty(String name) {
 		systemPropertiesBackup.put(name, System.getProperty(name));
 	}
+
+
 
 	@After
 	public void restoreSystemProperties() {
@@ -160,6 +164,8 @@ public class JulConfiguratorTests {
 					key.equals(LEVEL_SUFFIX) ? Level.INFO.toString() : newVal
 		);
 	}
+
+
 
 	@After
 	public void restoreJulConfig() throws IOException {
