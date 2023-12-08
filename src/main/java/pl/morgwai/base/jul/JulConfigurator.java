@@ -65,7 +65,7 @@ public class JulConfigurator {
 		if (namesFromProperty != null) {
 			Collections.addAll(loggerAndHandlerNamesSet, namesFromProperty.split(","));
 		}
-		if (loggerAndHandlerNamesSet.size() > 0) {
+		if ( !loggerAndHandlerNamesSet.isEmpty()) {
 			overrideLogLevelsWithSystemProperties(loggerAndHandlerNamesSet);
 		}
 	}
