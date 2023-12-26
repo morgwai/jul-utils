@@ -98,10 +98,10 @@ public class JulConfigurator {
 
 	/**
 	 * Reads logging config normally and then calls
-	 * {@link #overrideLogLevelsWithSystemProperties(String...)}. For use with
-	 * {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is set to the
-	 * fully-qualified name of this class, then {@link LogManager} will call this constructor
-	 * instead of reading its configuration the normal way.
+	 * {@link #overrideLogLevelsWithSystemProperties(String...)}.
+	 * For use with {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is set
+	 * to the {@link Class#getName() fully-qualified name} of this class, then {@link LogManager}
+	 * will call this constructor instead of reading its configuration the normal way.
 	 * <p>
 	 * Note: overriding can be applied to existing java apps without rebuilding: just add
 	 * {@code jul-utils.jar} to command-line class-path. See the example in
@@ -119,10 +119,10 @@ public class JulConfigurator {
 
 
 	/**
-	 * Name of the system property that can contain comma separated, fully-qualified names of
-	 * {@link java.util.logging.Logger}s and {@link java.util.logging.Handler}s whose
-	 * {@link java.util.logging.Level}s will be overridden by
-	 * {@link #overrideLogLevelsWithSystemProperties(String...)}.
+	 * Name of the system property that can contain comma separated,
+	 * {@link Class#getName() fully-qualified names} of {@link java.util.logging.Logger}s and
+	 * {@link java.util.logging.Handler}s whose {@link java.util.logging.Level}s will be overridden
+	 * by {@link #overrideLogLevelsWithSystemProperties(String...)}.
 	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
 	/** {@value #LEVEL_SUFFIX} */
@@ -188,12 +188,16 @@ public class JulConfigurator {
 
 	/**
 	 * Convenient version of {@link #addOrReplaceLoggingConfigProperties(Properties)} that takes a
-	 * {@link Map} as an argument. This allows to use {@link Map#of(Object, Object) Map.of(...)}
-	 * function family inline, for example:
+	 * {@link Map} as an argument.
+	 * This allows to use {@link Map#of(Object, Object) Map.of(...)} function family inline, for
+	 * example:
 	 * <pre>{@code
 	 * addOrReplaceLoggingConfigProperties(Map.of(
-	 *         ".level", "FINE",
-	 *         "java.util.logging.ConsoleHandler.level", "FINE"));}</pre>
+	 *     ".level", "FINE",
+	 *     "java.util.logging.ConsoleHandler.level", "FINEST",
+	 *     "com.example.level", "FINEST",
+	 *     "com.thirdparty.level", "WARNING"
+	 * ));}</pre>
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Map<String, String> loggingConfigUpdates)
 	{
