@@ -69,7 +69,7 @@ public class JulFormatter extends Formatter {
 	 * <p>
 	 * By default the value of {@link #FORMAT_PROPERTY} property is used as the main format
 	 * for log records. If it is not present in either logging or system properties, then
-	 * {@value #JUL_SIMPLE_FORMAT_PROPERTY_NAME} property is read and if present, its value is
+	 * {@value #JUL_SIMPLE_FORMAT_PROPERTY} property is read and if present, its value is
 	 * prepended with {@code "%7$5d %8$3d "} and used instead. if it is also absent, then
 	 * {@value #DEFAULT_FORMAT} is used.</p>
 	 * <p>
@@ -88,10 +88,9 @@ public class JulFormatter extends Formatter {
 		var format = System.getProperty(FORMAT_PROPERTY);
 		if (format == null) format = LogManager.getLogManager().getProperty(FORMAT_PROPERTY);
 		if (format == null) {
-			var simpleFormat = System.getProperty(JUL_SIMPLE_FORMAT_PROPERTY_NAME);
+			var simpleFormat = System.getProperty(JUL_SIMPLE_FORMAT_PROPERTY);
 			if (simpleFormat == null) {
-				simpleFormat = LogManager.getLogManager().getProperty(
-						JUL_SIMPLE_FORMAT_PROPERTY_NAME);
+				simpleFormat = LogManager.getLogManager().getProperty(JUL_SIMPLE_FORMAT_PROPERTY);
 			}
 			if (simpleFormat != null) {
 				format = "%7$5d %8$3d " + simpleFormat;
@@ -108,9 +107,12 @@ public class JulFormatter extends Formatter {
 
 
 
-	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY_NAME} */
-	public static final String JUL_SIMPLE_FORMAT_PROPERTY_NAME =
+	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY} */
+	public static final String JUL_SIMPLE_FORMAT_PROPERTY =
 			"java.util.logging.SimpleFormatter.format";
+	/** @deprecated use {@link #JUL_SIMPLE_FORMAT_PROPERTY} instead. */
+	@Deprecated(forRemoval = true)
+	public static final String JUL_SIMPLE_FORMAT_PROPERTY_NAME = JUL_SIMPLE_FORMAT_PROPERTY;
 
 
 

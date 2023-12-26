@@ -21,9 +21,9 @@ public class JulFormatterTests {
 
 	@Test
 	public void testFormatRecordWithoutThrownUsingDefaultFormat() throws IOException {
-		System.clearProperty(JUL_SIMPLE_FORMAT_PROPERTY_NAME);
+		System.clearProperty(JUL_SIMPLE_FORMAT_PROPERTY);
 		LogManager.getLogManager().updateConfiguration(
-			(key) -> (oldVal, newVal) -> key.equals(JUL_SIMPLE_FORMAT_PROPERTY_NAME) ? null : newVal
+			(key) -> (oldVal, newVal) -> key.equals(JUL_SIMPLE_FORMAT_PROPERTY) ? null : newVal
 		);
 		final JulFormatter formatter = new JulFormatter();
 		final var threadId = (int) Thread.currentThread().getId();
@@ -56,12 +56,12 @@ public class JulFormatterTests {
 	@Test
 	public void testFormatThrownWithoutStackTraceFormatProvided() throws IOException {
 		final var simpleFormatterFormat = "some string";
-		System.setProperty(JUL_SIMPLE_FORMAT_PROPERTY_NAME, simpleFormatterFormat);
+		System.setProperty(JUL_SIMPLE_FORMAT_PROPERTY, simpleFormatterFormat);
 		LogManager.getLogManager().updateConfiguration(
-			(key) -> (oldVal, newVal) -> key.equals(JUL_SIMPLE_FORMAT_PROPERTY_NAME) ? "ha" : newVal
+			(key) -> (oldVal, newVal) -> key.equals(JUL_SIMPLE_FORMAT_PROPERTY) ? "ha" : newVal
 		);
 		final JulFormatter formatter = new JulFormatter();
-		assertEquals(JUL_SIMPLE_FORMAT_PROPERTY_NAME + " property should be used",
+		assertEquals(JUL_SIMPLE_FORMAT_PROPERTY + " property should be used",
 				"%7$5d %8$3d " + simpleFormatterFormat, formatter.format);
 		final var record = new LogRecord(Level.INFO, "");
 		final var thrown = new Exception("test exception");
