@@ -8,8 +8,8 @@ import java.util.logging.LogManager;
 
 
 /**
- * A {@link LogManager} that does not get reset automatically at JVM shutdown. Useful if logs from
- * user shutdown hooks are important.
+ * A {@link LogManager} that does not get reset automatically at JVM shutdown.
+ * Useful if logs from user shutdown hooks are important.
  * <p>
  * To use this class, define system property named
  * {@value #JUL_LOG_MANAGER_PROPERTY} to contain fully-qualified name of this class either on the
