@@ -152,15 +152,16 @@ public class JulFormatter extends Formatter {
 		}
 
 		return String.format(
-				format,
-				timestamp,
-				source,
-				record.getLoggerName(),
-				record.getLevel().getLocalizedName(),
-				formatMessage(record),
-				getFormattedThrown(record),
-				record.getSequenceNumber(),
-				record.getThreadID());
+			format,
+			timestamp,
+			source,
+			record.getLoggerName(),
+			record.getLevel().getLocalizedName(),
+			formatMessage(record),
+			getFormattedThrown(record),
+			record.getSequenceNumber(),
+			record.getThreadID()
+		);
 	}
 
 	String getFormattedThrown(LogRecord record) {
@@ -183,16 +184,17 @@ public class JulFormatter extends Formatter {
 		final var throwableStringBuilder = new StringBuilder(thrown.toString());
 		for (var stackFrame: thrown.getStackTrace()) {
 			throwableStringBuilder.append(String.format(
-					stackFrameFormat,
-					record.getSequenceNumber(),
-					record.getThreadID(),
-					stackFrame.getClassName(),
-					stackFrame.getMethodName(),
-					stackFrame.getFileName(),
-					stackFrame.getLineNumber(),
-					stackFrame.getModuleName(),
-					stackFrame.getModuleVersion(),
-					stackFrame.getClassLoaderName()));
+				stackFrameFormat,
+				record.getSequenceNumber(),
+				record.getThreadID(),
+				stackFrame.getClassName(),
+				stackFrame.getMethodName(),
+				stackFrame.getFileName(),
+				stackFrame.getLineNumber(),
+				stackFrame.getModuleName(),
+				stackFrame.getModuleVersion(),
+				stackFrame.getClassLoaderName())
+			);
 		}
 		return throwableStringBuilder.toString();
 	}

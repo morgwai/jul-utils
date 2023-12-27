@@ -31,7 +31,6 @@ public class JulManualResetLogManagerTests {
 	@Before
 	public void setHandler() {
 		testLogger.addHandler(new ConsoleHandler() {
-
 			@Override public void close() {
 				handlerWasClosed = true;
 				super.close();

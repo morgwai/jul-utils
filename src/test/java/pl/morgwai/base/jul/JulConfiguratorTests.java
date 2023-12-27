@@ -111,14 +111,21 @@ public class JulConfiguratorTests {
 		);
 
 		JulConfigurator.addOrReplaceLoggingConfigProperties(loggingConfigUpdates);
-		assertEquals("ConsoleHandler should have level as in the property",
-				loggingConfigUpdates.get(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
-				new ConsoleHandler().getLevel().toString());
-		assertEquals(EXAMPLE_DOMAIN + " logger should have level as in the property",
-				loggingConfigUpdates.get(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
-				Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString());
-		assertEquals("root logger should have level as in the property",
-				loggingConfigUpdates.get(LEVEL_SUFFIX), Logger.getLogger("").getLevel().toString());
+		assertEquals(
+			"ConsoleHandler should have level as in the property",
+			loggingConfigUpdates.get(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
+			new ConsoleHandler().getLevel().toString()
+		);
+		assertEquals(
+			EXAMPLE_DOMAIN + " logger should have level as in the property",
+			loggingConfigUpdates.get(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
+			Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString()
+		);
+		assertEquals(
+			"root logger should have level as in the property",
+			loggingConfigUpdates.get(LEVEL_SUFFIX),
+			Logger.getLogger("").getLevel().toString()
+		);
 	}
 
 
