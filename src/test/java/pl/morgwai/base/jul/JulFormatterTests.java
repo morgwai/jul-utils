@@ -37,18 +37,21 @@ public class JulFormatterTests {
 		record.setThreadID(threadId);
 		record.setInstant(Instant.ofEpochMilli(timestampMillis));
 
-		assertEquals("values formatted manually should be equal to formatter.format(record)",
-				String.format(
-						DEFAULT_FORMAT,
-						new Date(timestampMillis),
-						JulFormatter.class.getName(),
-						JulFormatter.class.getName(),
-						Level.INFO.getLocalizedName(),
-						formatter.formatMessage(record),
-						"",
-						recordId,
-						threadId),
-				formatter.format(record));
+		assertEquals(
+			"values formatted manually should be equal to formatter.format(record)",
+			String.format(
+				DEFAULT_FORMAT,
+				new Date(timestampMillis),
+				JulFormatter.class.getName(),
+				JulFormatter.class.getName(),
+				Level.INFO.getLocalizedName(),
+				formatter.formatMessage(record),
+				"",
+				recordId,
+				threadId
+			),
+			formatter.format(record)
+		);
 	}
 
 
@@ -94,16 +97,17 @@ public class JulFormatterTests {
 		final var throwableStringBuilder = new StringBuilder(thrown.toString());
 		for (var stackFrame: thrown.getStackTrace()) {
 			throwableStringBuilder.append(String.format(
-					stackFrameFormat,
-					recordId,
-					threadId,
-					stackFrame.getClassName(),
-					stackFrame.getMethodName(),
-					stackFrame.getFileName(),
-					stackFrame.getLineNumber(),
-					stackFrame.getModuleName(),
-					stackFrame.getModuleVersion(),
-					stackFrame.getClassLoaderName()));
+				stackFrameFormat,
+				recordId,
+				threadId,
+				stackFrame.getClassName(),
+				stackFrame.getMethodName(),
+				stackFrame.getFileName(),
+				stackFrame.getLineNumber(),
+				stackFrame.getModuleName(),
+				stackFrame.getModuleVersion(),
+				stackFrame.getClassLoaderName()
+			));
 		}
 
 		assertEquals("thrown formatted manually should be equal to getFormattedThrown(record)",
