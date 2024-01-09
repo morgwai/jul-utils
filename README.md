@@ -1,4 +1,4 @@
-# jul utils
+# JUL utils
 
 `java.util.logging` utilities.<br/>
 <br/>
