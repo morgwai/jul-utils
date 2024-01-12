@@ -110,9 +110,6 @@ public class JulFormatter extends Formatter {
 	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY} */
 	public static final String JUL_SIMPLE_FORMAT_PROPERTY =
 			"java.util.logging.SimpleFormatter.format";
-	/** @deprecated use {@link #JUL_SIMPLE_FORMAT_PROPERTY} instead. */
-	@Deprecated(forRemoval = true)
-	public static final String JUL_SIMPLE_FORMAT_PROPERTY_NAME = JUL_SIMPLE_FORMAT_PROPERTY;
 
 
 
