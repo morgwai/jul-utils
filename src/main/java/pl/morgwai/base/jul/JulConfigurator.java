@@ -32,8 +32,7 @@ public class JulConfigurator {
 	 * appending {@value #LEVEL_SUFFIX} to the given
 	 * {@link java.util.logging.Logger}'s&nbsp;/&nbsp;{@link java.util.logging.Handler}'s
 	 * fully-qualified name.<br/>
-	 * If a system property with a new {@link Level} is missing, it is ignored. If it is present,
-	 * its validity is verified using {@link Level#parse(String)} method.</p>
+	 * If a system property with a new {@link Level} is missing, it is simply ignored.</p>
 	 * <p>
 	 * <b>Example:</b><br/>
 	 * Output all entries from <code>com.example</code> name-space with level <code>FINE</code> or
@@ -77,7 +76,6 @@ public class JulConfigurator {
 			final var newLevelPropertyName = loggerOrHandlerName + LEVEL_SUFFIX;
 			final var newLevel = System.getProperty(newLevelPropertyName);
 			if (newLevel == null) continue;
-			Level.parse(newLevel);
 			newLogLevels.put(newLevelPropertyName, newLevel);
 			characterCount += newLevelPropertyName.length();
 			characterCount += newLevel.length();
