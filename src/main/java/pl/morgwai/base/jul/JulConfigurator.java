@@ -88,7 +88,7 @@ public class JulConfigurator {
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			newLogLevels,
-			characterCount * 2,  // *2 is for UTF characters
+			characterCount * 2,  // *2 is for UTF characters and \ escapes
 			addOrReplaceMapper
 		);
 	}
@@ -134,14 +134,13 @@ public class JulConfigurator {
 
 
 	/**
-	 * Convenient version of {@link LogManager#updateConfiguration(InputStream, Function)} that
-	 * takes a {@link Properties} argument instead of an {@link InputStream}.
+	 * Similar to {@link LogManager#updateConfiguration(InputStream, Function)}, but takes a
+	 * {@link Properties} argument instead of an {@link InputStream}.
 	 * This is somewhat a low-level method: in most situations
 	 * {@link #addOrReplaceLoggingConfigProperties(Properties)} or
 	 * {@link #addOrReplaceLoggingConfigProperties(Map)} will be more convenient.
 	 * @param estimatedLoggingConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes.
-	 *     It will be passed as an argument to
-	 *     {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
+	 *     It will be passed to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
 	 */
 	public static void logManagerUpdateConfiguration(
 		LogManager logManager,
@@ -172,7 +171,7 @@ public class JulConfigurator {
 
 
 	/**
-	 * Adds to or replaces logging config properties with values from {@code loggingConfigUpdates}.
+	 * Adds to or replaces logging config properties with entries from {@code loggingConfigUpdates}.
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Properties loggingConfigUpdates) {
 		logManagerUpdateConfiguration(
@@ -186,8 +185,8 @@ public class JulConfigurator {
 
 
 	/**
-	 * Convenient version of {@link #addOrReplaceLoggingConfigProperties(Properties)} that takes a
-	 * {@link Map} as an argument.
+	 * Variant of {@link #addOrReplaceLoggingConfigProperties(Properties)} that takes a {@link Map}
+	 * as an argument.
 	 * This allows to use {@link Map#of(Object, Object) Map.of(...)} function family inline, for
 	 * example:
 	 * <pre>{@code
@@ -200,8 +199,8 @@ public class JulConfigurator {
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Map<String, String> loggingConfigUpdates)
 	{
-		final var loggingConfigUpdateProperties = new Properties(loggingConfigUpdates.size());
-		loggingConfigUpdateProperties.putAll(loggingConfigUpdates);
-		addOrReplaceLoggingConfigProperties(loggingConfigUpdateProperties);
+		final var propertiesUpdates = new Properties(loggingConfigUpdates.size());
+		propertiesUpdates.putAll(loggingConfigUpdates);
+		addOrReplaceLoggingConfigProperties(propertiesUpdates);
 	}
 }

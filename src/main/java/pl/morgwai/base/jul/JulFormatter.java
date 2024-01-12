@@ -12,7 +12,7 @@ import java.util.logging.*;
 
 /**
  * A text log formatter similar to {@link java.util.logging.SimpleFormatter} that additionally
- * allows to format stack trace elements and to add
+ * allows to format stack-trace elements and to add
  * {@link LogRecord#getSequenceNumber() log sequence id} and
  * {@link LogRecord#getThreadID() thread id} to log entries.
  */
@@ -25,14 +25,13 @@ public class JulFormatter extends Formatter {
 	 * @see #format(LogRecord)
 	 */
 	public static final String FORMAT_PROPERTY = JulFormatter.class.getName() + ".format";
-	final String format;
-
 	/**
 	 * {@value #DEFAULT_FORMAT}<br/>
 	 * "{sequenceId} {threadId} {level} {timestamp} {loggerName} {message} {thrown}"
 	 */
 	public static final String DEFAULT_FORMAT =
 			"%7$5d %8$3d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
+	final String format;
 
 	/**
 	 * Name of the logging or system property containing the format for stack frames of logged
@@ -114,13 +113,15 @@ public class JulFormatter extends Formatter {
 
 
 	/**
-	 * Formats the given {@code record}.
+	 * Formats {@code record}.
 	 * <p>
 	 * The result is obtained by running<br/>
 	 * {@link String#format(String, Object...)
 	 * String.format(format, timestamp, source, loggerName, level, message, formattedThrown, logId,
 	 * threadId)}<br/>
-	 * where {@code format} is obtained from either {@link #FORMAT_PROPERTY} property or the
+	 * where:</p>
+	 * <p>
+	 * {@code format} is obtained from either {@link #FORMAT_PROPERTY} property or the
 	 * first param of {@link #JulFormatter(String, String)}.</p>
 	 * <p>
 	 * {@code formattedThrown} is obtained
