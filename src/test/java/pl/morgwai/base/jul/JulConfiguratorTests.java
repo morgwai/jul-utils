@@ -157,6 +157,28 @@ public class JulConfiguratorTests {
 
 
 
+	@Test
+	public void testThrowingOverridingPreservesJulConfigClassProperty() {
+		System.setProperty(JUL_CONFIG_CLASS_PROPERTY, JulConfigurator.class.getName());
+		System.setProperty(
+			JUL_CONFIG_FILE_PROPERTY,
+			JulConfigurator.class.getName() + ".nonexistent"
+		);
+		try {
+			LogManager.getLogManager().readConfiguration();
+			fail("LogManager should throw when pointed to a nonexistent file");
+		} catch (IOException expected) {}
+		assertEquals(
+			'"' + JUL_CONFIG_CLASS_PROPERTY + "\" property should be preserved",
+			JulConfigurator.class.getName(),
+			System.getProperty(JUL_CONFIG_CLASS_PROPERTY)
+		);
+	}
+
+	static final String JUL_CONFIG_FILE_PROPERTY = "java.util.logging.config.file";
+
+
+
 	Map<String, String> systemPropertiesBackup;
 
 
@@ -164,6 +186,7 @@ public class JulConfiguratorTests {
 	@Before
 	public void backupSystemPropertiesAndPrepareJulConfig() throws IOException {
 		systemPropertiesBackup = new HashMap<>();
+		backupSystemProperty(JUL_CONFIG_FILE_PROPERTY);
 		backupSystemProperty(JUL_CONFIG_CLASS_PROPERTY);
 		backupSystemProperty(OVERRIDE_LEVEL_PROPERTY);
 		backupSystemProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX);
