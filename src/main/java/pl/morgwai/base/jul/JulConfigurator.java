@@ -31,7 +31,7 @@ public class JulConfigurator {
 	 * {@link java.util.logging.Logger}/{@link java.util.logging.Handler} is constructed by
 	 * appending {@value #LEVEL_SUFFIX} to the given
 	 * {@link java.util.logging.Logger}'s&nbsp;/&nbsp;{@link java.util.logging.Handler}'s
-	 * fully-qualified name.<br/>
+	 * fully-qualified name (coherently with {@link LogManager}'s convention).<br/>
 	 * If a system property with a new {@link Level} is missing, it is simply ignored.</p>
 	 * <p>
 	 * <b>Example:</b><br/>
@@ -122,9 +122,9 @@ public class JulConfigurator {
 	 * by {@link #overrideLogLevelsWithSystemProperties(String...)}.
 	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
-	/** {@value #LEVEL_SUFFIX} */
+	/** {@value #LEVEL_SUFFIX} (see {@link #overrideLogLevelsWithSystemProperties(String...)}) */
 	public static final String LEVEL_SUFFIX = ".level";
-	/** {@value #JUL_CONFIG_CLASS_PROPERTY} */
+	/** {@value #JUL_CONFIG_CLASS_PROPERTY} (see {@link #JulConfigurator()}) */
 	public static final String JUL_CONFIG_CLASS_PROPERTY = "java.util.logging.config.class";
 	static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
 			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
