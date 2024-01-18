@@ -14,6 +14,13 @@ import java.util.logging.LogManager;
  * Utilities to manipulate {@code java.util.logging} config, among others allows to override log
  * levels with system properties in existing java apps without rebuilding: see
  * {@link #overrideLogLevelsWithSystemProperties(String...)} and {@link #JulConfigurator()}.
+ * <p>
+ * Note: as {@link LogManager#reset()} does <b>not</b> remove {@link java.util.logging.Handler}s of
+ * the root {@link java.util.logging.Logger}, manipulating properties related to
+ * {@link java.util.logging.Handler}s (like {@code "java.util.logging.ConsoleHandler.level"}) will
+ * <b>only</b> have effect if no log entry has been made yet. Otherwise root
+ * {@link java.util.logging.Handler}s can only be modified programmatically via
+ * {@link java.util.logging.Logger#getHandlers() rootLogger.getHandlers()}.</p>
  */
 public class JulConfigurator {
 
