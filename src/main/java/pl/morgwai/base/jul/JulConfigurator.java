@@ -58,14 +58,14 @@ public class JulConfigurator {
 	 * {@value #JUL_CONFIG_CLASS_PROPERTY} as in the example above.</p>
 	 */
 	public static void overrideLogLevelsWithSystemProperties(String... loggerAndHandlerNames) {
-		final var loggerAndHandlerNamesSet = new HashSet<String>();
-		Collections.addAll(loggerAndHandlerNamesSet, loggerAndHandlerNames);
+		final var combinedNames = new HashSet<String>();  // both from the param & the sys property
+		Collections.addAll(combinedNames, loggerAndHandlerNames);
 		final var namesFromProperty = System.getProperty(OVERRIDE_LEVEL_PROPERTY);
 		if (namesFromProperty != null) {
-			Collections.addAll(loggerAndHandlerNamesSet, namesFromProperty.split(","));
+			Collections.addAll(combinedNames, namesFromProperty.split(","));
 		}
-		if (loggerAndHandlerNamesSet.isEmpty()) return;
-		overrideLogLevelsWithSystemProperties(loggerAndHandlerNamesSet);
+		if (combinedNames.isEmpty()) return;
+		overrideLogLevelsWithSystemProperties(combinedNames);
 	}
 
 	static void overrideLogLevelsWithSystemProperties(Set<String> loggerAndHandlerNames) {
@@ -86,7 +86,7 @@ public class JulConfigurator {
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			newLogLevels,
-			characterCount * 2,  // *2 is for UTF characters and \ escapes
+			characterCount * 2,  // *2 is to account for escaping Properties.store() does
 			addOrReplaceMapper
 		);
 	}
@@ -108,9 +108,12 @@ public class JulConfigurator {
 	public JulConfigurator() throws IOException {
 		final var julConfigClassPropertyBackup = System.getProperty(JUL_CONFIG_CLASS_PROPERTY);
 		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY);
-		LogManager.getLogManager().readConfiguration();
-		overrideLogLevelsWithSystemProperties();
-		System.setProperty(JUL_CONFIG_CLASS_PROPERTY, julConfigClassPropertyBackup);
+		try {
+			LogManager.getLogManager().readConfiguration();
+			overrideLogLevelsWithSystemProperties();
+		} finally {
+			System.setProperty(JUL_CONFIG_CLASS_PROPERTY, julConfigClassPropertyBackup);
+		}
 	}
 
 
@@ -170,15 +173,26 @@ public class JulConfigurator {
 
 	/**
 	 * Adds to or replaces logging config properties with entries from {@code loggingConfigUpdates}.
+	 * <p>
+	 * Note: this method does not bother to calculate the byte size of the buffer needed to store
+	 * {@code loggingConfigUpdates} and just estimates {@value #DEFAULT_PROPERTY_BYTE_SIZE} bytes
+	 * per property. If more accurate allocation is needed, use
+	 * {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)} directly
+	 * instead.</p>
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Properties loggingConfigUpdates) {
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			loggingConfigUpdates,
-			80 * loggingConfigUpdates.size(),  // in most cases more efficient than calculating
+			DEFAULT_PROPERTY_BYTE_SIZE * loggingConfigUpdates.size(),
 			addOrReplaceMapper
 		);
 	}
+
+	/**
+	 * Used by {@link #addOrReplaceLoggingConfigProperties(Properties)} to estimate the buffer size.
+	 */
+	public static final int DEFAULT_PROPERTY_BYTE_SIZE = 80;
 
 
 
