@@ -106,7 +106,7 @@ public class JulFormatter extends Formatter {
 
 
 
-	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY} */
+	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY} (see {@link #JulFormatter()}) */
 	public static final String JUL_SIMPLE_FORMAT_PROPERTY =
 			"java.util.logging.SimpleFormatter.format";
 

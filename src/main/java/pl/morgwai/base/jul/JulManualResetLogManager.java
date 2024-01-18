@@ -26,8 +26,9 @@ import java.util.logging.LogManager;
  *     // other stuff that may trigger LogManager initialization
  *     static {
  *         System.setProperty(
- *                 JulManualResetLogManager.JUL_LOG_MANAGER_PROPERTY,
- *                 JulManualResetLogManager.class.getName());
+ *             JulManualResetLogManager.JUL_LOG_MANAGER_PROPERTY,
+ *             JulManualResetLogManager.class.getName()
+ *         );
  *     }
  *
  *     public static void main(String[] args) {
