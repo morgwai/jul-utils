@@ -20,6 +20,9 @@ public class JulFormatter extends Formatter {
 
 
 
+	/** {@value #FORMATTER_SUFFIX} (for constructing config property names) */
+	public static final String FORMATTER_SUFFIX = ".formatter";
+
 	/**
 	 * Name of the logging or system property containing the main format for log records.
 	 * @see #format(LogRecord)
