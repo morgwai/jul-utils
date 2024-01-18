@@ -70,7 +70,7 @@ public class JulConfigurator {
 
 	static void overrideLogLevelsWithSystemProperties(Set<String> loggerAndHandlerNames) {
 		final var newLogLevels = new Properties();  // loggerName.level -> newLevel
-		int characterCount = 30;  // first line date comment character length
+		int characterCount = PROPERTIES_STORE_HEADER_LENGTH;
 		for (final var loggerOrHandlerName: loggerAndHandlerNames) {
 			// read a system property with the new level and put it into newLogLevels
 			final var newLevelProperty = loggerOrHandlerName + LEVEL_SUFFIX;
@@ -79,7 +79,7 @@ public class JulConfigurator {
 			newLogLevels.put(newLevelProperty, newLevel);
 			characterCount += newLevelProperty.length();
 			characterCount += newLevel.length();
-			characterCount += 2;  // '=' and '\n'
+			characterCount += PROPERTY_BOILERPLATE_LENGTH;
 		}
 		if (newLogLevels.isEmpty()) return;
 
@@ -90,6 +90,12 @@ public class JulConfigurator {
 			addOrReplaceMapper
 		);
 	}
+
+	/** Combined length of {@code EOL} and {@code '='} characters. */
+	static final int PROPERTY_BOILERPLATE_LENGTH = System.lineSeparator().length() + 1;
+	/** {@link Properties#store(OutputStream, String)} date comment header length. */
+	static final int PROPERTIES_STORE_HEADER_LENGTH =
+			new Date().toString().length() + System.lineSeparator().length() + 1;  // +1 is for '#'
 
 
 
