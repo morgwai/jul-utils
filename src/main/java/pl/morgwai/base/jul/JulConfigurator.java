@@ -82,7 +82,15 @@ public class JulConfigurator {
 			// read a system property with the new level and put it into newLogLevels
 			final var newLevelProperty = loggerOrHandlerName + LEVEL_SUFFIX;
 			final var newLevel = System.getProperty(newLevelProperty);
-			if (newLevel == null) continue;
+			if (newLevel == null) {
+				if (System.getProperty(loggerOrHandlerName) != null) {
+					System.err.println("WARNING: expected property \"" + newLevelProperty + "\" not"
+							+ " set, but \"" + loggerOrHandlerName + "\" present: have you "
+							+  "forgotten to add \".level\" suffix maybe?"
+					);
+				}
+				continue;
+			}
 			newLogLevels.put(newLevelProperty, newLevel);
 			characterCount += newLevelProperty.length();
 			characterCount += newLevel.length();
