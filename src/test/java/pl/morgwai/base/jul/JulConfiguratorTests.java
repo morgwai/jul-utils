@@ -7,8 +7,11 @@ import java.util.logging.*;
 
 import org.junit.*;
 
+import static java.util.logging.Level.INFO;
+import static java.util.logging.Level.SEVERE;
+
 import static org.junit.Assert.*;
-import static pl.morgwai.base.jul.JulConfigurator.LEVEL_SUFFIX;
+import static pl.morgwai.base.jul.JulConfigurator.*;
 
 
 
@@ -22,63 +25,87 @@ public class JulConfiguratorTests {
 
 	@Test
 	public void testNamesFromProperty() throws IOException {
-		System.setProperty(JulConfigurator.OVERRIDE_LEVEL_PROPERTY,
-				"," + ConsoleHandler.class.getName() + "," + EXAMPLE_DOMAIN);
-		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
-		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
-		System.setProperty(LEVEL_SUFFIX, Level.SEVERE.toString());
 		System.setProperty(
-				JulConfigurator.JUL_CONFIG_CLASS_PROPERTY, JulConfigurator.class.getName());
+			OVERRIDE_LEVEL_PROPERTY,
+			"," + ConsoleHandler.class.getName() + "," + EXAMPLE_DOMAIN
+		);
+		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, SEVERE.toString());
+		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, SEVERE.toString());
+		System.setProperty(LEVEL_SUFFIX, SEVERE.toString());
+		System.setProperty(JUL_CONFIG_CLASS_PROPERTY, JulConfigurator.class.getName());
 
 		LogManager.getLogManager().readConfiguration();
-		assertEquals("ConsoleHandler should have level as in the property",
-				System.getProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
-				new ConsoleHandler().getLevel().toString());
-		assertEquals(EXAMPLE_DOMAIN + " logger should have level as in the property",
-				System.getProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
-				Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString());
-		assertEquals("root logger should have level as in the property",
-				System.getProperty(LEVEL_SUFFIX), Logger.getLogger("").getLevel().toString());
-		assertEquals("config class property should be preserved",
-				JulConfigurator.class.getName(),
-				System.getProperty(JulConfigurator.JUL_CONFIG_CLASS_PROPERTY));
+		assertEquals(
+			"ConsoleHandler should have its Level as in the property",
+			System.getProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
+			new ConsoleHandler().getLevel().toString()
+		);
+		assertEquals(
+			'"' + EXAMPLE_DOMAIN + "\" Logger should have its Level as in the property",
+			System.getProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
+			Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString()
+		);
+		assertEquals(
+			"root Logger should have its Level as in the property",
+			System.getProperty(LEVEL_SUFFIX),
+			Logger.getLogger("").getLevel().toString()
+		);
+		assertEquals(
+			'"' + JUL_CONFIG_CLASS_PROPERTY + "\" property should be preserved",
+			JulConfigurator.class.getName(),
+			System.getProperty(JUL_CONFIG_CLASS_PROPERTY)
+		);
 	}
 
 
 
 	@Test
 	public void testNamesFromParams() {
-		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
-		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
-		System.setProperty(LEVEL_SUFFIX, Level.SEVERE.toString());
+		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, SEVERE.toString());
+		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, SEVERE.toString());
+		System.setProperty(LEVEL_SUFFIX, SEVERE.toString());
 
-		JulConfigurator.overrideLogLevelsWithSystemProperties(
-				ConsoleHandler.class.getName(), EXAMPLE_DOMAIN, "");
-		assertEquals("ConsoleHandler should have level as in the property",
-				System.getProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
-				new ConsoleHandler().getLevel().toString());
-		assertEquals(EXAMPLE_DOMAIN + " logger should have level as in the property",
-				System.getProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
-				Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString());
-		assertEquals("root logger should have level as in the property",
-				System.getProperty(LEVEL_SUFFIX), Logger.getLogger("").getLevel().toString());
+		overrideLogLevelsWithSystemProperties(
+			ConsoleHandler.class.getName(),
+			EXAMPLE_DOMAIN,
+			""
+		);
+		assertEquals(
+			"ConsoleHandler should have its Level as in the property",
+			System.getProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
+			new ConsoleHandler().getLevel().toString()
+		);
+		assertEquals(
+			'"' + EXAMPLE_DOMAIN + "\" Logger should have its Level as in the property",
+			System.getProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
+			Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString()
+		);
+		assertEquals(
+			"root Logger should have its Level as in the property",
+			System.getProperty(LEVEL_SUFFIX),
+			Logger.getLogger("").getLevel().toString()
+		);
 	}
 
 
 
 	@Test
 	public void testNamesFromBothPropertyAndParams() {
-		System.setProperty(JulConfigurator.OVERRIDE_LEVEL_PROPERTY, ConsoleHandler.class.getName());
-		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString());
-		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString());
+		System.setProperty(OVERRIDE_LEVEL_PROPERTY, ConsoleHandler.class.getName());
+		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, SEVERE.toString());
+		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, SEVERE.toString());
 
-		JulConfigurator.overrideLogLevelsWithSystemProperties(EXAMPLE_DOMAIN);
-		assertEquals("ConsoleHandler should have level as in the property",
-				System.getProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
-				new ConsoleHandler().getLevel().toString());
-		assertEquals(EXAMPLE_DOMAIN + " logger should have level as in the property",
-				System.getProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
-				Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString());
+		overrideLogLevelsWithSystemProperties(EXAMPLE_DOMAIN);
+		assertEquals(
+			"ConsoleHandler should have its Level as in the property",
+			System.getProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
+			new ConsoleHandler().getLevel().toString()
+		);
+		assertEquals(
+			'"' + EXAMPLE_DOMAIN + "\" Logger should have its Level as in the property",
+			System.getProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
+			Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString()
+		);
 	}
 
 
@@ -87,7 +114,7 @@ public class JulConfiguratorTests {
 	public void testLogManagerUpdateConfigurationCallsLogMapperEvenWithEmptyUpdates() {
 		boolean[] mapperCalledHolder = {false};
 
-		JulConfigurator.logManagerUpdateConfiguration(
+		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			new Properties(),
 			40,
@@ -105,14 +132,14 @@ public class JulConfiguratorTests {
 	@Test
 	public void testAddOrReplaceLoggingConfigProperties() {
 		final var loggingConfigUpdates = Map.of(
-			ConsoleHandler.class.getName() + LEVEL_SUFFIX, Level.SEVERE.toString(),
-			EXAMPLE_DOMAIN + LEVEL_SUFFIX, Level.SEVERE.toString(),
-			LEVEL_SUFFIX, Level.SEVERE.toString()
+			ConsoleHandler.class.getName() + LEVEL_SUFFIX, SEVERE.toString(),
+			EXAMPLE_DOMAIN + LEVEL_SUFFIX, SEVERE.toString(),
+			LEVEL_SUFFIX, SEVERE.toString()
 		);
 
-		JulConfigurator.addOrReplaceLoggingConfigProperties(loggingConfigUpdates);
+		addOrReplaceLoggingConfigProperties(loggingConfigUpdates);
 		assertEquals(
-			"ConsoleHandler should have level as in the property",
+			"ConsoleHandler should have its Level as in the property",
 			loggingConfigUpdates.get(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
 			new ConsoleHandler().getLevel().toString()
 		);
@@ -122,7 +149,7 @@ public class JulConfiguratorTests {
 			Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString()
 		);
 		assertEquals(
-			"root logger should have level as in the property",
+			"root Logger should have its Level as in the property",
 			loggingConfigUpdates.get(LEVEL_SUFFIX),
 			Logger.getLogger("").getLevel().toString()
 		);
@@ -135,13 +162,17 @@ public class JulConfiguratorTests {
 
 
 	@Before
-	public void backupSystemProperties() {
+	public void backupSystemPropertiesAndPrepareJulConfig() throws IOException {
 		systemPropertiesBackup = new HashMap<>();
-		backupSystemProperty(JulConfigurator.JUL_CONFIG_CLASS_PROPERTY);
-		backupSystemProperty(JulConfigurator.OVERRIDE_LEVEL_PROPERTY);
+		backupSystemProperty(JUL_CONFIG_CLASS_PROPERTY);
+		backupSystemProperty(OVERRIDE_LEVEL_PROPERTY);
 		backupSystemProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX);
 		backupSystemProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX);
 		backupSystemProperty(LEVEL_SUFFIX);
+		LogManager.getLogManager().updateConfiguration(
+			(key) -> (oldVal, newVal) ->
+					key.equals(LEVEL_SUFFIX) ? INFO.toString() : newVal
+		);
 	}
 
 	void backupSystemProperty(String name) {
@@ -151,7 +182,7 @@ public class JulConfiguratorTests {
 
 
 	@After
-	public void restoreSystemProperties() {
+	public void restoreSystemPropertiesAndJulConfig() throws IOException {
 		for(var key: systemPropertiesBackup.keySet()) {
 			String value = systemPropertiesBackup.get(key);
 			if (value != null) {
@@ -160,22 +191,6 @@ public class JulConfiguratorTests {
 				System.clearProperty(key);
 			}
 		}
-	}
-
-
-
-	@Before
-	public void prepareJulConfig() throws IOException {
-		LogManager.getLogManager().updateConfiguration(
-			(key) -> (oldVal, newVal) ->
-					key.equals(LEVEL_SUFFIX) ? Level.INFO.toString() : newVal
-		);
-	}
-
-
-
-	@After
-	public void restoreJulConfig() throws IOException {
 		LogManager.getLogManager().readConfiguration();
 	}
 }
