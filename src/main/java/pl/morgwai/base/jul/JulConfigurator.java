@@ -73,11 +73,11 @@ public class JulConfigurator {
 		int characterCount = 30;  // first line date comment character length
 		for (final var loggerOrHandlerName: loggerAndHandlerNames) {
 			// read a system property with the new level and put it into newLogLevels
-			final var newLevelPropertyName = loggerOrHandlerName + LEVEL_SUFFIX;
-			final var newLevel = System.getProperty(newLevelPropertyName);
+			final var newLevelProperty = loggerOrHandlerName + LEVEL_SUFFIX;
+			final var newLevel = System.getProperty(newLevelProperty);
 			if (newLevel == null) continue;
-			newLogLevels.put(newLevelPropertyName, newLevel);
-			characterCount += newLevelPropertyName.length();
+			newLogLevels.put(newLevelProperty, newLevel);
+			characterCount += newLevelProperty.length();
 			characterCount += newLevel.length();
 			characterCount += 2;  // '=' and '\n'
 		}
