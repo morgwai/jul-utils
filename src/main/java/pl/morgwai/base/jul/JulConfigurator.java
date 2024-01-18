@@ -129,7 +129,8 @@ public class JulConfigurator {
 	public static final String LEVEL_SUFFIX = ".level";
 	/** {@value #JUL_CONFIG_CLASS_PROPERTY} (see {@link #JulConfigurator()}) */
 	public static final String JUL_CONFIG_CLASS_PROPERTY = "java.util.logging.config.class";
-	static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
+	/** For use with {@link LogManager#updateConfiguration(InputStream, Function)}. */
+	public static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
 			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
 
 
@@ -176,9 +177,9 @@ public class JulConfigurator {
 	 * <p>
 	 * Note: this method does not bother to calculate the byte size of the buffer needed to store
 	 * {@code loggingConfigUpdates} and just estimates {@value #DEFAULT_PROPERTY_BYTE_SIZE} bytes
-	 * per property. If more accurate allocation is needed, use
-	 * {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)} directly
-	 * instead.</p>
+	 * per property. If more accurate allocation is needed, then use instead
+	 * {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)} with
+	 * {@link #addOrReplaceMapper} directly.</p>
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Properties loggingConfigUpdates) {
 		logManagerUpdateConfiguration(
