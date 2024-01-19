@@ -10,6 +10,8 @@ import java.util.logging.*;
 
 import org.junit.Test;
 
+import static java.util.logging.Level.INFO;
+
 import static org.junit.Assert.assertEquals;
 import static pl.morgwai.base.jul.JulFormatter.*;
 
@@ -30,7 +32,7 @@ public class JulFormatterTests {
 		final var recordId = 69L;
 		final var timestampMillis = System.currentTimeMillis();
 		final var message = "test message";
-		final var record = new LogRecord(Level.INFO, message);
+		final var record = new LogRecord(INFO, message);
 		record.setSourceClassName(JulFormatter.class.getName());
 		record.setLoggerName(JulFormatter.class.getName());
 		record.setSequenceNumber(recordId);
@@ -44,7 +46,7 @@ public class JulFormatterTests {
 				new Date(timestampMillis),
 				JulFormatter.class.getName(),
 				JulFormatter.class.getName(),
-				Level.INFO.getLocalizedName(),
+				INFO.getLocalizedName(),
 				formatter.formatMessage(record),
 				"",
 				recordId,
@@ -58,16 +60,20 @@ public class JulFormatterTests {
 
 	@Test
 	public void testFormatThrownWithoutStackTraceFormatProvided() throws IOException {
-		final var simpleFormatterFormat = "some string";
+		final var simpleFormatterFormat = "testFormat";
 		System.setProperty(JUL_SIMPLE_FORMAT_PROPERTY, simpleFormatterFormat);
 		LogManager.getLogManager().updateConfiguration(
-			(key) -> (oldVal, newVal) -> key.equals(JUL_SIMPLE_FORMAT_PROPERTY) ? "ha" : newVal
+			(key) -> (oldVal, newVal) ->
+					key.equals(JUL_SIMPLE_FORMAT_PROPERTY) ? "anotherValue" : newVal
 		);
 		final JulFormatter formatter = new JulFormatter();
-		assertEquals(JUL_SIMPLE_FORMAT_PROPERTY + " property should be used",
-				JUL_SIMPLE_FORMAT_PREFIX + simpleFormatterFormat, formatter.format);
-		final var record = new LogRecord(Level.INFO, "");
-		final var thrown = new Exception("test exception");
+		assertEquals(
+			JUL_SIMPLE_FORMAT_PROPERTY + " property should be used",
+			JUL_SIMPLE_FORMAT_PREFIX + simpleFormatterFormat,
+			formatter.format
+		);
+		final var record = new LogRecord(INFO, "");
+		final var thrown = new Exception("thrown");
 		record.setThrown(thrown);
 
 		try (
@@ -90,7 +96,7 @@ public class JulFormatterTests {
 		final var threadId = (int) Thread.currentThread().getId();
 		final var recordId = 69L;
 		final var thrown = new Exception("test exception");
-		final var record = new LogRecord(Level.INFO, "");
+		final var record = new LogRecord(INFO, "");
 		record.setSequenceNumber(recordId);
 		record.setThreadID(threadId);
 		record.setThrown(thrown);
@@ -110,7 +116,10 @@ public class JulFormatterTests {
 			));
 		}
 
-		assertEquals("thrown formatted manually should be equal to getFormattedThrown(record)",
-				throwableStringBuilder.toString(), formatter.getFormattedThrown(record));
+		assertEquals(
+			"thrown formatted manually should be equal to getFormattedThrown(record)",
+			throwableStringBuilder.toString(),
+			formatter.getFormattedThrown(record)
+		);
 	}
 }
