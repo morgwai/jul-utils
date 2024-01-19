@@ -6,7 +6,7 @@
 
 	<groupId>pl.morgwai.base</groupId>
 	<artifactId>jul-utils</artifactId>
-	<version>3.1-SNAPSHOT</version>
+	<version>3.1</version>
 
 	<name>JUL utils</name>
 	<description>java.util.logging utilities</description>
