@@ -1,6 +1,7 @@
 # JUL utils
 
 `java.util.logging` utilities.<br/>
+Copyright 2021 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0.<br/>
 <br/>
 **latest release: [3.0](https://search.maven.org/artifact/pl.morgwai.base/jul-utils/3.0/jar)**
 ([javadoc](https://javadoc.io/doc/pl.morgwai.base/jul-utils/3.0))
