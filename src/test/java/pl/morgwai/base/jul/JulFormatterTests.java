@@ -65,7 +65,7 @@ public class JulFormatterTests {
 		);
 		final JulFormatter formatter = new JulFormatter();
 		assertEquals(JUL_SIMPLE_FORMAT_PROPERTY + " property should be used",
-				"%7$5d %8$3d " + simpleFormatterFormat, formatter.format);
+				JUL_SIMPLE_FORMAT_PREFIX + simpleFormatterFormat, formatter.format);
 		final var record = new LogRecord(Level.INFO, "");
 		final var thrown = new Exception("test exception");
 		record.setThrown(thrown);

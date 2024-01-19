@@ -33,7 +33,7 @@ public class JulFormatter extends Formatter {
 	 * "{sequenceId} {threadId} {level} {timestamp} {loggerName} {message} {thrown}"
 	 */
 	public static final String DEFAULT_FORMAT =
-			"%7$5d %8$3d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
+			"%7$5d %8$5d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
 	final String format;
 
 	/**
@@ -72,8 +72,8 @@ public class JulFormatter extends Formatter {
 	 * By default the value of {@link #FORMAT_PROPERTY} property is used as the main format
 	 * for log records. If it is not present in either logging or system properties, then
 	 * {@value #JUL_SIMPLE_FORMAT_PROPERTY} property is read and if present, its value is
-	 * prepended with {@code "%7$5d %8$3d "} and used instead. if it is also absent, then
-	 * {@value #DEFAULT_FORMAT} is used.</p>
+	 * prepended with {@value #JUL_SIMPLE_FORMAT_PREFIX} and used as format. if it is also absent,
+	 * then {@value #DEFAULT_FORMAT} is used.</p>
 	 * <p>
 	 * The value of {@link #STACKFRAME_FORMAT_PROPERTY} property is used as the format for
 	 * stack trace elements. If it is not present in either logging or system properties, then
@@ -95,7 +95,7 @@ public class JulFormatter extends Formatter {
 				simpleFormat = LogManager.getLogManager().getProperty(JUL_SIMPLE_FORMAT_PROPERTY);
 			}
 			if (simpleFormat != null) {
-				format = "%7$5d %8$3d " + simpleFormat;
+				format = JUL_SIMPLE_FORMAT_PREFIX + simpleFormat;
 			}
 		}
 		return format;
@@ -112,6 +112,8 @@ public class JulFormatter extends Formatter {
 	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY} (see {@link #JulFormatter()}) */
 	public static final String JUL_SIMPLE_FORMAT_PROPERTY =
 			"java.util.logging.SimpleFormatter.format";
+	/** {@value #JUL_SIMPLE_FORMAT_PREFIX} (see {@link #JulFormatter()}) */
+	public static final String JUL_SIMPLE_FORMAT_PREFIX = "%7$5d %8$5d ";
 
 
 
