@@ -7,8 +7,7 @@ import java.util.logging.*;
 
 import org.junit.*;
 
-import static java.util.logging.Level.INFO;
-import static java.util.logging.Level.SEVERE;
+import static java.util.logging.Level.*;
 
 import static org.junit.Assert.*;
 import static pl.morgwai.base.jul.JulConfigurator.*;
@@ -23,14 +22,15 @@ public class JulConfiguratorTests {
 
 
 
-	@Test
-	public void testNamesFromProperty() throws IOException {
-		System.setProperty(
-			OVERRIDE_LEVEL_PROPERTY,
-			"," + ConsoleHandler.class.getName() + "," + EXAMPLE_DOMAIN
-		);
+	public void testOverrideViaConstructor(boolean defineOverrideProperty) throws IOException {
+		if (defineOverrideProperty) {
+			System.setProperty(
+				OVERRIDE_LEVEL_PROPERTY,
+				"," + ConsoleHandler.class.getName()
+			);
+		}
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, SEVERE.toString());
-		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, SEVERE.toString());
+		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, FINE.toString());
 		System.setProperty(LEVEL_SUFFIX, SEVERE.toString());
 		System.setProperty(JUL_CONFIG_CLASS_PROPERTY, JulConfigurator.class.getName());
 
@@ -40,11 +40,18 @@ public class JulConfiguratorTests {
 			System.getProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
 			new ConsoleHandler().getLevel().toString()
 		);
-		assertEquals(
-			'"' + EXAMPLE_DOMAIN + "\" Logger should have its Level as in the property",
-			System.getProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
-			Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString()
-		);
+		if (defineOverrideProperty) {
+			assertNull(
+				'"' + EXAMPLE_DOMAIN + "\" Logger should have the default Level",
+				Logger.getLogger(EXAMPLE_DOMAIN).getLevel()
+			);
+		} else {
+			assertEquals(
+				'"' + EXAMPLE_DOMAIN + "\" Logger should have its Level as in the property",
+				System.getProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
+				Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString()
+			);
+		}
 		assertEquals(
 			"root Logger should have its Level as in the property",
 			System.getProperty(LEVEL_SUFFIX),
@@ -55,6 +62,16 @@ public class JulConfiguratorTests {
 			JulConfigurator.class.getName(),
 			System.getProperty(JUL_CONFIG_CLASS_PROPERTY)
 		);
+	}
+
+	@Test
+	public void testOverrideViaConstructorWithDefinedProperty() throws IOException {
+		testOverrideViaConstructor(true);
+	}
+
+	@Test
+	public void testOverrideViaConstructorWithUndefinedProperty() throws IOException {
+		testOverrideViaConstructor(false);
 	}
 
 

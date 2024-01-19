@@ -8,6 +8,8 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
+import static java.util.stream.Collectors.toSet;
+
 
 
 /**
@@ -121,6 +123,10 @@ public class JulConfigurator {
 	 * to the {@link Class#getName() fully-qualified name} of this class, then {@link LogManager}
 	 * will call this constructor instead of reading its configuration the normal way.
 	 * <p>
+	 * If {@value #OVERRIDE_LEVEL_PROPERTY} system property is missing, this constructor will use
+	 * all defined system properties whose names end with {@value #LEVEL_SUFFIX} to override log
+	 * {@link Level}s.</p>
+	 * <p>
 	 * Note: overriding can be applied to existing java apps without rebuilding: just add
 	 * {@code jul-utils.jar} to command-line class-path. See the example in
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)} documentation.</p>
@@ -131,7 +137,17 @@ public class JulConfigurator {
 		System.clearProperty(JUL_CONFIG_CLASS_PROPERTY);
 		try {
 			LogManager.getLogManager().readConfiguration();
-			overrideLogLevelsWithSystemProperties();
+			if (System.getProperty(OVERRIDE_LEVEL_PROPERTY) != null) {
+				overrideLogLevelsWithSystemProperties();
+				return;
+			}
+			final var loggerAndHandlerNames = System.getProperties().stringPropertyNames()
+				.stream()
+				.filter((property) -> property.endsWith(LEVEL_SUFFIX))
+				.map((property) -> property.substring(0, property.length() - LEVEL_SUFFIX.length()))
+				.collect(toSet());
+			if (loggerAndHandlerNames.isEmpty()) return;
+			overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
 		} finally {
 			System.setProperty(JUL_CONFIG_CLASS_PROPERTY, julConfigClassPropertyBackup);
 		}
