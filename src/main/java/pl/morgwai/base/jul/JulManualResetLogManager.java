@@ -8,8 +8,8 @@ import java.util.logging.LogManager;
 
 
 /**
- * A {@link LogManager} that does not get reset automatically at JVM shutdown.
- * Useful if logs from user shutdown hooks are important.
+ * A {@link LogManager} that does not get {@link LogManager#reset() reset} automatically at JVM
+ * shutdown not to lose logs from user {@link Runtime#addShutdownHook(Thread) shutdown hooks}.
  * <p>
  * To use this class, define system property named
  * {@value #JUL_LOG_MANAGER_PROPERTY} to contain fully-qualified name of this class either on the
@@ -52,7 +52,7 @@ public class JulManualResetLogManager extends LogManager {
 
 
 
-	/** {@value #JUL_LOG_MANAGER_PROPERTY} */
+	/** {@value #JUL_LOG_MANAGER_PROPERTY} (see {@link LogManager}). */
 	public static final String JUL_LOG_MANAGER_PROPERTY = "java.util.logging.manager";
 
 
@@ -72,6 +72,7 @@ public class JulManualResetLogManager extends LogManager {
 
 
 
+	/** Behaves the same as {@code super}. Properly calls {@code super.reset()} when needed. */
 	@Override
 	public void readConfiguration(InputStream ins) throws IOException, SecurityException {
 		synchronized (lock) {

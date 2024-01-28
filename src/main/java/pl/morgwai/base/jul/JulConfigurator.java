@@ -22,7 +22,8 @@ import static java.util.stream.Collectors.toSet;
  * {@link java.util.logging.Handler}s (like {@code "java.util.logging.ConsoleHandler.level"}) will
  * <b>only</b> have effect if no log entry has been made yet. Otherwise root
  * {@link java.util.logging.Handler}s can only be modified programmatically via
- * {@link java.util.logging.Logger#getHandlers() rootLogger.getHandlers()}.</p>
+ * {@link java.util.logging.Logger#getHandlers() rootLogger.getHandlers()}. See
+ * {@link LogManager#updateConfiguration(InputStream, Function)} for details.</p>
  */
 public class JulConfigurator {
 
@@ -64,7 +65,7 @@ public class JulConfigurator {
 	 * <p>
 	 * Note: overriding can be applied to existing java apps at startup without rebuilding: just add
 	 * {@code jul-utils.jar} to the command-line class-path and define
-	 * {@value #JUL_CONFIG_CLASS_PROPERTY} as in the example above.</p>
+	 * {@value #JUL_CONFIG_CLASS_PROPERTY} similarly as in the example above.</p>
 	 */
 	public static void overrideLogLevelsWithSystemProperties(String... loggerAndHandlerNames) {
 		final var combinedNames = new HashSet<String>();  // both from the param & the sys property
@@ -123,14 +124,13 @@ public class JulConfigurator {
 	 * to the {@link Class#getName() fully-qualified name} of this class, then {@link LogManager}
 	 * will call this constructor instead of reading its configuration the normal way.
 	 * <p>
-	 * If {@value #OVERRIDE_LEVEL_PROPERTY} system property is missing, this constructor will use
-	 * all defined system properties whose names end with {@value #LEVEL_SUFFIX} to override log
+	 * If {@value #OVERRIDE_LEVEL_PROPERTY} system property is unset, this constructor will use all
+	 * defined system properties whose names end with {@value #LEVEL_SUFFIX} to override log
 	 * {@link Level}s.</p>
 	 * <p>
 	 * Note: overriding can be applied to existing java apps without rebuilding: just add
 	 * {@code jul-utils.jar} to command-line class-path. See the example in
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)} documentation.</p>
-	 * @see LogManager
 	 */
 	public JulConfigurator() throws IOException {
 		final var julConfigClassPropertyBackup = System.getProperty(JUL_CONFIG_CLASS_PROPERTY);
@@ -162,11 +162,16 @@ public class JulConfigurator {
 	 * by {@link #overrideLogLevelsWithSystemProperties(String...)}.
 	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
-	/** {@value #LEVEL_SUFFIX} (see {@link #overrideLogLevelsWithSystemProperties(String...)}) */
+	/** {@value #LEVEL_SUFFIX} (see {@link #overrideLogLevelsWithSystemProperties(String...)}). */
 	public static final String LEVEL_SUFFIX = ".level";
-	/** {@value #JUL_CONFIG_CLASS_PROPERTY} (see {@link #JulConfigurator()}) */
+	/**
+	 * {@value #JUL_CONFIG_CLASS_PROPERTY} (see {@link #JulConfigurator()} and {@link LogManager}).
+	 */
 	public static final String JUL_CONFIG_CLASS_PROPERTY = "java.util.logging.config.class";
-	/** For use with {@link LogManager#updateConfiguration(InputStream, Function)}. */
+	/**
+	 * For use with {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)}
+	 * and {@link LogManager#updateConfiguration(InputStream, Function)}.
+	 */
 	public static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
 			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
 

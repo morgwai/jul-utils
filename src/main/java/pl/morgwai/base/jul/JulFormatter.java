@@ -20,7 +20,7 @@ public class JulFormatter extends Formatter {
 
 
 
-	/** {@value #FORMATTER_SUFFIX} (for constructing config property names) */
+	/** {@value #FORMATTER_SUFFIX} (for constructing config property names). */
 	public static final String FORMATTER_SUFFIX = ".formatter";
 
 	/**
@@ -30,7 +30,7 @@ public class JulFormatter extends Formatter {
 	public static final String FORMAT_PROPERTY = JulFormatter.class.getName() + ".format";
 	/**
 	 * {@value #DEFAULT_FORMAT}<br/>
-	 * "{sequenceId} {threadId} {level} {timestamp} {loggerName} {message} {thrown}"
+	 * ("{sequenceId} {threadId} {level} {timestamp} {loggerName} {message} {thrown}")
 	 */
 	public static final String DEFAULT_FORMAT =
 			"%7$5d %8$5d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
@@ -109,10 +109,10 @@ public class JulFormatter extends Formatter {
 
 
 
-	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY} (see {@link #JulFormatter()}) */
+	/** {@value #JUL_SIMPLE_FORMAT_PROPERTY} (see {@link #JulFormatter()}). */
 	public static final String JUL_SIMPLE_FORMAT_PROPERTY =
 			"java.util.logging.SimpleFormatter.format";
-	/** {@value #JUL_SIMPLE_FORMAT_PREFIX} (see {@link #JulFormatter()}) */
+	/** {@value #JUL_SIMPLE_FORMAT_PREFIX} (see {@link #JulFormatter()}). */
 	public static final String JUL_SIMPLE_FORMAT_PREFIX = "%7$5d %8$5d ";
 
 
