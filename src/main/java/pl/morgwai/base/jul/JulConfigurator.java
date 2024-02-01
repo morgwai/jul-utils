@@ -97,7 +97,7 @@ public class JulConfigurator {
 			newLogLevels.put(newLevelProperty, newLevel);
 			characterCount += newLevelProperty.length();
 			characterCount += newLevel.length();
-			characterCount += PROPERTY_BOILERPLATE_LENGTH;
+			characterCount += PROPERTY_OVERHEAD_LENGTH;
 		}
 		if (newLogLevels.isEmpty()) return;
 
@@ -110,7 +110,7 @@ public class JulConfigurator {
 	}
 
 	/** Combined length of {@code EOL} and {@code '='} characters. */
-	static final int PROPERTY_BOILERPLATE_LENGTH = System.lineSeparator().length() + 1;
+	static final int PROPERTY_OVERHEAD_LENGTH = System.lineSeparator().length() + 1;
 	/** {@link Properties#store(OutputStream, String)} date comment header length. */
 	static final int PROPERTIES_STORE_HEADER_LENGTH =
 			new Date().toString().length() + System.lineSeparator().length() + 1;  // +1 is for '#'
@@ -141,7 +141,9 @@ public class JulConfigurator {
 				overrideLogLevelsWithSystemProperties();
 				return;
 			}
-			final var loggerAndHandlerNames = System.getProperties().stringPropertyNames()
+
+			final var loggerAndHandlerNames = System.getProperties()
+				.stringPropertyNames()
 				.stream()
 				.filter((property) -> property.endsWith(LEVEL_SUFFIX))
 				.map((property) -> property.substring(0, property.length() - LEVEL_SUFFIX.length()))
