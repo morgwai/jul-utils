@@ -105,7 +105,7 @@ public class JulConfigurator {
 			LogManager.getLogManager(),
 			newLogLevels,
 			characterCount * 2,  // *2 is to account for escaping Properties.store() does
-			addOrReplaceMapper
+			ADD_OR_REPLACE_MAPPER
 		);
 	}
 
@@ -174,7 +174,7 @@ public class JulConfigurator {
 	 * For use with {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)}
 	 * and {@link LogManager#updateConfiguration(InputStream, Function)}.
 	 */
-	public static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
+	public static final Function<String, BiFunction<String,String,String>> ADD_OR_REPLACE_MAPPER =
 			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
 
 
@@ -223,14 +223,14 @@ public class JulConfigurator {
 	 * {@code loggingConfigUpdates} and just estimates {@value #DEFAULT_PROPERTY_BYTE_SIZE} bytes
 	 * per property. If more accurate allocation is needed, then use instead
 	 * {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)} with
-	 * {@link #addOrReplaceMapper} directly.</p>
+	 * {@link #ADD_OR_REPLACE_MAPPER} directly.</p>
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Properties loggingConfigUpdates) {
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			loggingConfigUpdates,
 			DEFAULT_PROPERTY_BYTE_SIZE * loggingConfigUpdates.size(),
-			addOrReplaceMapper
+			ADD_OR_REPLACE_MAPPER
 		);
 	}
 
@@ -260,4 +260,11 @@ public class JulConfigurator {
 		propertiesUpdates.putAll(loggingConfigUpdates);
 		addOrReplaceLoggingConfigProperties(propertiesUpdates);
 	}
+
+
+
+	/** @deprecated use {@link #ADD_OR_REPLACE_MAPPER} instead. */
+	@Deprecated(forRemoval = true)
+	public static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
+			ADD_OR_REPLACE_MAPPER;
 }
