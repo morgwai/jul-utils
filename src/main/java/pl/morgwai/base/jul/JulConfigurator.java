@@ -234,9 +234,8 @@ public class JulConfigurator {
 		);
 	}
 
-	/**
-	 * Used by {@link #addOrReplaceLoggingConfigProperties(Properties)} to estimate the buffer size.
-	 */
+	/** @deprecated this constant will be marked as package-private in the next version. */
+	@Deprecated(forRemoval = true)
 	public static final int DEFAULT_PROPERTY_BYTE_SIZE = 80;
 
 
