@@ -146,7 +146,7 @@
 					</execution>
 					<execution>
 						<!-- additional execution that runs only JulManualResetLogManagerTest -->
-						<id>JulManualResetLogManagerTest</id>
+						<id>JulManualResetLogManagerTests</id>
 						<configuration>
 							<argLine>-Djava.util.logging.manager=pl.morgwai.base.jul.JulManualResetLogManager</argLine>
 							<includes>
