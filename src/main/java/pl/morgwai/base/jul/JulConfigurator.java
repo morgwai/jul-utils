@@ -234,9 +234,7 @@ public class JulConfigurator {
 		);
 	}
 
-	/** @deprecated this constant will be marked as package-private in the next version. */
-	@Deprecated(forRemoval = true)
-	public static final int DEFAULT_PROPERTY_BYTE_SIZE = 80;
+	static final int DEFAULT_PROPERTY_BYTE_SIZE = 80;
 
 
 
@@ -259,11 +257,4 @@ public class JulConfigurator {
 		propertiesUpdates.putAll(loggingConfigUpdates);
 		addOrReplaceLoggingConfigProperties(propertiesUpdates);
 	}
-
-
-
-	/** @deprecated use {@link #ADD_OR_REPLACE_MAPPER} instead. */
-	@Deprecated(forRemoval = true)
-	public static final Function<String, BiFunction<String,String,String>> addOrReplaceMapper =
-			ADD_OR_REPLACE_MAPPER;
 }
