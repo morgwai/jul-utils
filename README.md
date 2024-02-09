@@ -3,8 +3,8 @@
 `java.util.logging` utilities.<br/>
 Copyright 2021 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0.<br/>
 <br/>
-**latest release: [3.2](https://search.maven.org/artifact/pl.morgwai.base/jul-utils/3.2/jar)**
-([javadoc](https://javadoc.io/doc/pl.morgwai.base/jul-utils/3.2))
+**latest release: [4.0](https://search.maven.org/artifact/pl.morgwai.base/jul-utils/4.0/jar)**
+([javadoc](https://javadoc.io/doc/pl.morgwai.base/jul-utils/4.0))
 
 
 ## MAIN USER CLASSES
