@@ -32,7 +32,7 @@ public class JulConfigurator {
 	/**
 	 * Overrides {@link Level}s of {@code java.util.logging} {@link java.util.logging.Logger}s and
 	 * {@link java.util.logging.Handler}s with values obtained from system properties.
-	 * Fully-qualified names of {@link java.util.logging.Logger Logger}s and
+	 * Names of {@link java.util.logging.Logger Logger}s and
 	 * {@link java.util.logging.Handler Handler}s whose {@link Level}s should be overridden, can be
 	 * provided as {@code loggerAndHandlerNames} arguments and/or comma separated on
 	 * {@value #OVERRIDE_LEVEL_PROPERTY} system property.
@@ -40,9 +40,12 @@ public class JulConfigurator {
 	 * Name of the system property containing a new {@link Level} for a given
 	 * {@link java.util.logging.Logger}/{@link java.util.logging.Handler} is constructed by
 	 * appending {@value #LEVEL_SUFFIX} to the given
-	 * {@link java.util.logging.Logger}'s&nbsp;/&nbsp;{@link java.util.logging.Handler}'s
-	 * fully-qualified name (coherently with {@link LogManager}'s convention).<br/>
-	 * If a system property with a new {@link Level} is missing, it is simply ignored.</p>
+	 * {@link java.util.logging.Logger}'s&nbsp;/&nbsp;{@link java.util.logging.Handler}'s name
+	 * (coherently with {@link LogManager}'s convention).<br/>
+	 * If a system property with a new {@link Level} is missing, it is simply ignored. However if
+	 * at the same time a system property named exactly as the given
+	 * {@link java.util.logging.Logger} is present, then a warning will be printed to
+	 * {@link System#err}, as it is a common mistake to omit {@value #LEVEL_SUFFIX}.</p>
 	 * <p>
 	 * <b>Example:</b><br/>
 	 * Output all entries from <code>com.example</code> name-space with level <code>FINE</code> or
@@ -158,10 +161,10 @@ public class JulConfigurator {
 
 
 	/**
-	 * Name of the system property that can contain comma separated,
-	 * {@link Class#getName() fully-qualified names} of {@link java.util.logging.Logger}s and
-	 * {@link java.util.logging.Handler}s whose {@link java.util.logging.Level}s will be overridden
-	 * by {@link #overrideLogLevelsWithSystemProperties(String...)}.
+	 * Name of the system property that may contain comma separated names of
+	 * {@link java.util.logging.Logger}s and {@link java.util.logging.Handler}s whose
+	 * {@link java.util.logging.Level}s will be overridden by
+	 * {@link #overrideLogLevelsWithSystemProperties(String...)}.
 	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
 	/** {@value #LEVEL_SUFFIX} (see {@link #overrideLogLevelsWithSystemProperties(String...)}). */
@@ -185,7 +188,8 @@ public class JulConfigurator {
 	 * This is somewhat a low-level method: in most situations
 	 * {@link #addOrReplaceLoggingConfigProperties(Properties)} or
 	 * {@link #addOrReplaceLoggingConfigProperties(Map)} will be more convenient.
-	 * @param estimatedLoggingConfigUpdatesByteSize estimated size of loggingConfigUpdates in bytes.
+	 * @param estimatedLoggingConfigUpdatesByteSize estimated size for a byte buffer needed to
+	 *     {@link Properties#store(OutputStream, String) store} {@code loggingConfigUpdates}.
 	 *     It will be passed to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
 	 */
 	public static void logManagerUpdateConfiguration(
