@@ -42,7 +42,10 @@ public class JulConfigurator {
 	 * appending {@value #LEVEL_SUFFIX} to the given
 	 * {@link java.util.logging.Logger}'s&nbsp;/&nbsp;{@link java.util.logging.Handler}'s
 	 * fully-qualified name (coherently with {@link LogManager}'s convention).<br/>
-	 * If a system property with a new {@link Level} is missing, it is simply ignored.</p>
+	 * If a system property with a new {@link Level} is missing, it is simply ignored. However if
+	 * at the same time a system property named exactly as the given
+	 * {@link java.util.logging.Logger} is present, a warning will be printed to {@link System#err},
+	 * as it is a common mistake to omit {@value #LEVEL_SUFFIX}.</p>
 	 * <p>
 	 * <b>Example:</b><br/>
 	 * Output all entries from <code>com.example</code> name-space with level <code>FINE</code> or
