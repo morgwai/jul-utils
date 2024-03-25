@@ -74,8 +74,7 @@ public class JulConfigurator {
 		if (namesFromProperty != null) {
 			Collections.addAll(combinedNames, namesFromProperty.split(","));
 		}
-		if (combinedNames.isEmpty()) return;
-		overrideLogLevelsWithSystemProperties(combinedNames);
+		if ( !combinedNames.isEmpty()) overrideLogLevelsWithSystemProperties(combinedNames);
 	}
 
 	static void overrideLogLevelsWithSystemProperties(Set<String> loggerAndHandlerNames) {
@@ -148,8 +147,9 @@ public class JulConfigurator {
 				.filter((property) -> property.endsWith(LEVEL_SUFFIX))
 				.map((property) -> property.substring(0, property.length() - LEVEL_SUFFIX.length()))
 				.collect(toSet());
-			if (loggerAndHandlerNames.isEmpty()) return;
-			overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
+			if ( !loggerAndHandlerNames.isEmpty()) {
+				overrideLogLevelsWithSystemProperties(loggerAndHandlerNames);
+			}
 		} finally {
 			System.setProperty(JUL_CONFIG_CLASS_PROPERTY, julConfigClassPropertyBackup);
 		}
@@ -226,6 +226,7 @@ public class JulConfigurator {
 	 * {@link #ADD_OR_REPLACE_MAPPER} directly.</p>
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Properties loggingConfigUpdates) {
+		if (loggingConfigUpdates.isEmpty()) return;
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			loggingConfigUpdates,
