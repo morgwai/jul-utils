@@ -77,8 +77,7 @@ public class JulConfigurator {
 		if (namesFromProperty != null) {
 			Collections.addAll(combinedNames, namesFromProperty.split(","));
 		}
-		if (combinedNames.isEmpty()) return;
-		overrideLogLevelsWithSystemProperties(combinedNames);
+		if ( !combinedNames.isEmpty()) overrideLogLevelsWithSystemProperties(combinedNames);
 	}
 
 	static void overrideLogLevelsWithSystemProperties(Set<String> loggerAndHandlerNames) {
