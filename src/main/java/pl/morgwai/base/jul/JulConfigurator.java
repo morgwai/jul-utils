@@ -89,10 +89,7 @@ public class JulConfigurator {
 			final var newLevel = System.getProperty(newLevelProperty);
 			if (newLevel == null) {
 				if (System.getProperty(loggerOrHandlerName) != null) {
-					System.err.println("WARNING: expected property \"" + newLevelProperty + "\" not"
-							+ " set, but \"" + loggerOrHandlerName + "\" present: have you "
-							+  "forgotten to add \".level\" suffix maybe?"
-					);
+					System.err.printf(MISSING_LEVEL_WARNING, newLevelProperty, loggerOrHandlerName);
 				}
 				continue;
 			}
@@ -111,6 +108,9 @@ public class JulConfigurator {
 		);
 	}
 
+	static final String MISSING_LEVEL_WARNING = "WARNING: expected property \"%s\" not set, but "
+			+ "\"%s\" present: have you forgotten to add \".level\" suffix maybe?"
+			+ System.lineSeparator();
 	/** Combined length of {@code EOL} and {@code '='} characters. */
 	static final int PROPERTY_OVERHEAD_LENGTH = System.lineSeparator().length() + 1;
 	/** {@link Properties#store(OutputStream, String)} date comment header length. */

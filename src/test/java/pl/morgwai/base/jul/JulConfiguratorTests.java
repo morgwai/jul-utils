@@ -78,13 +78,16 @@ public class JulConfiguratorTests {
 
 	@Test
 	public void testNamesFromParams() {
+		final var MISSING_LEVEL_LOGGER = "missing.level.logger";
 		System.setProperty(ConsoleHandler.class.getName() + LEVEL_SUFFIX, SEVERE.toString());
 		System.setProperty(EXAMPLE_DOMAIN + LEVEL_SUFFIX, SEVERE.toString());
 		System.setProperty(LEVEL_SUFFIX, SEVERE.toString());
+		System.setProperty(MISSING_LEVEL_LOGGER, WARNING.toString());
 
 		overrideLogLevelsWithSystemProperties(
 			ConsoleHandler.class.getName(),
 			EXAMPLE_DOMAIN,
+			MISSING_LEVEL_LOGGER,
 			""
 		);
 		assertEquals(
