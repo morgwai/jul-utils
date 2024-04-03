@@ -114,8 +114,9 @@ public class JulConfigurator {
 	/** Combined length of {@code EOL} and {@code '='} characters. */
 	static final int PROPERTY_OVERHEAD_LENGTH = System.lineSeparator().length() + 1;
 	/** {@link Properties#store(OutputStream, String)} date comment header length. */
-	static final int PROPERTIES_STORE_HEADER_LENGTH =
-			new Date().toString().length() + System.lineSeparator().length() + 1;  // +1 is for '#'
+	static final int PROPERTIES_STORE_HEADER_LENGTH = System.getenv("SOURCE_DATE_EPOCH") == null
+			? new Date().toString().length() + System.lineSeparator().length() + 1  // +1 is for '#'
+			: 24 + System.lineSeparator().length();  // see Properties.getFormattedTimestamp()
 
 
 
