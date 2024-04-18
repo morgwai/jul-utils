@@ -168,10 +168,14 @@ public class JulConfigurator {
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)}.
 	 */
 	public static final String OVERRIDE_LEVEL_PROPERTY = "java.util.logging.overrideLevel";
-	/** {@value #LEVEL_SUFFIX} (see {@link #overrideLogLevelsWithSystemProperties(String...)}). */
+	/**
+	 * {@value #LEVEL_SUFFIX} (for constructing config property names, see
+	 * {@link #overrideLogLevelsWithSystemProperties(String...)}).
+	 */
 	public static final String LEVEL_SUFFIX = ".level";
 	/**
-	 * {@value #JUL_CONFIG_CLASS_PROPERTY} (see {@link #JulConfigurator()} and {@link LogManager}).
+	 * {@value #JUL_CONFIG_CLASS_PROPERTY} (see {@link #JulConfigurator() the constructor} and
+	 * {@link LogManager}).
 	 */
 	public static final String JUL_CONFIG_CLASS_PROPERTY = "java.util.logging.config.class";
 	/**

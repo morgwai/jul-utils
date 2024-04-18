@@ -20,7 +20,10 @@ public class JulFormatter extends Formatter {
 
 
 
-	/** {@value #FORMATTER_SUFFIX} (for constructing config property names). */
+	/**
+	 * {@value #FORMATTER_SUFFIX} (for constructing config property names defining
+	 * {@link Formatter}s for {@link Handler}s).
+	 */
 	public static final String FORMATTER_SUFFIX = ".formatter";
 
 	/**
