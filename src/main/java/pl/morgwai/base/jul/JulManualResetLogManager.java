@@ -8,17 +8,17 @@ import java.util.logging.LogManager;
 
 
 /**
- * A {@link LogManager} that does not get {@link LogManager#reset() reset} automatically at JVM
- * shutdown not to lose logs from user {@link Runtime#addShutdownHook(Thread) shutdown hooks}.
+ * {@link LogManager} that does not get {@link LogManager#reset() reset} automatically at JVM
+ * shutdown to avoid losing logs from user {@link Runtime#addShutdownHook(Thread) shutdown hooks}.
  * <p>
- * To use this class, define system property named
- * {@value #JUL_LOG_MANAGER_PROPERTY} to contain fully-qualified name of this class either on the
- * command-line:</p>
+ * To use this class, a {@link System#getProperty(String) system property} named
+ * {@value #JUL_LOG_MANAGER_PROPERTY} must be defined to contain the
+ * {@link Class#getName() fully-qualified name} of this class either on a command-line:</p>
  * <pre>{@code
  * java -Djava.util.logging.manager=pl.morgwai.base.jul.JulManualResetLogManager \
  *     -cp ${CLASSPATH} MyMainClass}</pre>
  * <p>
- * ...<b>OR</b> in the static initializer of your main class:</p>
+ * ...or in a static initializer of the main class:</p>
  * <pre>{@code
  * public class MyMainClass {
  *
@@ -39,13 +39,13 @@ import java.util.logging.LogManager;
  * }
  * }</pre>
  * <p>
- * It is then user's responsibility to call {@link #manualReset()} at the end of his shutdown
+ * It is then the user's responsibility to call {@link #manualReset()} at the end of their shutdown
  * hook:</p>
  * <pre>{@code
  * Runtime.getRuntime().addShutdownHook(new Thread(() -> {
  *     // ...
  *     log.info("this message won't be lost");
- *     ((pl.morgwai.base.jul.JulManualResetLogManager) LogManager.getLogManager()).manualReset();
+ *     ((JulManualResetLogManager) LogManager.getLogManager()).manualReset();
  * }));}</pre>
  */
 public class JulManualResetLogManager extends LogManager {
@@ -72,7 +72,10 @@ public class JulManualResetLogManager extends LogManager {
 
 
 
-	/** Behaves the same as {@code super}. Properly calls {@code super.reset()} when needed. */
+	/**
+	 * Behaves the same way as {@code super}.
+	 * Properly calls {@link LogManager#reset() super.reset()} when needed.
+	 */
 	@Override
 	public void readConfiguration(InputStream ins) throws IOException, SecurityException {
 		synchronized (lock) {

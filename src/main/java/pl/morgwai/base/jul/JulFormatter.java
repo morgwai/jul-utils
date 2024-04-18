@@ -11,16 +11,18 @@ import java.util.logging.*;
 
 
 /**
- * A text log formatter similar to {@link java.util.logging.SimpleFormatter} that additionally
- * allows to format stack-trace elements and to add
- * {@link LogRecord#getSequenceNumber() log sequence id} and
- * {@link LogRecord#getThreadID() thread id} to log entries.
+ * {@link Formatter} similar to {@link SimpleFormatter} that additionally allows to format
+ * stack-trace elements and add {@link LogRecord#getSequenceNumber() log sequence id} and
+ * {@link LogRecord#getThreadID() Thread id} to log entries.
  */
 public class JulFormatter extends Formatter {
 
 
 
-	/** {@value #FORMATTER_SUFFIX} (for constructing config property names). */
+	/**
+	 * {@value #FORMATTER_SUFFIX} (for constructing config property names defining
+	 * {@link Formatter}s for {@link Handler}s).
+	 */
 	public static final String FORMATTER_SUFFIX = ".formatter";
 
 	/**
@@ -30,7 +32,7 @@ public class JulFormatter extends Formatter {
 	public static final String FORMAT_PROPERTY = JulFormatter.class.getName() + ".format";
 	/**
 	 * {@value #DEFAULT_FORMAT}<br/>
-	 * ("{sequenceId} {threadId} {level} {timestamp} {loggerName} {message} {thrown}")
+	 * ("{@code <sequenceId> <threadId> <level> <timestamp> <loggerName> <message> <thrown>}")
 	 */
 	public static final String DEFAULT_FORMAT =
 			"%7$5d %8$5d %4$7s %1$tF %1$tT.%1$tL %3$s %5$s %6$s%n";
@@ -50,7 +52,7 @@ public class JulFormatter extends Formatter {
 	/**
 	 * Creates a new formatter configured using supplied params.
 	 * @param format the main format for log records.
-	 *     If it's {@code null} then {@value #DEFAULT_FORMAT} is used.
+	 *     If it's {@code null} then {@link #DEFAULT_FORMAT} is used.
 	 * @param stackFrameFormat format for stack trace elements of logged {@link Throwable}s.
 	 * @see #format(LogRecord)
 	 */

@@ -10,10 +10,10 @@ Copyright 2021 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Ver
 ## MAIN USER CLASSES
 
 ### [JulConfigurator](https://javadoc.io/doc/pl.morgwai.base/jul-utils/latest/pl/morgwai/base/jul/JulConfigurator.html)
-Utilities to manipulate `java.util.logging` config, among others allows to override log levels with system properties in existing java apps without rebuilding: just add `jul-utils.jar` to your command-line class-path and define your desired properties.
+Utilities to manipulate `java.util.logging` config, including overriding log `Level`s with system properties in existing apps without rebuilding.
 
 ### [JulFormatter](https://javadoc.io/doc/pl.morgwai.base/jul-utils/latest/pl/morgwai/base/jul/JulFormatter.html)
-A text log formatter similar to `SimpleFormatter` that additionally allows to format stack trace elements and to add log sequence id and thread id to log entries.
+Text log `Formatter` similar to `SimpleFormatter` that additionally allows to format stack-trace elements and add log sequence id and `Thread` id to log entries.
 
 ### [JulManualResetLogManager](https://javadoc.io/doc/pl.morgwai.base/jul-utils/latest/pl/morgwai/base/jul/JulManualResetLogManager.html)
-A `LogManager` that does not get `reset()` automatically at JVM shutdown. Useful if logs from user shutdown hooks are important. See a usage example [here](https://github.com/morgwai/grpc-scopes/blob/v12.2/sample/src/main/java/pl/morgwai/samples/grpc/scopes/grpc/RecordStorageServer.java#L138) (notice the static initializer a [few lines below](https://github.com/morgwai/grpc-scopes/blob/v12.2/sample/src/main/java/pl/morgwai/samples/grpc/scopes/grpc/RecordStorageServer.java#L169-L174)).
+`LogManager` that does not get `reset()` automatically at JVM shutdown to avoid losing logs from user shutdown hooks. See a usage example [here](https://github.com/morgwai/grpc-scopes/blob/v12.2/sample/src/main/java/pl/morgwai/samples/grpc/scopes/grpc/RecordStorageServer.java#L138) (notice the static initializer a [few lines below](https://github.com/morgwai/grpc-scopes/blob/v12.2/sample/src/main/java/pl/morgwai/samples/grpc/scopes/grpc/RecordStorageServer.java#L169-L174)).
