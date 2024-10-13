@@ -39,13 +39,13 @@ import java.util.logging.LogManager;
  * }
  * }</pre>
  * <p>
- * It is then the user's responsibility to call {@link #manualReset()} at the end of their shutdown
- * hook:</p>
+ * It is then the user's responsibility to call {@link #manualReset()} or {@link #staticReset()} at
+ * the end of their shutdown hook:</p>
  * <pre>{@code
  * Runtime.getRuntime().addShutdownHook(new Thread(() -> {
  *     // ...
  *     log.info("this message won't be lost");
- *     ((JulManualResetLogManager) LogManager.getLogManager()).manualReset();
+ *     JulManualResetLogManager.staticReset();
  * }));}</pre>
  */
 public class JulManualResetLogManager extends LogManager {
@@ -93,5 +93,10 @@ public class JulManualResetLogManager extends LogManager {
 	/** Calls {@link LogManager#reset() super.reset()}. */
 	public void manualReset() throws SecurityException {
 		super.reset();
+	}
+
+	/** Calls {@link #manualReset() getLogManager().manualReset()}. */
+	public static void staticReset() throws SecurityException {
+		((JulManualResetLogManager) getLogManager()).manualReset();
 	}
 }

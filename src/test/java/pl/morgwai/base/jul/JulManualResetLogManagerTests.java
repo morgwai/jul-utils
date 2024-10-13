@@ -58,7 +58,7 @@ public class JulManualResetLogManagerTests {
 
 	@Test
 	public void testManualReset() {
-		logManager.manualReset();
+		JulManualResetLogManager.staticReset();
 		assertTrue("testHandler should be closed", handlerWasClosed);
 	}
 }
