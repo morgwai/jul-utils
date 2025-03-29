@@ -4,7 +4,9 @@
 Copyright 2021 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0.<br/>
 <br/>
 **latest release: [4.2](https://search.maven.org/artifact/pl.morgwai.base/jul-utils/4.2/jar)**
-([javadoc](https://javadoc.io/doc/pl.morgwai.base/jul-utils/4.2))
+([javadoc](https://javadoc.io/doc/pl.morgwai.base/jul-utils/4.2))<br/>
+<br/>
+See [CHANGES](CHANGES.md) for the summary of changes between releases. If the major version of a subsequent release remains unchanged, it is supposed to be backwards compatible in terms of API and behaviour with previous ones with the same major version (meaning that it should be safe to just blindly update in dependent projects and things should not break under normal circumstances).
 
 
 ## MAIN USER CLASSES
