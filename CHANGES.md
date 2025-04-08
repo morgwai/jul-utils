@@ -1,5 +1,8 @@
 # Summaries of visible changes between releases
 
+### 4.3
+- `JulConfigurator.addOrReplaceLoggingConfigProperties(...)`: add header size to the buffer size estimate
+
 ### 4.2
 - `JulManualResetLogManager`: add `staticReset()` method.
 

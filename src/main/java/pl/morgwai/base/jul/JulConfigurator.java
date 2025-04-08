@@ -226,7 +226,7 @@ public class JulConfigurator {
 	 * <p>
 	 * Note: this method does not bother to calculate the byte size of the buffer needed to store
 	 * {@code loggingConfigUpdates} and just estimates {@value #DEFAULT_PROPERTY_BYTE_SIZE} bytes
-	 * per property. If more accurate allocation is needed, then use instead
+	 * per property + header size. If more accurate allocation is needed, then use instead
 	 * {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)} with
 	 * {@link #ADD_OR_REPLACE_MAPPER} directly.</p>
 	 */
@@ -235,7 +235,8 @@ public class JulConfigurator {
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
 			loggingConfigUpdates,
-			DEFAULT_PROPERTY_BYTE_SIZE * loggingConfigUpdates.size(),
+			(DEFAULT_PROPERTY_BYTE_SIZE * loggingConfigUpdates.size())
+					+ (2 * PROPERTIES_STORE_HEADER_LENGTH),
 			ADD_OR_REPLACE_MAPPER
 		);
 	}
