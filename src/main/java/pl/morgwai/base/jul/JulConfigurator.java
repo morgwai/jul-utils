@@ -175,8 +175,11 @@ public class JulConfigurator {
 	 */
 	public static final String JUL_CONFIG_CLASS_PROPERTY = "java.util.logging.config.class";
 	/**
-	 * For use with {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)}
-	 * and {@link LogManager#updateConfiguration(InputStream, Function)}.
+	 * When used with {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)
+	 * logManagerUpdateConfiguration(...)} or {@link
+	 * LogManager#updateConfiguration(InputStream, Function) LogManager.updateConfiguration(...)},
+	 * adds the supplied {@link Properties} to the logging config or replaces the values of those
+	 * that already exist.
 	 */
 	public static final Function<String, BiFunction<String,String,String>> ADD_OR_REPLACE_MAPPER =
 			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
@@ -226,9 +229,9 @@ public class JulConfigurator {
 	 * <p>
 	 * Note: this method does not bother to calculate the byte size of the buffer needed to store
 	 * {@code loggingConfigUpdates} and just estimates {@value #DEFAULT_PROPERTY_BYTE_SIZE} bytes
-	 * per property + header size. If more accurate allocation is needed, then use instead
+	 * per property + header size. If more accurate allocation is needed, then instead use directly
 	 * {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)} with
-	 * {@link #ADD_OR_REPLACE_MAPPER} directly.</p>
+	 * {@link #ADD_OR_REPLACE_MAPPER}.</p>
 	 */
 	public static void addOrReplaceLoggingConfigProperties(Properties loggingConfigUpdates) {
 		if (loggingConfigUpdates.isEmpty()) return;
