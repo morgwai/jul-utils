@@ -236,7 +236,7 @@ public class JulConfigurator {
 			LogManager.getLogManager(),
 			loggingConfigUpdates,
 			(DEFAULT_PROPERTY_BYTE_SIZE * loggingConfigUpdates.size())
-					+ (2 * PROPERTIES_STORE_HEADER_LENGTH),
+					+ PROPERTIES_STORE_HEADER_LENGTH,
 			ADD_OR_REPLACE_MAPPER
 		);
 	}
