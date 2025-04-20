@@ -190,8 +190,8 @@ public class JulConfigurator {
 	 * Similar to {@link LogManager#updateConfiguration(InputStream, Function)}, but takes a
 	 * {@link Properties} argument instead of an {@link InputStream}.
 	 * This is somewhat a low-level method: in most situations
-	 * {@link #addOrReplaceLoggingConfigProperties(Properties)} or
-	 * {@link #addOrReplaceLoggingConfigProperties(Map)} will be more convenient.
+	 * {@link #addOrReplaceLogConfigProperties(Properties)} or
+	 * {@link #addOrReplaceLogConfigProperties(Map)} will be more convenient.
 	 * @param estimatedLoggingConfigUpdatesByteSize estimated size for a byte buffer needed to
 	 *     {@link Properties#store(OutputStream, String) store} {@code loggingConfigUpdates}.
 	 *     It will be passed to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
@@ -225,20 +225,20 @@ public class JulConfigurator {
 
 
 	/**
-	 * Adds to or replaces logging config properties with entries from {@code loggingConfigUpdates}.
+	 * Adds to or replaces logging config properties with entries from {@code logConfigUpdates}.
 	 * <p>
 	 * Note: this method does not bother to calculate the byte size of the buffer needed to store
-	 * {@code loggingConfigUpdates} and just estimates {@value #DEFAULT_PROPERTY_BYTE_SIZE} bytes
-	 * per property + header size. If more accurate allocation is needed, then instead use directly
+	 * {@code logConfigUpdates} and just estimates {@value #DEFAULT_PROPERTY_BYTE_SIZE} bytes per
+	 * property + header size. If more accurate allocation is needed, then instead use directly
 	 * {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)} with
 	 * {@link #ADD_OR_REPLACE_MAPPER}.</p>
 	 */
-	public static void addOrReplaceLoggingConfigProperties(Properties loggingConfigUpdates) {
-		if (loggingConfigUpdates.isEmpty()) return;
+	public static void addOrReplaceLogConfigProperties(Properties logConfigUpdates) {
+		if (logConfigUpdates.isEmpty()) return;
 		logManagerUpdateConfiguration(
 			LogManager.getLogManager(),
-			loggingConfigUpdates,
-			(DEFAULT_PROPERTY_BYTE_SIZE * loggingConfigUpdates.size())
+			logConfigUpdates,
+			(DEFAULT_PROPERTY_BYTE_SIZE * logConfigUpdates.size())
 					+ PROPERTIES_STORE_HEADER_LENGTH,
 			ADD_OR_REPLACE_MAPPER
 		);
@@ -249,22 +249,35 @@ public class JulConfigurator {
 
 
 	/**
-	 * Variant of {@link #addOrReplaceLoggingConfigProperties(Properties)} that takes a {@link Map}
-	 * as an argument.
+	 * Variant of {@link #addOrReplaceLogConfigProperties(Properties)} that takes a {@link Map} as
+	 * an argument.
 	 * This allows to use {@link Map#of(Object, Object) Map.of(...)} function family inline, for
 	 * example:
 	 * <pre>{@code
-	 * addOrReplaceLoggingConfigProperties(Map.of(
+	 * addOrReplaceLogConfigProperties(Map.of(
 	 *     ".level", "FINE",
 	 *     "java.util.logging.ConsoleHandler.level", "FINEST",
 	 *     "com.example.level", "FINEST",
 	 *     "com.thirdparty.level", "WARNING"
 	 * ));}</pre>
 	 */
-	public static void addOrReplaceLoggingConfigProperties(Map<String, String> loggingConfigUpdates)
-	{
-		final var propertiesUpdates = new Properties(loggingConfigUpdates.size());
-		propertiesUpdates.putAll(loggingConfigUpdates);
-		addOrReplaceLoggingConfigProperties(propertiesUpdates);
+	public static void addOrReplaceLogConfigProperties(Map<String, String> logConfigUpdates) {
+		final var propertiesUpdates = new Properties(logConfigUpdates.size());
+		propertiesUpdates.putAll(logConfigUpdates);
+		addOrReplaceLogConfigProperties(propertiesUpdates);
+	}
+
+
+
+	/** @deprecated Use {@link #addOrReplaceLogConfigProperties(Properties)}. */
+	@Deprecated(forRemoval = true)
+	public static void addOrReplaceLoggingConfigProperties(Properties logConfigUpdates) {
+		addOrReplaceLogConfigProperties(logConfigUpdates);
+	}
+
+	/** @deprecated Use {@link #addOrReplaceLogConfigProperties(Map)}. */
+	@Deprecated(forRemoval = true)
+	public static void addOrReplaceLoggingConfigProperties(Map<String, String> logConfigUpdates) {
+		addOrReplaceLogConfigProperties(logConfigUpdates);
 	}
 }

@@ -150,26 +150,26 @@ public class JulConfiguratorTests {
 
 	@Test
 	public void testAddOrReplaceLoggingConfigProperties() {
-		final var loggingConfigUpdates = Map.of(
+		final var logConfigUpdates = Map.of(
 			ConsoleHandler.class.getName() + LEVEL_SUFFIX, SEVERE.toString(),
 			EXAMPLE_DOMAIN + LEVEL_SUFFIX, SEVERE.toString(),
 			LEVEL_SUFFIX, SEVERE.toString()
 		);
 
-		addOrReplaceLoggingConfigProperties(loggingConfigUpdates);
+		addOrReplaceLogConfigProperties(logConfigUpdates);
 		assertEquals(
 			"ConsoleHandler should have its Level as in the property",
-			loggingConfigUpdates.get(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
+			logConfigUpdates.get(ConsoleHandler.class.getName() + LEVEL_SUFFIX),
 			new ConsoleHandler().getLevel().toString()
 		);
 		assertEquals(
 			EXAMPLE_DOMAIN + " logger should have level as in the property",
-			loggingConfigUpdates.get(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
+			logConfigUpdates.get(EXAMPLE_DOMAIN + LEVEL_SUFFIX),
 			Logger.getLogger(EXAMPLE_DOMAIN).getLevel().toString()
 		);
 		assertEquals(
 			"root Logger should have its Level as in the property",
-			loggingConfigUpdates.get(LEVEL_SUFFIX),
+			logConfigUpdates.get(LEVEL_SUFFIX),
 			Logger.getLogger("").getLevel().toString()
 		);
 	}
