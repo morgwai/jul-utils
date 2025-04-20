@@ -1,9 +1,7 @@
 // Copyright 2021 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.jul;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.logging.*;

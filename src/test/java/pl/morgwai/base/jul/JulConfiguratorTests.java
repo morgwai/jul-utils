@@ -4,12 +4,11 @@ package pl.morgwai.base.jul;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.*;
-
 import org.junit.*;
 
 import static java.util.logging.Level.*;
-
 import static org.junit.Assert.*;
+
 import static pl.morgwai.base.jul.JulConfigurator.*;
 
 

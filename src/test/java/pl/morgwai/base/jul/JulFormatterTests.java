@@ -1,18 +1,16 @@
 // Copyright 2022 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.jul;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.time.Instant;
 import java.util.Date;
-import java.util.logging.*;
-
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
 import org.junit.Test;
 
 import static java.util.logging.Level.INFO;
-
 import static org.junit.Assert.assertEquals;
+
 import static pl.morgwai.base.jul.JulFormatter.*;
 
 

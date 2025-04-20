@@ -3,7 +3,6 @@ package pl.morgwai.base.jul;
 
 import java.io.IOException;
 import java.util.logging.*;
-
 import org.junit.Before;
 import org.junit.Test;
 
