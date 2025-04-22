@@ -118,7 +118,7 @@ public class JulConfigurator {
 
 
 	/**
-	 * Reads logging config normally and then calls
+	 * {@link LogManager#readConfiguration() Reads the log config normally} and then calls
 	 * {@link #overrideLogLevelsWithSystemProperties(String...)}.
 	 * For use with {@value #JUL_CONFIG_CLASS_PROPERTY} system property: when this property is set
 	 * to the {@link Class#getName() fully-qualified name} of this class, then {@link LogManager}
@@ -178,8 +178,8 @@ public class JulConfigurator {
 	 * When used with {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)
 	 * logManagerUpdateConfiguration(...)} or {@link
 	 * LogManager#updateConfiguration(InputStream, Function) LogManager.updateConfiguration(...)},
-	 * adds the supplied {@link Properties} to the logging config or replaces the values of those
-	 * that already exist.
+	 * adds the supplied {@link Properties} to the log config or replaces the values of those that
+	 * already exist.
 	 */
 	public static final Function<String, BiFunction<String,String,String>> ADD_OR_REPLACE_MAPPER =
 			(key) -> (oldVal, newVal) -> newVal != null ? newVal : oldVal;
@@ -193,19 +193,19 @@ public class JulConfigurator {
 	 * {@link #addOrReplaceLogConfigProperties(Properties)} or
 	 * {@link #addOrReplaceLogConfigProperties(Map)} will be more convenient.
 	 * @param estimatedLoggingConfigUpdatesByteSize estimated size for a byte buffer needed to
-	 *     {@link Properties#store(OutputStream, String) store} {@code loggingConfigUpdates}.
-	 *     It will be passed to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
+	 *     {@link Properties#store(OutputStream, String) store} {@code logConfigUpdates}. It will be
+	 *     passed to {@link ByteArrayOutputStream#ByteArrayOutputStream(int)}.
 	 */
 	public static void logManagerUpdateConfiguration(
 		LogManager logManager,
-		Properties loggingConfigUpdates,
+		Properties logConfigUpdates,
 		int estimatedLoggingConfigUpdatesByteSize,
 		Function<String, BiFunction<String,String,String>> mapper
 	) {
 		try {
 			final var outputBytes =
 					new NoCopyByteArrayOutputStream(estimatedLoggingConfigUpdatesByteSize);
-			try (outputBytes) { loggingConfigUpdates.store(outputBytes, null); }
+			try (outputBytes) { logConfigUpdates.store(outputBytes, null); }
 			try (
 				final var inputBytes =
 						new ByteArrayInputStream(outputBytes.getBuffer(), 0, outputBytes.size())
@@ -225,11 +225,12 @@ public class JulConfigurator {
 
 
 	/**
-	 * Adds to or replaces logging config properties with entries from {@code logConfigUpdates}.
+	 * Adds to or replaces log config properties with entries from {@code logConfigUpdates}.
 	 * <p>
-	 * Note: this method does not bother to calculate the byte size of the buffer needed to store
-	 * {@code logConfigUpdates} and just estimates {@value #DEFAULT_PROPERTY_BYTE_SIZE} bytes per
-	 * property + header size. If more accurate allocation is needed, then instead use directly
+	 * Note: this method does not bother to calculate the byte size of the buffer needed to
+	 * {@link Properties#store(OutputStream, String) store} {@code logConfigUpdates} and just
+	 * estimates {@value #DEFAULT_PROPERTY_BYTE_SIZE} bytes per property + header size. If more
+	 * accurate allocation is needed, then instead use directly
 	 * {@link #logManagerUpdateConfiguration(LogManager, Properties, int, Function)} with
 	 * {@link #ADD_OR_REPLACE_MAPPER}.</p>
 	 */
